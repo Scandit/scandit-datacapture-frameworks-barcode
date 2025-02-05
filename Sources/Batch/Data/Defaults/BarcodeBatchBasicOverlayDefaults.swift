@@ -7,7 +7,7 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-extension BarcodeBatchBasicOverlayStyle: CaseIterable {
+extension ScanditBarcodeCapture.BarcodeBatchBasicOverlayStyle: Swift.CaseIterable {
     public static var allCases: [BarcodeBatchBasicOverlayStyle] = [.dot, .frame]
 }
 

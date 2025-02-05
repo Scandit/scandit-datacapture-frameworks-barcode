@@ -61,7 +61,7 @@ open class BarcodeBatchModule: NSObject, FrameworkModule {
     public let defaults: DefaultsEncodable = BarcodeBatchDefaults.shared
 
     public func addBarcodeBatchListener() {
-        barcodeBatchListener.enable()
+        barcodeBatchListener.enable(dataCaptureContext: context)
     }
 
     public func removeBarcodeBatchListener() {
@@ -69,7 +69,7 @@ open class BarcodeBatchModule: NSObject, FrameworkModule {
     }
 
     public func addAsyncBarcodeBatchListener() {
-        barcodeBatchListener.enableAsync()
+        barcodeBatchListener.enableAsync(dataCaptureContext: context)
     }
 
     public func removeAsyncBarcodeBatchListener() {

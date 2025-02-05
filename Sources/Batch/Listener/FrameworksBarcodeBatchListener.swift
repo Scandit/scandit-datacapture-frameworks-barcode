@@ -38,9 +38,16 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
     public init(emitter: Emitter) {
         self.emitter = emitter
     }
+    
+    private var dataCaptureContext: DataCaptureContext?
 
     private var latestSession: BarcodeBatchSession?
     private var isEnabled = AtomicBool()
+    
+    private lazy var isLicenseArFull: Bool? = {
+        // This check works only when the first frame has been processed
+        return dataCaptureContext?.isFeatureSupported("barcode-ar-full")
+    }()
 
     private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(.sessionUpdated))
 
@@ -51,13 +58,16 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
         latestSession = session
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
+        
+        let payload =  [
+            "session": session.jsonString,
+            "frameId": frameId,
+            "isBarcodeArFull": isLicenseArFull
+        ] as [String : Any?]
 
         sessionUpdatedEvent.emit(
             on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "frameId": frameId
-            ]
+            payload: payload
         )
         
         LastFrameData.shared.removeFromCache(frameId: frameId)
@@ -74,8 +84,9 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
         session.reset()
     }
 
-    public func enable() {
+    public func enable(dataCaptureContext: DataCaptureContext?) {
         isEnabled.value = true
+        self.dataCaptureContext = dataCaptureContext
     }
 
     public func disable() {
@@ -84,9 +95,9 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
         sessionUpdatedEvent.reset()
     }
 
-    public func enableAsync() {
+    public func enableAsync(dataCaptureContext: DataCaptureContext?) {
         sessionUpdatedEvent.timeout = Self.asyncTimeoutInterval
-        enable()
+        enable(dataCaptureContext: dataCaptureContext)
     }
 
     public func disableAsync() {
