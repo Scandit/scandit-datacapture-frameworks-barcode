@@ -67,6 +67,14 @@ open class BarcodeSelectionModule: NSObject, FrameworkModule {
     public func removeListener() {
         barcodeSelectionListener.disable()
     }
+    
+    public func addAsyncListener() {
+        barcodeSelectionListener.enableAsync()
+    }
+
+    public func removeAsyncListener() {
+        barcodeSelectionListener.disableAsync()
+    }
 
     public func unfreezeCamera() {
         barcodeSelection?.unfreezeCamera()
@@ -76,8 +84,9 @@ open class BarcodeSelectionModule: NSObject, FrameworkModule {
         barcodeSelection?.reset()
     }
 
-    public func getBarcodeCount(selectionIdentifier: String) -> Int {
-        barcodeSelectionListener.getBarcodeCount(selectionIdentifier: selectionIdentifier)
+    public func submitBarcodeCountForIdentifier(selectionIdentifier: String, result: FrameworksResult) {
+        let count = barcodeSelectionListener.getBarcodeCount(selectionIdentifier: selectionIdentifier)
+        result.success(result: count)
     }
 
     public func resetLatestSession(frameSequenceId: Int?) {
@@ -202,6 +211,15 @@ open class BarcodeSelectionModule: NSObject, FrameworkModule {
         }
     }
     
+    public func updateFeedback(feedbackJson: String, result: FrameworksResult) {
+        do {
+            barcodeSelection?.feedback = try BarcodeSelectionFeedback(fromJSONString: feedbackJson)
+            result.success(result: nil)
+        } catch {
+            result.reject(error: error)
+        }
+    }
+    
     private func onModeRemovedFromContext() {
         barcodeSelection = nil
     }
@@ -217,6 +235,12 @@ open class BarcodeSelectionModule: NSObject, FrameworkModule {
             result.success(result: nil)
         } catch {
             result.reject(error: error)
+        }
+    }
+    
+    public func getLastFrameDataBytes(frameId: String, result: FrameworksResult) {
+        LastFrameData.shared.getLastFrameDataBytes(frameId: frameId) {
+            result.success(result: $0)
         }
     }
 }
@@ -264,6 +288,26 @@ extension BarcodeSelectionModule: BarcodeSelectionDeserializerDelegate {
         if aimedBrushProviderFlag {
             overlay.setAimedBarcodeBrushProvider(aimedBrushProvider)
         }
+        
+        if jsonValue.containsKey("textForSelectOrDoubleTapToFreezeHint") {
+            overlay.setTextForSelectOrDoubleTapToFreezeHint(jsonValue.string(forKey: "textForSelectOrDoubleTapToFreezeHint", default: ""))
+        }
+        
+        if jsonValue.containsKey("textForTapToSelectHint") {
+            overlay.setTextForTapToSelectHint(jsonValue.string(forKey: "textForTapToSelectHint", default: ""))
+        }
+        
+        if jsonValue.containsKey("textForDoubleTapToUnfreezeHint") {
+            overlay.setTextForDoubleTapToUnfreezeHint(jsonValue.string(forKey: "textForDoubleTapToUnfreezeHint", default: ""))
+        }
+        
+        if jsonValue.containsKey("textForTapAnywhereToSelectHint") {
+            overlay.setTextForTapAnywhereToSelectHint(jsonValue.string(forKey: "textForTapAnywhereToSelectHint", default: ""))
+        }
+        
+        if jsonValue.containsKey("textForAimToSelectAutoHint") {
+            overlay.setTextForAimToSelectAutoHint(jsonValue.string(forKey: "textForAimToSelectAutoHint", default: ""))
+        }
     }
 }
 
@@ -303,7 +347,6 @@ extension BarcodeSelectionModule: DeserializationLifeCycleObserver {
     }
     
     public func dataCaptureContextAllModeRemoved() {
-        self.context = nil
         self.onModeRemovedFromContext()
     }
     

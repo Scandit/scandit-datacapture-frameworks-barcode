@@ -114,7 +114,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
                 }
                 
                 // update feedback in case the update call did run before the creation of the mode
-                if let feedback = barcodeFindFeedback {
+                if let feedback = self.barcodeFindFeedback {
                     dispatchMain { [weak self] in
                         mode.feedback = feedback
                         self?.barcodeFindFeedback = nil
@@ -149,6 +149,14 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
             }
         }
         dispatchMain(block)
+    }
+
+    public func removeBarcodeFindView(result: FrameworksResult) {
+        barcodeFindView?.stopSearching()
+        barcodeFindView?.removeFromSuperview()
+        barcodeFind?.stop()
+        barcodeFind = nil
+        result.success(result: nil)
     }
 
     public func updateBarcodeFindMode(modeJson: String, result: FrameworksResult) {
