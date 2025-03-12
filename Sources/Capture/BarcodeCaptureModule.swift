@@ -10,9 +10,11 @@ import ScanditFrameworksCore
 open class BarcodeCaptureModule: NSObject, FrameworkModule {
     private let barcodeCaptureDeserializer: BarcodeCaptureDeserializer
     private let barcodeCaptureListener: FrameworksBarcodeCaptureListener
+    private let captureContext = DefaultFrameworksCaptureContext.shared
+    private let captureViewHandler = DataCaptureViewHandler.shared
+    
     private var modeEnabled = true
-    private var context: DataCaptureContext?
-
+    
     private var barcodeCapture: BarcodeCapture? {
         willSet {
             barcodeCapture?.removeListener(barcodeCaptureListener)
@@ -110,17 +112,26 @@ open class BarcodeCaptureModule: NSObject, FrameworkModule {
     }
     
     public func updateOverlay(overlayJson: String, result: FrameworksResult) {
-        guard let overlay: BarcodeCaptureOverlay = DataCaptureViewHandler.shared.findFirstOverlayOfType() else {
-            result.success(result: nil)
-            return
+        let block = { [weak self] in
+            guard let self = self else {
+                Log.error("Self was nil while trying to create the context.")
+                result.reject(error: ScanditFrameworksCoreError.nilSelf)
+                return
+            }
+            
+            guard let overlay: BarcodeCaptureOverlay = self.captureViewHandler.findFirstOverlayOfType() else {
+                result.success(result: nil)
+                return
+            }
+            
+            do {
+                try self.barcodeCaptureDeserializer.update(overlay, fromJSONString: overlayJson)
+                result.success(result: nil)
+            } catch {
+                result.reject(error: error)
+            }
         }
-                
-        do {
-            try barcodeCaptureDeserializer.update(overlay, fromJSONString: overlayJson)
-            result.success(result: nil)
-        } catch {
-            result.reject(error: error)
-        }
+        dispatchMain(block)
     }
     
     public func updateFeedback(feedbackJson: String, result: FrameworksResult) {
@@ -135,6 +146,14 @@ open class BarcodeCaptureModule: NSObject, FrameworkModule {
     public func getLastFrameDataBytes(frameId: String, result: FrameworksResult) {
         LastFrameData.shared.getLastFrameDataBytes(frameId: frameId) {
             result.success(result: $0)
+        }
+    }
+    
+    func onModeRemovedFromContext() {
+        barcodeCapture = nil
+        
+        if let overlay: BarcodeCaptureOverlay = captureViewHandler.findFirstOverlayOfType() {
+            captureViewHandler.removeOverlayFromTopmostView(overlay: overlay)
         }
     }
 }
@@ -179,46 +198,37 @@ extension BarcodeCaptureModule: BarcodeCaptureDeserializerDelegate {
 }
 
 extension BarcodeCaptureModule: DeserializationLifeCycleObserver {
-    public func dataCaptureContext(deserialized context: DataCaptureContext?) {
-        self.context = context
-    }
-    
     public func dataCaptureContext(addMode modeJson: String) throws {
         if JSONValue(string: modeJson).string(forKey: "type") != "barcodeCapture" {
             return
         }
 
-        guard let dcContext = self.context else {
+        guard let dcContext = self.captureContext.context else {
             return
         }
 
         let mode = try barcodeCaptureDeserializer.mode(fromJSONString: modeJson, with: dcContext)
-        dcContext.addMode(mode)
+        captureContext.addMode(mode: mode)
     }
     
     public func dataCaptureContext(removeMode modeJson: String) {
         if JSONValue(string: modeJson).string(forKey: "type") != "barcodeCapture" {
             return
         }
-
-        guard let dcContext = self.context else {
-            return
-        }
         
         guard let mode = self.barcodeCapture else {
             return
         }
-        dcContext.removeMode(mode)
-        self.barcodeCapture = nil
+        captureContext.removeMode(mode: mode)
+        onModeRemovedFromContext()
     }
     
     public func dataCaptureContextAllModeRemoved() {
-        self.barcodeCapture = nil
+        self.onModeRemovedFromContext()
     }
     
     public func didDisposeDataCaptureContext() {
-        self.context = nil
-        self.barcodeCapture = nil
+        self.onModeRemovedFromContext()
     }
     
     public func dataCaptureView(addOverlay overlayJson: String, to view: DataCaptureView) throws {
@@ -232,7 +242,7 @@ extension BarcodeCaptureModule: DeserializationLifeCycleObserver {
         
         try dispatchMainSync {
             let overlay = try barcodeCaptureDeserializer.overlay(fromJSONString: overlayJson, withMode: mode)
-            DataCaptureViewHandler.shared.addOverlayToView(view, overlay: overlay)
+            captureViewHandler.addOverlayToView(view, overlay: overlay)
         }
     }
 }

@@ -20,6 +20,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
     private let feedbackDelegate: FrameworksSparkScanFeedbackDelegate
     private let sparkScanDeserializer: SparkScanDeserializer
     private let sparkScanViewDeserializer: SparkScanViewDeserializer
+    private let captureContext = DefaultFrameworksCaptureContext.shared
 
     public var shouldBringSparkScanViewToFront = true
 
@@ -33,8 +34,6 @@ open class SparkScanModule: NSObject, FrameworkModule {
     }
 
     public var sparkScanView: SparkScanView?
-
-    private var dataCaptureContext: DataCaptureContext?
 
     private var modeEnabled = true
 
@@ -99,7 +98,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
     public func addViewToContainer(_ container: UIView, jsonString: String, result: FrameworksResult) {
         let block = { [weak self] in
             guard let self = self else { return }
-            guard let context = self.dataCaptureContext else {
+            guard let context = self.captureContext.context else {
                 Log.error(SparkScanError.nilContext)
                 result.reject(error: SparkScanError.nilContext)
                 return
@@ -297,10 +296,10 @@ open class SparkScanModule: NSObject, FrameworkModule {
     }
 
     public func disposeView() {
-        dispatchMainSync {
-            sparkScanView?.removeFromSuperview()
-            sparkScanView?.uiDelegate = nil
-            sparkScanView = nil
+        dispatchMain {
+            self.sparkScanView?.removeFromSuperview()
+            self.sparkScanView?.uiDelegate = nil
+            self.sparkScanView = nil
         }
     }
     
@@ -312,7 +311,8 @@ open class SparkScanModule: NSObject, FrameworkModule {
 }
 
 extension SparkScanModule: DeserializationLifeCycleObserver {
-    public func dataCaptureContext(deserialized context: DataCaptureContext?) {
-        dataCaptureContext = context
+    public func didDisposeDataCaptureContext() {
+        sparkScan = nil
+        disposeView()
     }
 }
