@@ -39,15 +39,8 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
         self.emitter = emitter
     }
     
-    private var dataCaptureContext: DataCaptureContext?
-
     private var latestSession: FrameworksBarcodeBatchSession?
     private var isEnabled = AtomicBool()
-    
-    private lazy var isLicenseArFull: Bool? = {
-        // This check works only when the first frame has been processed
-        return dataCaptureContext?.isFeatureSupported("barcode-ar-full")
-    }()
 
     private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(.sessionUpdated))
 
@@ -61,8 +54,7 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
         
         let payload =  [
             "session": session.jsonString,
-            "frameId": frameId,
-            "isBarcodeArFull": isLicenseArFull
+            "frameId": frameId
         ] as [String : Any?]
 
         sessionUpdatedEvent.emit(
@@ -84,9 +76,8 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
         session.batchSession?.reset()
     }
 
-    public func enable(dataCaptureContext: DataCaptureContext?) {
+    public func enable() {
         isEnabled.value = true
-        self.dataCaptureContext = dataCaptureContext
     }
 
     public func disable() {
@@ -95,9 +86,9 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
         sessionUpdatedEvent.reset()
     }
 
-    public func enableAsync(dataCaptureContext: DataCaptureContext?) {
+    public func enableAsync() {
+        enable()
         sessionUpdatedEvent.timeout = Self.asyncTimeoutInterval
-        enable(dataCaptureContext: dataCaptureContext)
     }
 
     public func disableAsync() {

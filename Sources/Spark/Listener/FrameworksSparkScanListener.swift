@@ -53,7 +53,7 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
         }
     }
 
-    private var lastSession: SparkScanSession?
+    private weak var lastSession: SparkScanSession?
 
     public init(emitter: Emitter) {
         self.emitter = emitter

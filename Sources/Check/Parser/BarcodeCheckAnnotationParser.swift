@@ -147,10 +147,12 @@ private extension BarcodeCheckAnnotationParser {
         annotation.body = bodyComponents
 
         if json.bool(forKey: "hasListener", default: false) {
-            let annotationDelegate = FrameworksInfoAnnotationDelegate(emitter: emitter, barcodeId: barcodeId)
-            // Need to keep a reference of the delegate in the cache because it's garbage collected on native side
-            self.cache.addInfoAnnotationDelegate(barcodeId: barcodeId, delegate: annotationDelegate)
-            annotation.delegate = annotationDelegate
+            if annotation.delegate == nil {
+                let annotationDelegate = FrameworksInfoAnnotationDelegate(emitter: emitter, barcodeId: barcodeId)
+                // Need to keep a reference of the delegate in the cache because it's garbage collected on native side
+                self.cache.addInfoAnnotationDelegate(barcodeId: barcodeId, delegate: annotationDelegate)
+                annotation.delegate = annotationDelegate
+            }
         } else {
             annotation.delegate = nil
         }
@@ -278,13 +280,15 @@ private extension BarcodeCheckAnnotationParser {
     ) {
         annotation.isEntirePopoverTappable = json.bool(forKey: "isEntirePopoverTappable", default: false)
         if json.bool(forKey: "hasListener", default: false) && annotation.delegate == nil {
-            let popoverDelegate = FrameworksPopoverAnnotationDelegate(
-                emitter: self.emitter,
-                barcodeId: barcode.uniqueId
-            )
-            // Need to keep a reference of the delegate in the cache because it's garbage collected on native side
-            self.cache.addPopoverDelegate(barcodeId: barcode.uniqueId, delegate: popoverDelegate)
-            annotation.delegate = popoverDelegate
+            if annotation.delegate == nil {
+                let popoverDelegate = FrameworksPopoverAnnotationDelegate(
+                    emitter: self.emitter,
+                    barcodeId: barcode.uniqueId
+                )
+                // Need to keep a reference of the delegate in the cache because it's garbage collected on native side
+                self.cache.addPopoverDelegate(barcodeId: barcode.uniqueId, delegate: popoverDelegate)
+                annotation.delegate = popoverDelegate
+            }
         } else {
             annotation.delegate = nil
         }
