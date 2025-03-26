@@ -43,7 +43,7 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
 
     private var isEnabled = AtomicBool()
 
-    private var lastSession: FrameworksBarcodeSelectionSession?
+    private var lastSession: BarcodeSelectionSession?
 
     public init(emitter: Emitter) {
         self.emitter = emitter
@@ -86,21 +86,21 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
         let selector: (Barcode) -> Bool = { $0.selectionIdentifier == selectionIdentifier }
         guard let session = lastSession,
               let barcode = session.selectedBarcodes.first(where: selector) else { return 0 }
-        return (session.selectionSession?.count(for: barcode)) ?? 0
+        return session.count(for: barcode)
     }
 
     public func resetSession(frameSequenceId: Int?) {
         guard let session = lastSession,
               let frameSequenceId = frameSequenceId,
               session.frameSequenceId == frameSequenceId else { return }
-        session.selectionSession?.reset()
+        session.reset()
     }
 
     public func barcodeSelection(_ barcodeSelection: BarcodeSelection,
                                  didUpdateSelection session: BarcodeSelectionSession,
                                  frameData: FrameData?) {
         guard isEnabled.value, emitter.hasListener(for: .didUpdateSelection) else { return }
-        lastSession = FrameworksBarcodeSelectionSession.fromSelectionSession(session: session)
+        lastSession = session
         
         var frameId: String? = nil
         
@@ -125,7 +125,7 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
                                  didUpdate session: BarcodeSelectionSession,
                                  frameData: FrameData?) {
         guard isEnabled.value, emitter.hasListener(for: .didUpdateSession) else { return }
-        lastSession = FrameworksBarcodeSelectionSession.fromSelectionSession(session: session)
+        lastSession = session
         var frameId: String? = nil
         
         if let data = frameData {
