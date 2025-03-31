@@ -87,8 +87,8 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
     }
 
     public func enableAsync() {
-        sessionUpdatedEvent.timeout = Self.asyncTimeoutInterval
         enable()
+        sessionUpdatedEvent.timeout = Self.asyncTimeoutInterval
     }
 
     public func disableAsync() {

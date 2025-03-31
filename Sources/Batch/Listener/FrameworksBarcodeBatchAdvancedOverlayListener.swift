@@ -46,6 +46,8 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
         }
         return .zero
     }
+    
+
 
     public func enable() {
         isEnabled.value = true

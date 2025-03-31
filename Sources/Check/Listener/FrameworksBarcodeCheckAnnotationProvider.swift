@@ -67,8 +67,12 @@ open class FrameworksBarcodeCheckAnnotationProvider: NSObject, BarcodeCheckAnnot
     public func updateAnnotation(annotationJson: String) {
         let json = JSONValue(string: annotationJson)
 
-        guard let barcodeId = json.optionalString(forKey: "barcodeId"),
-              let annotation = cache.getAnnotation(barcodeId: barcodeId) else {
+        guard let barcodeId = json.optionalString(forKey: "barcodeId") else {
+            Log.error("Invalid update call received. BarcodeId was not present in the json.")
+            return
+        }
+        
+        guard let annotation = cache.getAnnotation(barcodeId: barcodeId) else {
             return
         }
 

@@ -15,6 +15,7 @@ open class BarcodeCheckModule: NSObject, FrameworkModule, DeserializationLifeCyc
     private let highlightProvider: FrameworksBarcodeCheckHighlightProvider
     private let annotationProvider: FrameworksBarcodeCheckAnnotationProvider
     private let augmentationsCache: BarcodeCheckAugmentationsCache
+    private let captureContext = DefaultFrameworksCaptureContext.shared
 
     public init(emitter: Emitter) {
         self.deserializer = BarcodeCheckDeserializer()
@@ -28,14 +29,18 @@ open class BarcodeCheckModule: NSObject, FrameworkModule, DeserializationLifeCyc
             parser: BarcodeCheckHighlightParser(emitter: emitter),
             cache: augmentationsCache
         )
+        let infoAnnotationDelegate = FrameworksInfoAnnotationDelegate(emitter: emitter)
+        let popoverAnnotationDelegate = FrameworksPopoverAnnotationDelegate(emitter: emitter)
         self.annotationProvider = FrameworksBarcodeCheckAnnotationProvider(
             emitter: emitter,
-            parser: BarcodeCheckAnnotationParser(emitter: emitter, cache: augmentationsCache),
+            parser: BarcodeCheckAnnotationParser(
+                infoAnnotationDelegate: infoAnnotationDelegate,
+                popoverAnnotationDelegate: popoverAnnotationDelegate,
+                cache: augmentationsCache
+            ),
             cache: augmentationsCache
         )
     }
-
-    private var context: DataCaptureContext?
 
     public var barcodeCheckView: BarcodeCheckView?
 
@@ -57,12 +62,7 @@ open class BarcodeCheckModule: NSObject, FrameworkModule, DeserializationLifeCyc
         cleanup()
     }
 
-    public func dataCaptureContext(deserialized context: DataCaptureContext?) {
-        self.context = context
-    }
-
     public func didDisposeDataCaptureContext() {
-        self.context = nil
         cleanup()
     }
 
@@ -229,7 +229,7 @@ public extension BarcodeCheckModule {
                 result.reject(error: ScanditFrameworksCoreError.nilSelf)
                 return
             }
-            guard let context = self.context else {
+            guard let context = self.captureContext.context else {
                 result.reject(error: ScanditFrameworksCoreError.nilDataCaptureContext)
                 return
             }
@@ -317,6 +317,11 @@ public extension BarcodeCheckModule {
 
     func viewPause(result: FrameworksResult) {
         self.barcodeCheckView?.pause()
+        result.success()
+    }
+    
+    func viewReset(result: FrameworksResult) {
+        self.barcodeCheckView?.reset()
         result.success()
     }
 }

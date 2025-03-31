@@ -10,11 +10,9 @@ import ScanditFrameworksCore
 
 class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeCheckPopoverAnnotationDelegate {
     private let emitter: Emitter
-    private let barcodeId: String
 
-    public init(emitter: Emitter, barcodeId: String) {
+    public init(emitter: Emitter) {
         self.emitter = emitter
-        self.barcodeId = barcodeId
     }
 
     private let didTapPopoverButton = Event(
@@ -25,7 +23,7 @@ class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeCheckPopoverAnnotati
         _ annotation: BarcodeCheckPopoverAnnotation, didTap button: BarcodeCheckPopoverAnnotationButton, at index: Int
     ) {
         didTapPopoverButton.emit(on: self.emitter, payload: [
-            "barcodeId": self.barcodeId,
+            "barcodeId": annotation.barcode.uniqueId,
             "buttonIndex": index
         ])
     }
@@ -35,6 +33,6 @@ class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeCheckPopoverAnnotati
     )
 
     func barcodeCheckPopoverAnnotationDidTap(_ annotation: BarcodeCheckPopoverAnnotation) {
-        didTapPopover.emit(on: self.emitter, payload: ["barcodeId": self.barcodeId])
+        didTapPopover.emit(on: self.emitter, payload: ["barcodeId": annotation.barcode.uniqueId])
     }
 }
