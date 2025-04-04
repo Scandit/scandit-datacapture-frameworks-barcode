@@ -7,7 +7,7 @@
 import ScanditFrameworksCore
 import ScanditBarcodeCapture
 
-extension ScanditBarcodeCapture.BarcodePickState: Swift.CaseIterable {
+extension BarcodePickState: CaseIterable {
     static public var allCases: [BarcodePickState] {
         [.ignore, .picked, .toPick, .unknown]
     }

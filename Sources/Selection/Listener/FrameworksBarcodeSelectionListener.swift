@@ -33,9 +33,6 @@ fileprivate extension Emitter {
 }
 
 open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListener {
-    private static let asyncTimeoutInterval: TimeInterval = 600 // 10 mins
-    private static let defaultTimeoutInterval: TimeInterval = 2
-    
     private let emitter: Emitter
 
     private let didUpdateSelectionEvent = EventWithResult<Bool>(event: Event(.didUpdateSelection))
@@ -43,7 +40,7 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
 
     private var isEnabled = AtomicBool()
 
-    private var lastSession: FrameworksBarcodeSelectionSession?
+    private var lastSession: BarcodeSelectionSession?
 
     public init(emitter: Emitter) {
         self.emitter = emitter
@@ -59,20 +56,6 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
         didUpdateSessionEvent.reset()
         didUpdateSelectionEvent.reset()
     }
-    
-    public func enableAsync() {
-        [didUpdateSelectionEvent, didUpdateSessionEvent].forEach {
-            $0.timeout = Self.asyncTimeoutInterval
-        }
-        enable()
-    }
-
-    public func disableAsync() {
-        disable()
-        [didUpdateSelectionEvent, didUpdateSessionEvent].forEach {
-            $0.timeout = Self.defaultTimeoutInterval
-        }
-    }
 
     public func finishDidSelect(enabled: Bool) {
         didUpdateSelectionEvent.unlock(value: enabled)
@@ -86,62 +69,37 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
         let selector: (Barcode) -> Bool = { $0.selectionIdentifier == selectionIdentifier }
         guard let session = lastSession,
               let barcode = session.selectedBarcodes.first(where: selector) else { return 0 }
-        return (session.selectionSession?.count(for: barcode)) ?? 0
+        return session.count(for: barcode)
     }
 
     public func resetSession(frameSequenceId: Int?) {
         guard let session = lastSession,
               let frameSequenceId = frameSequenceId,
               session.frameSequenceId == frameSequenceId else { return }
-        session.selectionSession?.reset()
+        session.reset()
     }
 
     public func barcodeSelection(_ barcodeSelection: BarcodeSelection,
                                  didUpdateSelection session: BarcodeSelectionSession,
                                  frameData: FrameData?) {
         guard isEnabled.value, emitter.hasListener(for: .didUpdateSelection) else { return }
-        lastSession = FrameworksBarcodeSelectionSession.fromSelectionSession(session: session)
-        
-        var frameId: String? = nil
-        
-        if let data = frameData {
-            frameId = LastFrameData.shared.addToCache(frameData: data)
-        }
+        lastSession = session
+        LastFrameData.shared.frameData = frameData
+        defer { LastFrameData.shared.frameData = nil }
 
-        didUpdateSelectionEvent.emit(
-            on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "frameId": frameId
-            ]
-        )
-        
-        if let id = frameId {
-            LastFrameData.shared.removeFromCache(frameId: id)
-        }
+        didUpdateSelectionEvent.emit(on: emitter,
+                                                                  payload: ["session": session.jsonString])
     }
 
     public func barcodeSelection(_ barcodeSelection: BarcodeSelection,
                                  didUpdate session: BarcodeSelectionSession,
                                  frameData: FrameData?) {
         guard isEnabled.value, emitter.hasListener(for: .didUpdateSession) else { return }
-        lastSession = FrameworksBarcodeSelectionSession.fromSelectionSession(session: session)
-        var frameId: String? = nil
-        
-        if let data = frameData {
-            frameId = LastFrameData.shared.addToCache(frameData: data)
-        }
+        lastSession = session
+        LastFrameData.shared.frameData = frameData
+        defer { LastFrameData.shared.frameData = nil }
 
-        didUpdateSessionEvent.emit(
-            on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "frameId": frameId
-            ]
-        )
-        
-        if let id = frameId {
-            LastFrameData.shared.removeFromCache(frameId: id)
-        }
+        didUpdateSessionEvent.emit(on: emitter,
+                                                                payload: ["session": session.jsonString])
     }
 }

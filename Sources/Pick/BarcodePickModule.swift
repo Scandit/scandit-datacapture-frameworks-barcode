@@ -14,8 +14,8 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
     var viewListener: FrameworksBarcodePickViewListener
     var viewUiListener: FrameworksBarcodePickViewUiListener
     let deserializer = BarcodePickDeserializer()
-    private let captureContext = DefaultFrameworksCaptureContext.shared
 
+    private var context: DataCaptureContext?
     public var barcodePickView: BarcodePickView? {
         willSet {
             barcodePickView?.removeActionListener(actionListener)
@@ -56,10 +56,16 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
         viewListener.disable()
         viewUiListener.disable()
         barcodePickView?.stop()
+        context = nil
         barcodePickView?.removeFromSuperview()
     }
 
+    public func dataCaptureContext(deserialized context: DataCaptureContext?) {
+        self.context = context
+    }
+    
     public func didDisposeDataCaptureContext() {
+        self.context = nil
         self.barcodePickView?.uiDelegate = nil
         self.barcodePickView?.removeListener(viewListener)
         self.barcodePickView?.removeActionListener(actionListener)
@@ -76,7 +82,7 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
                 result.reject(error: ScanditFrameworksCoreError.nilSelf)
                 return
             }
-            guard let context = self.captureContext.context else {
+            guard let context = self.context else {
                 result.reject(error: ScanditFrameworksCoreError.nilDataCaptureContext)
                 return
             }
@@ -151,15 +157,6 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
         dispatchMain(block)
     }
 
-    public func removeBarcodePickView(result: FrameworksResult) {
-        actionListener.disable()
-        viewListener.disable()
-        viewUiListener.disable()
-        barcodePickView?.stop()
-        barcodePickView?.removeFromSuperview()
-        result.success(result: nil)
-    }
-
     public func addScanningListener() {
         scanningListener.enable()
     }
@@ -175,7 +172,7 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
     public func removeActionListener() {
         actionListener.disable()
     }
-
+    
     public func addViewListener() {
         viewListener.enable()
     }
@@ -219,7 +216,7 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
     public func viewFreeze() {
         barcodePickView?.freeze()
     }
-
+    
     public func viewStop() {
         barcodePickView?.stop()
     }

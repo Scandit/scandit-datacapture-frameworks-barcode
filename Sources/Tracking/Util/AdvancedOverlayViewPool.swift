@@ -36,14 +36,14 @@ class AdvancedOverlayViewPool {
     }
 
     func removeView(for barcode: TrackedBarcode) {
-        dispatchMain {
-            self.views.removeValue(forKey: barcode.identifier)
+        dispatchMainSync {
+            views.removeValue(forKey: barcode.identifier)
         }
     }
 
     func clear() {
-        dispatchMain {
-            self.views.removeAll()
+        dispatchMainSync {
+            views.removeAll()
         }
     }
 
