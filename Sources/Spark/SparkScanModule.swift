@@ -20,6 +20,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
     private let feedbackDelegate: FrameworksSparkScanFeedbackDelegate
     private let sparkScanDeserializer: SparkScanDeserializer
     private let sparkScanViewDeserializer: SparkScanViewDeserializer
+    private let captureContext = DefaultFrameworksCaptureContext.shared
 
     public var shouldBringSparkScanViewToFront = true
 
@@ -33,8 +34,6 @@ open class SparkScanModule: NSObject, FrameworkModule {
     }
 
     public var sparkScanView: SparkScanView?
-
-    private var dataCaptureContext: DataCaptureContext?
 
     private var modeEnabled = true
 
@@ -67,6 +66,14 @@ open class SparkScanModule: NSObject, FrameworkModule {
     public func removeSparkScanListener() {
         sparkScanListener.disable()
     }
+    
+    public func addAsyncSparkScanListener() {
+        sparkScanListener.enableAsync()
+    }
+
+    public func removeasyncSparkScanListener() {
+        sparkScanListener.disableAsync()
+    }
 
     public func finishDidUpdateSession(enabled: Bool) {
         sparkScanListener.finishDidUpdate(enabled: enabled)
@@ -91,7 +98,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
     public func addViewToContainer(_ container: UIView, jsonString: String, result: FrameworksResult) {
         let block = { [weak self] in
             guard let self = self else { return }
-            guard let context = self.dataCaptureContext else {
+            guard let context = self.captureContext.context else {
                 Log.error(SparkScanError.nilContext)
                 result.reject(error: SparkScanError.nilContext)
                 return
@@ -195,16 +202,17 @@ open class SparkScanModule: NSObject, FrameworkModule {
         }
     }
 
-    public func emitFeedback(feedbackJson: String, result: FrameworksResult) {
-        // Noop operation on the native sdk so we avoid calling anything here
-        result.success()
-    }
-
     public func pauseScanning() {
         dispatchMain { [weak self] in
             self?.sparkScanView?.pauseScanning()
         }
 
+    }
+    
+    public func stopScanning() {
+        dispatchMain { [weak self] in
+            self?.sparkScanView?.stopScanning()
+        }
     }
 
     public func startScanning(result: FrameworksResult) {
@@ -221,7 +229,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
         }
     }
 
-    public func onResume(result: FrameworksResult) {
+    public func prepareScanning(result: FrameworksResult) {
         dispatchMain { [weak self] in
             guard let self = self else { return }
             guard let view = self.sparkScanView else {
@@ -288,14 +296,23 @@ open class SparkScanModule: NSObject, FrameworkModule {
     }
 
     public func disposeView() {
-        sparkScanView?.removeFromSuperview()
-        sparkScanView?.uiDelegate = nil
-        sparkScanView = nil
+        dispatchMain {
+            self.sparkScanView?.removeFromSuperview()
+            self.sparkScanView?.uiDelegate = nil
+            self.sparkScanView = nil
+        }
+    }
+    
+    public func getLastFrameDataBytes(frameId: String, result: FrameworksResult) {
+        LastFrameData.shared.getLastFrameDataBytes(frameId: frameId) {
+            result.success(result: $0)
+        }
     }
 }
 
 extension SparkScanModule: DeserializationLifeCycleObserver {
-    public func dataCaptureContext(deserialized context: DataCaptureContext?) {
-        dataCaptureContext = context
+    public func didDisposeDataCaptureContext() {
+        sparkScan = nil
+        disposeView()
     }
 }
