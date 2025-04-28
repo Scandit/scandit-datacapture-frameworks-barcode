@@ -5,13 +5,14 @@
  */
 
 import ScanditBarcodeCapture
+import UIKit
 import ScanditFrameworksCore
 
-public enum BarcodeCheckViewUiDelegateEvents: String, CaseIterable {
-    case didTapHighlightForBarcodeEvent = "BarcodeCheckViewUiListener.didTapHighlightForBarcode"
+public enum BarcodeArViewUiDelegateEvents: String, CaseIterable {
+    case didTapHighlightForBarcodeEvent = "BarcodeArViewUiListener.didTapHighlightForBarcode"
 }
 
-open class FrameworksBarcodeCheckViewUiListener: NSObject, BarcodeCheckViewUIDelegate {
+open class FrameworksBarcodeArViewUiListener: NSObject, BarcodeArViewUIDelegate {
     private let emitter: Emitter
 
     public init(emitter: Emitter) {
@@ -19,16 +20,15 @@ open class FrameworksBarcodeCheckViewUiListener: NSObject, BarcodeCheckViewUIDel
     }
 
     private let didTapHighlightForBarcode = Event(
-        name: BarcodeCheckViewUiDelegateEvents.didTapHighlightForBarcodeEvent.rawValue
+        name: BarcodeArViewUiDelegateEvents.didTapHighlightForBarcodeEvent.rawValue
     )
 
-    public func barcodeCheck(
-        _ barcodeCheck: BarcodeCheck, didTapHighlightFor barcode: Barcode, highlight: any UIView & BarcodeCheckHighlight
+    public func barcodeArView(
+        _ barcodeArView: BarcodeArView, didTapHighlightFor barcode: Barcode, highlight: any UIView & BarcodeArHighlight
     ) {
         didTapHighlightForBarcode.emit(on: emitter, payload: [
             "barcode": barcode.jsonString,
             "barcodeId": barcode.uniqueId
         ])
     }
-
 }

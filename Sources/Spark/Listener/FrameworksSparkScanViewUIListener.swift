@@ -22,9 +22,11 @@ fileprivate extension Event {
 open class FrameworksSparkScanViewUIListener: NSObject, SparkScanViewUIDelegate {
 
     private let emitter: Emitter
+    private let viewId: Int
 
-    public init(emitter: Emitter) {
+    public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
+        self.viewId = viewId
     }
 
     private let didChangeViewStateEvent = Event(.didChangeViewState)
@@ -42,17 +44,17 @@ open class FrameworksSparkScanViewUIListener: NSObject, SparkScanViewUIDelegate 
     }
     
     public func sparkScanView(_ view: SparkScanView, didChange viewState: SparkScanViewState) {
-        guard isEnabled.value, emitter.hasListener(for: didChangeViewStateEvent) else { return }
-        didChangeViewStateEvent.emit(on: emitter, payload: ["state" : viewState.jsonString])
+        guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId: viewId, for: didChangeViewStateEvent) else { return }
+        didChangeViewStateEvent.emit(on: emitter, payload: ["state" : viewState.jsonString, "viewId": viewId])
     }
 
     public func barcodeCountButtonTapped(in view: SparkScanView) {
-        guard isEnabled.value, emitter.hasListener(for: barcodeCountButtonTappedEvent) else { return }
-        barcodeCountButtonTappedEvent.emit(on: emitter, payload: [:])
+        guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId: viewId, for: barcodeCountButtonTappedEvent) else { return }
+        barcodeCountButtonTappedEvent.emit(on: emitter, payload: ["viewId": viewId])
     }
     
     public func barcodeFindButtonTapped(in view: SparkScanView) {
-        guard isEnabled.value, emitter.hasListener(for: barcodeFindButtonTappedEvent) else { return }
-        barcodeFindButtonTappedEvent.emit(on: emitter, payload: [:])
+        guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId: viewId, for: barcodeFindButtonTappedEvent) else { return }
+        barcodeFindButtonTappedEvent.emit(on: emitter, payload: ["viewId": viewId])
     }
 }
