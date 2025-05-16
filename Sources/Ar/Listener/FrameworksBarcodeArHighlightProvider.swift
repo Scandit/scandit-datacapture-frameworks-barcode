@@ -7,30 +7,30 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-public enum BarcodeCheckHighlightProviderEvents: String, CaseIterable {
-    case highlightForBarcode = "BarcodeCheckHighlightProvider.highlightForBarcode"
+public enum BarcodeArHighlightProviderEvents: String, CaseIterable {
+    case highlightForBarcode = "BarcodeArHighlightProvider.highlightForBarcode"
 }
 
-open class FrameworksBarcodeCheckHighlightProvider: NSObject, BarcodeCheckHighlightProvider {
+open class FrameworksBarcodeArHighlightProvider: NSObject, BarcodeArHighlightProvider {
 
     private let emitter: Emitter
 
-    private let parser: BarcodeCheckHighlightParser
+    private let parser: BarcodeArHighlightParser
 
-    private let cache: BarcodeCheckAugmentationsCache
+    private let cache: BarcodeArAugmentationsCache
 
-    public init(emitter: Emitter, parser: BarcodeCheckHighlightParser, cache: BarcodeCheckAugmentationsCache) {
+    public init(emitter: Emitter, parser: BarcodeArHighlightParser, cache: BarcodeArAugmentationsCache) {
         self.emitter = emitter
         self.parser = parser
         self.cache = cache
     }
 
     private let highlightForBarcode = Event(
-        name: BarcodeCheckHighlightProviderEvents.highlightForBarcode.rawValue
+        name: BarcodeArHighlightProviderEvents.highlightForBarcode.rawValue
     )
 
     public func highlight(
-        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeCheckHighlight)?) -> Void
+        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeArHighlight)?) -> Void
     ) {
         self.cache.addHighlightProviderCallback(
             barcodeId: barcode.uniqueId,

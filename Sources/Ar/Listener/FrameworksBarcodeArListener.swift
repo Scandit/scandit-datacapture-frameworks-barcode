@@ -7,33 +7,33 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-public enum BarcodeCheckListenerEvents: String, CaseIterable {
-    case didUpdateSession = "BarcodeCheckListener.didUpdateSession"
+public enum BarcodeArListenerEvents: String, CaseIterable {
+    case didUpdateSession = "BarcodeArListener.didUpdateSession"
 }
 
 fileprivate extension Event {
-    init(_ event: BarcodeCheckListenerEvents) {
+    init(_ event: BarcodeArListenerEvents) {
         self.init(name: event.rawValue)
     }
 }
 
 fileprivate extension Emitter {
-    func hasListener(for event: BarcodeCheckListenerEvents) -> Bool {
+    func hasListener(for event: BarcodeArListenerEvents) -> Bool {
         hasListener(for: event.rawValue)
     }
 }
 
-open class FrameworksBarcodeCheckListener: NSObject, BarcodeCheckListener {
+open class FrameworksBarcodeArListener: NSObject, BarcodeArListener {
     private let emitter: Emitter
     private var isEnabled = AtomicBool()
 
     private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(.didUpdateSession))
 
-    private var latestSession: BarcodeCheckSession?
+    private var latestSession: BarcodeArSession?
 
-    private let cache: BarcodeCheckAugmentationsCache
+    private let cache: BarcodeArAugmentationsCache
 
-    public init(emitter: Emitter, cache: BarcodeCheckAugmentationsCache) {
+    public init(emitter: Emitter, cache: BarcodeArAugmentationsCache) {
         self.emitter = emitter
         self.cache = cache
     }
@@ -48,10 +48,10 @@ open class FrameworksBarcodeCheckListener: NSObject, BarcodeCheckListener {
         isEnabled.value = false
     }
 
-    public func barcodeCheck(
-        _ barcodeCheck: BarcodeCheck, didUpdate session: BarcodeCheckSession, frameData: any FrameData
+    public func barcodeAr(
+        _ barcodeAr: BarcodeAr, didUpdate session: BarcodeArSession, frameData: any FrameData
     ) {
-        guard isEnabled.value, emitter.hasListener(for: .sessionUpdated) else { return }
+        guard isEnabled.value, emitter.hasListener(for: .didUpdateSession) else { return }
         latestSession = session
         cache.updateFromSession(session)
 

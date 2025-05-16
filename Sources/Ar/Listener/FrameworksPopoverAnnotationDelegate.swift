@@ -8,7 +8,7 @@ import Foundation
 import UIKit
 import ScanditFrameworksCore
 
-class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeCheckPopoverAnnotationDelegate {
+class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeArPopoverAnnotationDelegate {
     private let emitter: Emitter
 
     public init(emitter: Emitter) {
@@ -16,11 +16,11 @@ class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeCheckPopoverAnnotati
     }
 
     private let didTapPopoverButton = Event(
-        name: FrameworksBarcodeCheckAnnotationEvents.didTapPopoverButton.rawValue
+        name: FrameworksBarcodeArAnnotationEvents.didTapPopoverButton.rawValue
     )
 
-    func barcodeCheckPopoverAnnotation(
-        _ annotation: BarcodeCheckPopoverAnnotation, didTap button: BarcodeCheckPopoverAnnotationButton, at index: Int
+    func barcodeArPopoverAnnotation(
+        _ annotation: BarcodeArPopoverAnnotation, didTap button: BarcodeArPopoverAnnotationButton, at index: Int
     ) {
         didTapPopoverButton.emit(on: self.emitter, payload: [
             "barcodeId": annotation.barcode.uniqueId,
@@ -29,10 +29,10 @@ class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeCheckPopoverAnnotati
     }
 
     private let didTapPopover = Event(
-        name: FrameworksBarcodeCheckAnnotationEvents.didTapPopover.rawValue
+        name: FrameworksBarcodeArAnnotationEvents.didTapPopover.rawValue
     )
 
-    func barcodeCheckPopoverAnnotationDidTap(_ annotation: BarcodeCheckPopoverAnnotation) {
+    func barcodeArPopoverAnnotationDidTap(_ annotation: BarcodeArPopoverAnnotation) {
         didTapPopover.emit(on: self.emitter, payload: ["barcodeId": annotation.barcode.uniqueId])
     }
 }

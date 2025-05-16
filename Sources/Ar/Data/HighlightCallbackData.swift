@@ -8,9 +8,9 @@ import ScanditBarcodeCapture
 
 class HighlightCallbackData {
     let barcode: Barcode
-    let callback: ((any UIView & BarcodeCheckHighlight)?) -> Void
+    let callback: ((any UIView & BarcodeArHighlight)?) -> Void
 
-    init(barcode: Barcode, callback: @escaping ((any UIView & BarcodeCheckHighlight)?) -> Void) {
+    init(barcode: Barcode, callback: @escaping ((any UIView & BarcodeArHighlight)?) -> Void) {
         self.barcode = barcode
         self.callback = callback
     }
