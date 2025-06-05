@@ -27,7 +27,7 @@ open class FrameworksBarcodeArListener: NSObject, BarcodeArListener {
     private let emitter: Emitter
     private var isEnabled = AtomicBool()
 
-    private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(.didUpdateSession))
+    private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(BarcodeArListenerEvents.didUpdateSession))
 
     private var latestSession: BarcodeArSession?
 
@@ -51,7 +51,7 @@ open class FrameworksBarcodeArListener: NSObject, BarcodeArListener {
     public func barcodeAr(
         _ barcodeAr: BarcodeAr, didUpdate session: BarcodeArSession, frameData: any FrameData
     ) {
-        guard isEnabled.value, emitter.hasListener(for: .didUpdateSession) else { return }
+        guard isEnabled.value, emitter.hasListener(for: BarcodeArListenerEvents.didUpdateSession) else { return }
         latestSession = session
         cache.updateFromSession(session)
 

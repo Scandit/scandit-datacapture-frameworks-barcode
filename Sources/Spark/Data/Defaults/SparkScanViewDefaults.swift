@@ -18,6 +18,7 @@ struct DefaultsSparkScanView: DefaultsEncodable {
             "scanningBehaviorButtonVisible": ViewDefaults.defaultScanningBehaviorButtonVisibility,
             "barcodeCountButtonVisible": ViewDefaults.defaultBarcodeCountButtonVisibility,
             "barcodeFindButtonVisible": ViewDefaults.defaultBarcodeFindButtonVisibility,
+            "labelCaptureButtonVisible": ViewDefaults.defaultLabelCaptureButtonVisibility,
             "targetModeButtonVisible": ViewDefaults.defaultTargetModeButtonVisibility,
             "toolbarBackgroundColor": ViewDefaults.defaultToolbarBackgroundColor.sdcHexString,
             "toolbarIconActiveTintColor": ViewDefaults.defaultToolbarIconActiveTintColor.sdcHexString,
