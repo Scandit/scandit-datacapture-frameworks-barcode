@@ -55,16 +55,13 @@ public class SparkScanViewCreationData {
         // Convert dictionaries back to JSON strings
         let modeJsonString = convertToJsonString(modeJsonObject) ?? "{}"
         let viewJsonString = convertToJsonString(viewJsonObject) ?? "{}"
-        
-        let hasViewUIListener = viewJsonObject[Constants.HAS_UI_LISTENER_KEY] as? Bool ?? false
-        let hasViewUIExtendedListener = viewJsonObject[Constants.HAS_UI_EXTENDED_LISTENER_KEY] as? Bool ?? false
 
         return SparkScanViewCreationData(
             modeJson: modeJsonString,
             viewJson: viewJsonString,
             hasModeListener: modeJsonObject[Constants.HAS_MODE_LISTENER_KEY] as? Bool ?? false,
             hasFeedbackDelegate: viewJsonObject[Constants.HAS_FEEDBACK_DELEGATE_KEY] as? Bool ?? false,
-            hasUIListener: (hasViewUIListener || hasViewUIExtendedListener),
+            hasUIListener: viewJsonObject[Constants.HAS_UI_LISTENER_KEY] as? Bool ?? false,
             shouldShowOnTopAlways: viewJsonObject[Constants.HAS_SHOULD_SHOW_VIEW_ON_TOP] as? Bool ?? false,
             viewId: viewJsonObject[Constants.VIEW_ID_KEY] as? Int ?? 0
         )
@@ -82,7 +79,6 @@ public class SparkScanViewCreationData {
         static let VIEW_KEY = "SparkScanView"
         static let HAS_FEEDBACK_DELEGATE_KEY = "hasFeedbackDelegate"
         static let HAS_UI_LISTENER_KEY = "hasUiListener"
-        static let HAS_UI_EXTENDED_LISTENER_KEY = "hasExtendedUiListener"
         static let VIEW_ID_KEY = "viewId"
         static let HAS_MODE_LISTENER_KEY = "hasListeners"
         static let HAS_SHOULD_SHOW_VIEW_ON_TOP = "shouldShowOnTopAlways"
