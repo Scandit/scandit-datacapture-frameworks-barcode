@@ -112,7 +112,6 @@ open class SparkScanModule: NSObject, FrameworkModule {
                 result.reject(error: error)
                 return -1
             }
-            result.success(result: nil)
         }
     }
 
