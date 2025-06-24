@@ -225,7 +225,7 @@ open class BarcodeSelectionModule: NSObject, FrameworkModule {
         barcodeSelection = nil
         
         if let overlay: BarcodeSelectionBasicOverlay = captureViewHandler.findFirstOverlayOfType() {
-            captureViewHandler.topmostDataCaptureView?.removeOverlay(overlay)
+            captureViewHandler.removeOverlayFromTopmostView(overlay: overlay)
         }
     }
     
@@ -369,7 +369,7 @@ extension BarcodeSelectionModule: DeserializationLifeCycleObserver {
         
         try dispatchMainSync {
             let overlay = try barcodeSelectionDeserializer.basicOverlay(fromJSONString: overlayJson, withMode: mode)
-            captureViewHandler.addOverlayToView(view: view, overlay: overlay)
+            captureViewHandler.addOverlayToView(view, overlay: overlay)
         }
     }
 }

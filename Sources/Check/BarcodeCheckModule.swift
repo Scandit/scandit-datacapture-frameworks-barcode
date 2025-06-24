@@ -7,33 +7,33 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleObserver {
-    private let barcodeArListener: FrameworksBarcodeArListener
-    private let barcodeArViewUiDelegate: FrameworksBarcodeArViewUiListener
-    private let deserializer: BarcodeArDeserializer
-    private let viewDeserialzier: BarcodeArViewDeserializer
-    private let highlightProvider: FrameworksBarcodeArHighlightProvider
-    private let annotationProvider: FrameworksBarcodeArAnnotationProvider
-    private let augmentationsCache: BarcodeArAugmentationsCache
+open class BarcodeCheckModule: NSObject, FrameworkModule, DeserializationLifeCycleObserver {
+    private let barcodeCheckListener: FrameworksBarcodeCheckListener
+    private let barcodeCheckViewUiDelegate: FrameworksBarcodeCheckViewUiListener
+    private let deserializer: BarcodeCheckDeserializer
+    private let viewDeserialzier: BarcodeCheckViewDeserializer
+    private let highlightProvider: FrameworksBarcodeCheckHighlightProvider
+    private let annotationProvider: FrameworksBarcodeCheckAnnotationProvider
+    private let augmentationsCache: BarcodeCheckAugmentationsCache
     private let captureContext = DefaultFrameworksCaptureContext.shared
 
     public init(emitter: Emitter) {
-        self.deserializer = BarcodeArDeserializer()
-        self.viewDeserialzier = BarcodeArViewDeserializer()
-        self.augmentationsCache = BarcodeArAugmentationsCache()
+        self.deserializer = BarcodeCheckDeserializer()
+        self.viewDeserialzier = BarcodeCheckViewDeserializer()
+        self.augmentationsCache = BarcodeCheckAugmentationsCache()
 
-        self.barcodeArViewUiDelegate = FrameworksBarcodeArViewUiListener(emitter: emitter)
-        self.barcodeArListener = FrameworksBarcodeArListener(emitter: emitter, cache: augmentationsCache)
-        self.highlightProvider = FrameworksBarcodeArHighlightProvider(
+        self.barcodeCheckViewUiDelegate = FrameworksBarcodeCheckViewUiListener(emitter: emitter)
+        self.barcodeCheckListener = FrameworksBarcodeCheckListener(emitter: emitter, cache: augmentationsCache)
+        self.highlightProvider = FrameworksBarcodeCheckHighlightProvider(
             emitter: emitter,
-            parser: BarcodeArHighlightParser(emitter: emitter),
+            parser: BarcodeCheckHighlightParser(emitter: emitter),
             cache: augmentationsCache
         )
         let infoAnnotationDelegate = FrameworksInfoAnnotationDelegate(emitter: emitter)
         let popoverAnnotationDelegate = FrameworksPopoverAnnotationDelegate(emitter: emitter)
-        self.annotationProvider = FrameworksBarcodeArAnnotationProvider(
+        self.annotationProvider = FrameworksBarcodeCheckAnnotationProvider(
             emitter: emitter,
-            parser: BarcodeArAnnotationParser(
+            parser: BarcodeCheckAnnotationParser(
                 infoAnnotationDelegate: infoAnnotationDelegate,
                 popoverAnnotationDelegate: popoverAnnotationDelegate,
                 cache: augmentationsCache
@@ -42,14 +42,14 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         )
     }
 
-    public var barcodeArView: BarcodeArView?
+    public var barcodeCheckView: BarcodeCheckView?
 
-    private var barcodeAr: BarcodeAr? {
+    private var barcodeCheck: BarcodeCheck? {
         willSet {
-            barcodeAr?.removeListener(barcodeArListener)
+            barcodeCheck?.removeListener(barcodeCheckListener)
         }
         didSet {
-            barcodeAr?.addListener(barcodeArListener)
+            barcodeCheck?.addListener(barcodeCheckListener)
         }
     }
 
@@ -68,67 +68,67 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
 
     private func cleanup() {
         augmentationsCache.clear()
-        if let view = self.barcodeArView {
+        if let view = self.barcodeCheckView {
             view.stop()
             view.uiDelegate = nil
             view.highlightProvider = nil
             view.annotationProvider = nil
             view.removeFromSuperview()
         }
-        self.barcodeArView = nil
+        self.barcodeCheckView = nil
 
-        self.barcodeAr?.removeListener(barcodeArListener)
-        self.barcodeAr = nil
+        self.barcodeCheck?.removeListener(barcodeCheckListener)
+        self.barcodeCheck = nil
     }
 
-    public let defaults: DefaultsEncodable = BarcodeArDefaults.shared
+    public let defaults: DefaultsEncodable = BarcodeCheckDefaults.shared
 
-    public func registerBarcodeArViewUiListener(result: FrameworksResult) {
-        self.barcodeArView?.uiDelegate = self.barcodeArViewUiDelegate
+    public func registerBarcodeCheckViewUiListener(result: FrameworksResult) {
+        self.barcodeCheckView?.uiDelegate = self.barcodeCheckViewUiDelegate
         result.success()
     }
 
-    public func unregisterBarcodeArViewUiListener(result: FrameworksResult) {
-        self.barcodeArView?.uiDelegate = nil
+    public func unregisterBarcodeCheckViewUiListener(result: FrameworksResult) {
+        self.barcodeCheckView?.uiDelegate = nil
         result.success()
     }
 
-    public func registerBarcodeArHighlightProvider(result: FrameworksResult) {
-        self.barcodeArView?.highlightProvider = self.highlightProvider
+    public func registerBarcodeCheckHighlightProvider(result: FrameworksResult) {
+        self.barcodeCheckView?.highlightProvider = self.highlightProvider
         result.success()
     }
 
-    public func unregisterBarcodeArHighlightProvider(result: FrameworksResult) {
-        self.barcodeArView?.highlightProvider = nil
+    public func unregisterBarcodeCheckHighlightProvider(result: FrameworksResult) {
+        self.barcodeCheckView?.highlightProvider = nil
         result.success()
     }
 
-    public func registerBarcodeArAnnotationProvider(result: FrameworksResult) {
-        self.barcodeArView?.annotationProvider = self.annotationProvider
+    public func registerBarcodeCheckAnnotationProvider(result: FrameworksResult) {
+        self.barcodeCheckView?.annotationProvider = self.annotationProvider
         result.success()
     }
 
-    public func unregisterBarcodeArAnnotationProvider(result: FrameworksResult) {
-        self.barcodeArView?.annotationProvider = nil
+    public func unregisterBarcodeCheckAnnotationProvider(result: FrameworksResult) {
+        self.barcodeCheckView?.annotationProvider = nil
         result.success()
     }
 
     public func updateFeedback(feedbackJson: String, result: FrameworksResult) {
         do {
-            barcodeAr?.feedback = try BarcodeArFeedback(fromJSONString: feedbackJson)
+            barcodeCheck?.feedback = try BarcodeCheckFeedback(fromJSONString: feedbackJson)
             result.success(result: nil)
         } catch {
             result.reject(error: error)
         }
     }
 
-    public func resetLatestBarcodeArSession(result: FrameworksResult) {
-        barcodeArListener.resetSession()
+    public func resetLatestBarcodeCheckSession(result: FrameworksResult) {
+        barcodeCheckListener.resetSession()
         result.success()
     }
 
-    public func applyBarcodeArModeSettings(modeSettingsJson: String, result: FrameworksResult) {
-        guard let mode = barcodeAr else {
+    public func applyBarcodeCheckModeSettings(modeSettingsJson: String, result: FrameworksResult) {
+        guard let mode = barcodeCheck else {
             result.success()
             return
         }
@@ -144,17 +144,17 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
     }
 
     public func addModeListener(result: FrameworksResult) {
-        barcodeArListener.enable()
+        barcodeCheckListener.enable()
         result.success()
     }
 
     public func removeModeListener(result: FrameworksResult) {
-        barcodeArListener.disable()
+        barcodeCheckListener.disable()
         result.success()
     }
 
     public func finishDidUpdateSession(result: FrameworksResult) {
-        barcodeArListener.finishDidUpdateSession()
+        barcodeCheckListener.finishDidUpdateSession()
         result.success()
     }
 
@@ -186,12 +186,12 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func updateBarcodeArPopoverButtonAtIndex(updateJson: String, result: FrameworksResult) {
+    public func updateBarcodeCheckPopoverButtonAtIndex(updateJson: String, result: FrameworksResult) {
         let block = { [weak self] in
             guard let self = self else {
                 return
             }
-            self.annotationProvider.updateBarcodeArPopoverButtonAtIndex(updateJson: updateJson)
+            self.annotationProvider.updateBarcodeCheckPopoverButtonAtIndex(updateJson: updateJson)
         }
         dispatchMain(block)
         result.success()
@@ -220,7 +220,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
     }
 }
 
-public extension BarcodeArModule {
+public extension BarcodeCheckModule {
 
     // swiftlint:disable function_body_length
     func addViewToContainer(container: UIView, jsonString: String, result: FrameworksResult) {
@@ -234,42 +234,42 @@ public extension BarcodeArModule {
                 return
             }
             let json = JSONValue(string: jsonString)
-            guard json.containsKey("BarcodeAr"), json.containsKey("View") else {
+            guard json.containsKey("BarcodeCheck"), json.containsKey("View") else {
                 result.reject(error: ScanditFrameworksCoreError.deserializationError(error: nil,
                                                                                      json: jsonString))
                 return
             }
-            let barcodeArJson = json.object(forKey: "BarcodeAr")
+            let barcodeCheckJson = json.object(forKey: "BarcodeCheck")
 
             do {
-                let barcodeAr = try self.deserializer.mode(fromJSONString: barcodeArJson.jsonString(),
+                let barcodeCheck = try self.deserializer.mode(fromJSONString: barcodeCheckJson.jsonString(),
                                                              context: context)
-                self.barcodeAr = barcodeAr
+                self.barcodeCheck = barcodeCheck
 
-                let barcodeArViewJson = json.object(forKey: "View")
-                let hasUiListener = barcodeArViewJson.bool(forKey: "hasUiListener", default: false)
-                let hasHighlightProvider = barcodeArViewJson.bool(forKey: "hasHighlightProvider", default: false)
-                let hasAnnotationProvider = barcodeArViewJson.bool(forKey: "hasAnnotationProvider", default: false)
-                let isStarted = barcodeArViewJson.bool(forKey: "isStarted", default: false)
+                let barcodeCheckViewJson = json.object(forKey: "View")
+                let hasUiListener = barcodeCheckViewJson.bool(forKey: "hasUiListener", default: false)
+                let hasHighlightProvider = barcodeCheckViewJson.bool(forKey: "hasHighlightProvider", default: false)
+                let hasAnnotationProvider = barcodeCheckViewJson.bool(forKey: "hasAnnotationProvider", default: false)
+                let isStarted = barcodeCheckViewJson.bool(forKey: "isStarted", default: false)
 
-                barcodeArViewJson.removeKeys(
+                barcodeCheckViewJson.removeKeys(
                     ["hasUiListener", "hasHighlightProvider", "hasAnnotationProvider", "isStarted"]
                 )
-                let barcodeArView = try self.viewDeserialzier.view(
-                    fromJSONString: barcodeArViewJson.jsonString(),
+                let barcodeCheckView = try self.viewDeserialzier.view(
+                    fromJSONString: barcodeCheckViewJson.jsonString(),
                     parentView: container,
-                    mode: barcodeAr
+                    mode: barcodeCheck
                 )
 
-                self.barcodeArView = barcodeArView
+                self.barcodeCheckView = barcodeCheckView
                 if hasUiListener {
-                    self.registerBarcodeArViewUiListener(result: NoopFrameworksResult())
+                    self.registerBarcodeCheckViewUiListener(result: NoopFrameworksResult())
                 }
                 if hasHighlightProvider {
-                    self.registerBarcodeArHighlightProvider(result: NoopFrameworksResult())
+                    self.registerBarcodeCheckHighlightProvider(result: NoopFrameworksResult())
                 }
                 if hasAnnotationProvider {
-                    self.registerBarcodeArAnnotationProvider(result: NoopFrameworksResult())
+                    self.registerBarcodeCheckAnnotationProvider(result: NoopFrameworksResult())
                 }
                 if isStarted {
                     self.viewStart(result: NoopFrameworksResult())
@@ -291,12 +291,12 @@ public extension BarcodeArModule {
                 result.reject(error: ScanditFrameworksCoreError.nilSelf)
                 return
             }
-            guard let view = self.barcodeArView else {
-                result.reject(code: "-3", message: "BarcodeArView is nil", details: nil)
+            guard let view = self.barcodeCheckView else {
+                result.reject(code: "-3", message: "BarcodeCheckView is nil", details: nil)
                 return
             }
             do {
-                self.barcodeArView = try self.viewDeserialzier.update(view, fromJSONString: viewJson)
+                self.barcodeCheckView = try self.viewDeserialzier.update(view, fromJSONString: viewJson)
             } catch let error {
                 result.reject(error: error)
                 return
@@ -306,22 +306,22 @@ public extension BarcodeArModule {
     }
 
     func viewStart(result: FrameworksResult) {
-        self.barcodeArView?.start()
+        self.barcodeCheckView?.start()
         result.success()
     }
 
     func viewStop(result: FrameworksResult) {
-        self.barcodeArView?.stop()
+        self.barcodeCheckView?.stop()
         result.success()
     }
 
     func viewPause(result: FrameworksResult) {
-        self.barcodeArView?.pause()
+        self.barcodeCheckView?.pause()
         result.success()
     }
     
     func viewReset(result: FrameworksResult) {
-        self.barcodeArView?.reset()
+        self.barcodeCheckView?.reset()
         result.success()
     }
 }

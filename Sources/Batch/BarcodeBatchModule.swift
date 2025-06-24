@@ -290,12 +290,12 @@ open class BarcodeBatchModule: NSObject, FrameworkModule {
         self.advancedOverlayViewPool?.clear()
         
         if let overlay: BarcodeBatchBasicOverlay = basicOverlay {
-            captureViewHandler.removeOverlayFromTopmostView(overlay)
+            captureViewHandler.removeOverlayFromTopmostView(overlay: overlay)
         }
         basicOverlay = nil
         
         if let overlay: BarcodeBatchAdvancedOverlay = advancedOverlay {
-            captureViewHandler.removeOverlayFromTopmostView(overlay)
+            captureViewHandler.removeOverlayFromTopmostView(overlay: overlay)
         }
         advancedOverlay = nil
     }
@@ -406,7 +406,7 @@ extension BarcodeBatchModule: DeserializationLifeCycleObserver {
             try barcodeBatchDeserializer.basicOverlay(fromJSONString: overlayJson, withMode: mode) :
             try barcodeBatchDeserializer.advancedOverlay(fromJSONString: overlayJson, withMode: mode)
 
-            captureViewHandler.addOverlayToView(view: view, overlay: overlay)
+            captureViewHandler.addOverlayToView(view, overlay: overlay)
         }
     }
 }

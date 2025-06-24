@@ -14,7 +14,6 @@ SDC_EXPORTED_SYMBOL
 @interface SDCSparkScanViewDefaults : NSObject
 
 @property (class, nonatomic, readonly) BOOL defaultBarcodeCountButtonVisibility;
-@property (class, nonatomic, readonly) BOOL defaultLabelCaptureButtonVisibility;
 @property (class, nonatomic, readonly) BOOL defaultBarcodeFindButtonVisibility;
 @property (class, nonatomic, readonly) BOOL defaultTargetModeButtonVisibility;
 @property (class, nonatomic, readonly) BOOL defaultScanningBehaviorButtonVisibility;

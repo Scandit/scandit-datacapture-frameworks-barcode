@@ -8,9 +8,9 @@ import ScanditBarcodeCapture
 import ScanditCaptureCore
 import ScanditFrameworksCore
 
-private typealias ViewDefaults = BarcodeArViewDefaults
+private typealias ViewDefaults = BarcodeCheckViewDefaults
 
-struct DefaultsBarcodeArView: DefaultsEncodable {
+struct DefaultsBarcodeCheckView: DefaultsEncodable {
     // swiftlint:disable function_body_length
     func toEncodable() -> [String: Any?] {
         [
@@ -25,9 +25,9 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
             "defaultShouldShowCameraSwitchControl": ViewDefaults.defaultShouldShowCameraSwitchControl,
             "defaultRectangleHighlightBrush": ViewDefaults.defaultRectangleHighlightBrush.jsonString,
             "defaultPopoverAnnotationTrigger": ViewDefaults.defaultPopoverAnnotationTrigger.jsonString,
-            "defaultBarcodeArPopoverAnnotationButtonTextSize":
+            "defaultBarcodeCheckPopoverAnnotationButtonTextSize":
                 ViewDefaults.defaultPopoverAnnotationButtonFont.pointSize,
-            "defaultBarcodeArPopoverAnnotationButtonTextColor":
+            "defaultBarcodeCheckPopoverAnnotationButtonTextColor":
                 ViewDefaults.defaultPopoverAnnotationButtonTextColor.sdcHexString,
             "defaultStatusIconAnnotationTrigger": ViewDefaults.defaultStatusIconAnnotationTrigger.jsonString,
             "defaultStatusIconAnnotationHasTip": ViewDefaults.defaultStatusIconAnnotationHasTip,
@@ -71,12 +71,12 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
                 ViewDefaults.defaultInfoAnnotationBodyComponentLeftIcon?.jsonString,
             "defaultInfoAnnotationBodyElementRightIcon":
                 ViewDefaults.defaultInfoAnnotationBodyComponentRightIcon?.jsonString,
-            "defaultBarcodeArPopoverAnnotationButtonEnabled": ViewDefaults.defaultPopoverAnnotationButtonEnabled
+            "defaultBarcodeCheckPopoverAnnotationButtonEnabled": ViewDefaults.defaultPopoverAnnotationButtonEnabled
         ]
     }
     // swiftlint:enable function_body_length
 
-    private func getDefaultCircleHighlightFromPreset(preset: BarcodeArCircleHighlightPreset) -> [String: Any] {
+    private func getDefaultCircleHighlightFromPreset(preset: BarcodeCheckCircleHighlightPreset) -> [String: Any] {
         return [
             "brush": ViewDefaults.defaultCircleHighlightBrush(for: preset).jsonString,
             "size": ViewDefaults.defaultCircleHighlightSize(for: preset)
@@ -85,7 +85,7 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
 
     private func getDefaultCircleHighlightPresets() -> [String: Any] {
         var presets: [String: Any] = [:]
-        let allPresets: [BarcodeArCircleHighlightPreset] = [.dot, .icon]
+        let allPresets: [BarcodeCheckCircleHighlightPreset] = [.dot, .icon]
 
         for preset in allPresets {
             presets[ preset.jsonString] = getDefaultCircleHighlightFromPreset(preset: preset)

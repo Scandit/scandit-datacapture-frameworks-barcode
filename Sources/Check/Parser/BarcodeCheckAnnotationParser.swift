@@ -9,44 +9,44 @@ import UIKit
 
 import ScanditFrameworksCore
 
-public enum FrameworksBarcodeArAnnotationEvents: String, CaseIterable {
-    case didTapPopover = "BarcodeArPopoverAnnotationListener.didTapPopover"
-    case didTapPopoverButton = "BarcodeArPopoverAnnotationListener.didTapPopoverButton"
-    case didTapInfoAnnotationFooter = "BarcodeArInfoAnnotationListener.didTapInfoAnnotationFooter"
-    case didTapInfoAnnotationHeader = "BarcodeArInfoAnnotationListener.didTapInfoAnnotationHeader"
-    case didTapInfoAnnotation = "BarcodeArInfoAnnotationListener.didTapInfoAnnotation"
-    case didTapInfoAnnotationLeftIcon = "BarcodeArInfoAnnotationListener.didTapInfoAnnotationLeftIcon"
-    case didTapInfoAnnotationRightIcon = "BarcodeArInfoAnnotationListener.didTapInfoAnnotationRightIcon"
+public enum FrameworksBarcodeCheckAnnotationEvents: String, CaseIterable {
+    case didTapPopover = "BarcodeCheckPopoverAnnotationListener.didTapPopover"
+    case didTapPopoverButton = "BarcodeCheckPopoverAnnotationListener.didTapPopoverButton"
+    case didTapInfoAnnotationFooter = "BarcodeCheckInfoAnnotationListener.didTapInfoAnnotationFooter"
+    case didTapInfoAnnotationHeader = "BarcodeCheckInfoAnnotationListener.didTapInfoAnnotationHeader"
+    case didTapInfoAnnotation = "BarcodeCheckInfoAnnotationListener.didTapInfoAnnotation"
+    case didTapInfoAnnotationLeftIcon = "BarcodeCheckInfoAnnotationListener.didTapInfoAnnotationLeftIcon"
+    case didTapInfoAnnotationRightIcon = "BarcodeCheckInfoAnnotationListener.didTapInfoAnnotationRightIcon"
 }
 
-public class BarcodeArAnnotationParser {
+public class BarcodeCheckAnnotationParser {
     private let infoAnnotationDelegate: FrameworksInfoAnnotationDelegate
     
     private let popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate
-    private let cache: BarcodeArAugmentationsCache
+    private let cache: BarcodeCheckAugmentationsCache
 
     init(
         infoAnnotationDelegate: FrameworksInfoAnnotationDelegate,
         popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate,
-        cache: BarcodeArAugmentationsCache
+        cache: BarcodeCheckAugmentationsCache
     ) {
         self.infoAnnotationDelegate = infoAnnotationDelegate
         self.popoverAnnotationDelegate = popoverAnnotationDelegate
         self.cache = cache
     }
 
-    func get(json: JSONValue, barcode: Barcode) -> (UIView & BarcodeArAnnotation)? {
+    func get(json: JSONValue, barcode: Barcode) -> (UIView & BarcodeCheckAnnotation)? {
         guard let type = json.optionalString(forKey: "type") else {
             Log.error("Missing type in JSON.")
             return nil
         }
 
         switch type {
-        case "barcodeArInfoAnnotation":
+        case "barcodeCheckInfoAnnotation":
             return getInfoAnnotation(barcode: barcode, json: json)
-        case "barcodeArPopoverAnnotation":
+        case "barcodeCheckPopoverAnnotation":
             return getPopoverAnnotation(barcode: barcode, json: json)
-        case "barcodeArStatusIconAnnotation":
+        case "barcodeCheckStatusIconAnnotation":
             return getStatusIconAnnotation(barcode: barcode, json: json)
         default:
             Log.error("Not supported annotation type.", error: NSError(domain: "Type \(type)", code: -1))
@@ -54,33 +54,33 @@ public class BarcodeArAnnotationParser {
         }
     }
 
-    func updateAnnotation(_ annotation: BarcodeArAnnotation, json: JSONValue) {
+    func updateAnnotation(_ annotation: BarcodeCheckAnnotation, json: JSONValue) {
         switch annotation {
-        case let infoAnnotation as BarcodeArInfoAnnotation:
+        case let infoAnnotation as BarcodeCheckInfoAnnotation:
             guard let barcodeId = json.optionalString(forKey: "barcodeId") else {
                 Log.error("Missing barcodeId in JSON.")
                 return
             }
             updateInfoAnnotation(infoAnnotation, json, barcodeId)
-        case let statusIconAnnotation as BarcodeArStatusIconAnnotation:
+        case let statusIconAnnotation as BarcodeCheckStatusIconAnnotation:
             let iconJson = json.getObjectAsString(forKey: "icon")
             updateStatusIconAnnotation(statusIconAnnotation, iconJson, json)
-        case let popoverAnnotation as BarcodeArPopoverAnnotation:
+        case let popoverAnnotation as BarcodeCheckPopoverAnnotation:
             updatePopoverAnnotation(popoverAnnotation, json, popoverAnnotation.barcode)
         default:
             Log.error("Unsupported annotation type")
         }
     }
 
-    func updateBarcodeArPopoverButton(_ annotation: BarcodeArPopoverAnnotation, json: JSONValue) {
+    func updateBarcodeCheckPopoverButton(_ annotation: BarcodeCheckPopoverAnnotation, json: JSONValue) {
         guard let index = json.optionalInt(forKey: "index") else {
-            Log.error("Invalid index received when trying to update the updateBarcodeArPopoverButton.")
+            Log.error("Invalid index received when trying to update the updateBarcodeCheckPopoverButton.")
             return
         }
 
         if  index < 0 {
             Log.error(
-                "Invalid index received when trying to update the updateBarcodeArPopoverButton.",
+                "Invalid index received when trying to update the updateBarcodeCheckPopoverButton.",
                 error: NSError(domain: "Index \(index)", code: -1)
             )
             return
@@ -88,7 +88,7 @@ public class BarcodeArAnnotationParser {
         
         if index > annotation.buttons.count - 1 {
             Log.error(
-                "Invalid index received when trying to update the updateBarcodeArPopoverButton",
+                "Invalid index received when trying to update the updateBarcodeCheckPopoverButton",
                 error: NSError(domain: "Buttons Size \(annotation.buttons.count), Index \(index)", code: -1)
             )
             return
@@ -104,12 +104,12 @@ public class BarcodeArAnnotationParser {
     }
 }
 
-// MARK: - Barcode Ar Info Annotation
+// MARK: - Barcode Check Info Annotation
 
-private extension BarcodeArAnnotationParser {
+private extension BarcodeCheckAnnotationParser {
 
-    private func getInfoAnnotation(barcode: Barcode, json: JSONValue) -> BarcodeArInfoAnnotation? {
-        let annotation = BarcodeArInfoAnnotation(barcode: barcode)
+    private func getInfoAnnotation(barcode: Barcode, json: JSONValue) -> BarcodeCheckInfoAnnotation? {
+        let annotation = BarcodeCheckInfoAnnotation(barcode: barcode)
 
         updateInfoAnnotation(annotation, json, barcode.uniqueId)
 
@@ -117,21 +117,21 @@ private extension BarcodeArAnnotationParser {
     }
 
     private func updateInfoAnnotation(
-        _ annotation: BarcodeArInfoAnnotation,
+        _ annotation: BarcodeCheckInfoAnnotation,
         _ json: JSONValue,
         _ barcodeId: String
     ) {
         annotation.hasTip = json.bool(forKey: "hasTip", default: false)
         annotation.isEntireAnnotationTappable = json.bool(forKey: "isEntireAnnotationTappable", default: false)
         if let anchorJson = json.optionalString(forKey: "anchor") {
-            var anchor = BarcodeArInfoAnnotationAnchor.bottom
-            SDCBarcodeArInfoAnnotationAnchorFromJSONString(anchorJson, &anchor)
+            var anchor = BarcodeCheckInfoAnnotationAnchor.bottom
+            SDCBarcodeCheckInfoAnnotationAnchorFromJSONString(anchorJson, &anchor)
             annotation.anchor = anchor
         }
 
         if let widthJson = json.optionalString(forKey: "width") {
-            var width = BarcodeArInfoAnnotationWidthPreset.small
-            SDCBarcodeArInfoAnnotationWidthPresetFromJSONString(widthJson, &width)
+            var width = BarcodeCheckInfoAnnotationWidthPreset.small
+            SDCBarcodeCheckInfoAnnotationWidthPresetFromJSONString(widthJson, &width)
             annotation.width = width
         }
 
@@ -144,10 +144,10 @@ private extension BarcodeArAnnotationParser {
         }
 
         let bodyComponentsJson = json.array(forKey: "body")
-        var bodyComponents = [BarcodeArInfoAnnotationBodyComponent]()
+        var bodyComponents = [BarcodeCheckInfoAnnotationBodyComponent]()
         for index in 0..<bodyComponentsJson.count() {
             let bodyJson = bodyComponentsJson.atIndex(index)
-            if let component = getBarcodeArInfoAnnotationBodyComponent(json: bodyJson) {
+            if let component = getBarcodeCheckInfoAnnotationBodyComponent(json: bodyJson) {
                 bodyComponents.append(component)
             }
         }
@@ -161,13 +161,13 @@ private extension BarcodeArAnnotationParser {
             annotation.delegate = nil
         }
 
-        var trigger = BarcodeArAnnotationTrigger.highlightTap
-        SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
+        var trigger = BarcodeCheckAnnotationTrigger.highlightTap
+        SDCBarcodeCheckAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
         annotation.annotationTrigger = trigger
     }
 
-    private func parseInfoAnnotationHeader(_ json: JSONValue) -> BarcodeArInfoAnnotationHeader {
-        let annotationHeader = BarcodeArInfoAnnotationHeader()
+    private func parseInfoAnnotationHeader(_ json: JSONValue) -> BarcodeCheckInfoAnnotationHeader {
+        let annotationHeader = BarcodeCheckInfoAnnotationHeader()
         do {
 
             if json.containsKey("icon") {
@@ -185,13 +185,13 @@ private extension BarcodeArAnnotationParser {
             }
             annotationHeader.font = json.getFont(forSizeKey: "textSize", andFamilyKey: "fontFamily")
         } catch {
-            Log.error("Unable to parse the BarcodeArInfoAnnotation header from the given json.", error: error)
+            Log.error("Unable to parse the BarcodeCheckInfoAnnotation header from the given json.", error: error)
         }
         return annotationHeader
     }
 
-    private func parseInfoAnnotationFooter(_ json: JSONValue) -> BarcodeArInfoAnnotationFooter {
-        let annotationFooter = BarcodeArInfoAnnotationFooter()
+    private func parseInfoAnnotationFooter(_ json: JSONValue) -> BarcodeCheckInfoAnnotationFooter {
+        let annotationFooter = BarcodeCheckInfoAnnotationFooter()
         do {
 
             if json.containsKey("icon") {
@@ -209,16 +209,16 @@ private extension BarcodeArAnnotationParser {
             }
             annotationFooter.font = json.getFont(forSizeKey: "textSize", andFamilyKey: "fontFamily")
         } catch {
-            Log.error("Unable to parse the BarcodeArInfoAnnotation footer from the given json.", error: error)
+            Log.error("Unable to parse the BarcodeCheckInfoAnnotation footer from the given json.", error: error)
         }
         return annotationFooter
     }
 
-    private func getBarcodeArInfoAnnotationBodyComponent(
+    private func getBarcodeCheckInfoAnnotationBodyComponent(
         json: JSONValue
-    ) -> BarcodeArInfoAnnotationBodyComponent? {
+    ) -> BarcodeCheckInfoAnnotationBodyComponent? {
         do {
-            let bodyComponent = BarcodeArInfoAnnotationBodyComponent()
+            let bodyComponent = BarcodeCheckInfoAnnotationBodyComponent()
             bodyComponent.text = json.optionalString(forKey: "text")
             if let textColorHex = json.optionalString(forKey: "textColor"),
                let textColor = UIColor(sdcHexString: textColorHex) {
@@ -237,21 +237,21 @@ private extension BarcodeArAnnotationParser {
             }
             return bodyComponent
         } catch {
-            Log.error("Unable to parse the BarcodeArInfoAnnotationBodyElement from the provided json.", error: error)
+            Log.error("Unable to parse the BarcodeCheckInfoAnnotationBodyElement from the provided json.", error: error)
             return nil
         }
     }
 }
 
-// MARK: - Barcode Ar Popover Annotation
+// MARK: - Barcode Check Popover Annotation
 
-private extension BarcodeArAnnotationParser {
+private extension BarcodeCheckAnnotationParser {
 
-    private func getPopoverAnnotation(barcode: Barcode, json: JSONValue) -> BarcodeArPopoverAnnotation? {
+    private func getPopoverAnnotation(barcode: Barcode, json: JSONValue) -> BarcodeCheckPopoverAnnotation? {
         do {
             let annotationButtons = json.array(forKey: "buttons")
 
-            var buttons: [BarcodeArPopoverAnnotationButton] = []
+            var buttons: [BarcodeCheckPopoverAnnotationButton] = []
 
             for index in 0..<annotationButtons.count() {
                 let buttonJson = annotationButtons.atIndex(index)
@@ -259,7 +259,7 @@ private extension BarcodeArAnnotationParser {
                 let iconJson = buttonJson.getObjectAsString(forKey: "icon")
                 let text = buttonJson.string(forKey: "text")
 
-                let button = BarcodeArPopoverAnnotationButton(
+                let button = BarcodeCheckPopoverAnnotationButton(
                     icon: try ScanditIcon(fromJSONString: iconJson),
                     text: text
                 )
@@ -267,18 +267,18 @@ private extension BarcodeArAnnotationParser {
                 buttons.append(button)
             }
 
-            let annotation = BarcodeArPopoverAnnotation(barcode: barcode, buttons: buttons)
+            let annotation = BarcodeCheckPopoverAnnotation(barcode: barcode, buttons: buttons)
             updatePopoverAnnotation(annotation, json, barcode)
 
             return annotation
         } catch {
-            Log.error("Unable to parse the BarcodeArPopoverAnnotation from the provided json.", error: error)
+            Log.error("Unable to parse the BarcodeCheckPopoverAnnotation from the provided json.", error: error)
             return nil
         }
     }
 
     private func updatePopoverAnnotation(
-        _ annotation: BarcodeArPopoverAnnotation,
+        _ annotation: BarcodeCheckPopoverAnnotation,
         _ json: JSONValue,
         _ barcode: Barcode
     ) {
@@ -290,12 +290,12 @@ private extension BarcodeArAnnotationParser {
         } else {
             annotation.delegate = nil
         }
-        var trigger = BarcodeArAnnotationTrigger.highlightTap
-        SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
+        var trigger = BarcodeCheckAnnotationTrigger.highlightTap
+        SDCBarcodeCheckAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
         annotation.annotationTrigger = trigger
     }
 
-    private func updatePopoverButton(_ json: JSONValue, _ button: BarcodeArPopoverAnnotationButton) {
+    private func updatePopoverButton(_ json: JSONValue, _ button: BarcodeCheckPopoverAnnotationButton) {
         if let textColorHex = json.optionalString(forKey: "textColor"),
            let textColor = UIColor(sdcHexString: textColorHex) {
             button.textColor = textColor
@@ -306,22 +306,22 @@ private extension BarcodeArAnnotationParser {
     }
 }
 
-// MARK: - Barcode Ar Status Icon Annotation
+// MARK: - Barcode Check Status Icon Annotation
 
-private extension BarcodeArAnnotationParser {
+private extension BarcodeCheckAnnotationParser {
 
-    private func getStatusIconAnnotation(barcode: Barcode, json: JSONValue) -> BarcodeArStatusIconAnnotation? {
+    private func getStatusIconAnnotation(barcode: Barcode, json: JSONValue) -> BarcodeCheckStatusIconAnnotation? {
         if json.containsKey("icon") == false {
             Log.error("Missing icon in status icon annotation JSON.")
             return nil
         }
-        let annotation = BarcodeArStatusIconAnnotation(barcode: barcode)
+        let annotation = BarcodeCheckStatusIconAnnotation(barcode: barcode)
         updateStatusIconAnnotation(annotation, json.getObjectAsString(forKey: "icon"), json)
         return annotation
     }
 
     private func updateStatusIconAnnotation(
-        _ annotation: BarcodeArStatusIconAnnotation,
+        _ annotation: BarcodeCheckStatusIconAnnotation,
         _ iconJson: String,
         _ json: JSONValue
     ) {
@@ -338,11 +338,11 @@ private extension BarcodeArAnnotationParser {
                 annotation.backgroundColor = backgroundColor
             }
 
-            var trigger = BarcodeArAnnotationTrigger.highlightTap
-            SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
+            var trigger = BarcodeCheckAnnotationTrigger.highlightTap
+            SDCBarcodeCheckAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
             annotation.annotationTrigger = trigger
         } catch {
-            Log.error("Unable to parse the BarcodeArStatusIconAnnotation from the provided json.", error: error)
+            Log.error("Unable to parse the BarcodeCheckStatusIconAnnotation from the provided json.", error: error)
         }
     }
 }

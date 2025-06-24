@@ -4,24 +4,13 @@
  * Copyright (C) 2024- Scandit AG. All rights reserved.
  */
 
-#import <Foundation/Foundation.h>
-#import <ScanditCaptureCore/SDCBase.h>
-#import <ScanditBarcodeCapture/SDCBarcodeArCircleHighlight.h>
-#import <ScanditCaptureCore/SDCAnchor.h>
-#import <ScanditCaptureCore/SDCCamera.h>
-#import <ScanditBarcodeCapture/SDCBarcodeArPopoverAnnotation.h>
-#import <ScanditBarcodeCapture/SDCBarcodeArInfoAnnotation.h>
-#import <ScanditBarcodeCapture/SDCBarcodeArInfoAnnotationBodyComponent.h>
-#import <ScanditBarcodeCapture/SDCBarcodeArStatusIconAnnotation.h>
+#import <ScanditBarcodeCapture/ScanditBarcodeCapture.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class SDCScanditIcon;
-@class SDCBrush;
-
+NS_SWIFT_NAME(BarcodeCheckViewDefaults)
 SDC_EXPORTED_SYMBOL
-NS_SWIFT_NAME(BarcodeArViewDefaults)
-@interface SDCBarcodeArViewDefaults : NSObject
+@interface SDCBarcodeCheckViewDefaults : NSObject
 
 // clang-format off
 @property (class, nonatomic, assign, readonly) BOOL defaultHapticsEnabled;
@@ -40,10 +29,7 @@ NS_SWIFT_NAME(BarcodeArViewDefaults)
 @property (class, nonatomic, readonly) SDCBrush *defaultRectangleHighlightBrush;
 @property (class, nonatomic, nullable, readonly) SDCScanditIcon *defaultRectangleHighlightIcon;
 
-@property (class, nonatomic, readonly) BOOL defaultHighlightIsPulsing;
-
-@property (class, nonatomic, readonly) SDCBarcodeArStatusIconAnnotationAnchor defaultStatusIconAnnotationAnchor;
-@property (class, nonatomic, readonly) SDCBarcodeArAnnotationTrigger defaultStatusIconAnnotationTrigger;
+@property (class, nonatomic, readonly) SDCBarcodeCheckAnnotationTrigger defaultStatusIconAnnotationTrigger;
 @property (class, nonatomic, readonly) BOOL defaultStatusIconAnnotationHasTip;
 @property (class, nonatomic, readonly) SDCScanditIcon *defaultStatusIconAnnotationIcon;
 @property (class, nonatomic, readonly, nullable) NSString *defaultStatusIconAnnotationText;
@@ -51,19 +37,18 @@ NS_SWIFT_NAME(BarcodeArViewDefaults)
 @property (class, nonatomic, readonly) UIColor *defaultStatusIconAnnotationIconTextColor;
 @property (class, nonatomic, readonly) UIFont *defaultStatusIconAnnotationLabelFont;
 
-@property (class, nonatomic, readonly) SDCBarcodeArAnnotationTrigger defaultPopoverAnnotationTrigger;
+@property (class, nonatomic, readonly) SDCBarcodeCheckAnnotationTrigger defaultPopoverAnnotationTrigger;
 @property (class, nonatomic, readonly) BOOL defaultPopoverAnnotationIsEntirePopoverTappable;
 @property (class, nonatomic, readonly) BOOL defaultPopoverAnnotationButtonEnabled;
 @property (class, nonatomic, readonly) UIFont *defaultPopoverAnnotationButtonFont;
 @property (class, nonatomic, readonly) UIColor *defaultPopoverAnnotationButtonTextColor;
-@property (class, nonatomic, readonly) SDCBarcodeArPopoverAnnotationAnchor defaultPopoverAnnotationAnchor;
 
-@property (class, nonatomic, readonly) SDCBarcodeArAnnotationTrigger defaultInfoAnnotationTrigger;
+@property (class, nonatomic, readonly) SDCBarcodeCheckAnnotationTrigger defaultInfoAnnotationTrigger;
 @property (class, nonatomic, readonly) UIColor *defaultInfoAnnotationBackgroundColor;
 @property (class, nonatomic, readonly) BOOL defaultInfoAnnotationHasTip;
 @property (class, nonatomic, readonly) BOOL defaultInfoAnnotationIsEntireAnnotationTappable;
-@property (class, nonatomic, readonly) SDCBarcodeArInfoAnnotationAnchor defaultInfoAnnotationAnchor;
-@property (class, nonatomic, readonly) SDCBarcodeArInfoAnnotationWidthPreset defaultInfoAnnotationWidth;
+@property (class, nonatomic, readonly) SDCBarcodeCheckInfoAnnotationAnchor defaultInfoAnnotationAnchor;
+@property (class, nonatomic, readonly) SDCBarcodeCheckInfoAnnotationWidthPreset defaultInfoAnnotationWidth;
 
 @property (class, nonatomic, nullable, readonly) SDCScanditIcon *defaultInfoAnnotationHeaderIcon;
 @property (class, nonatomic, nullable, readonly) NSString *defaultInfoAnnotationHeaderText;
@@ -90,10 +75,10 @@ NS_SWIFT_NAME(BarcodeArViewDefaults)
 
 - (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
-+ (CGFloat)defaultCircleHighlightSizeForPreset:(SDCBarcodeArCircleHighlightPreset)preset;
-+ (SDCBrush *)defaultCircleHighlightBrushForPreset:(SDCBarcodeArCircleHighlightPreset)preset;
++ (CGFloat)defaultCircleHighlightSizeForPreset:(SDCBarcodeCheckCircleHighlightPreset)preset;
++ (SDCBrush *)defaultCircleHighlightBrushForPreset:(SDCBarcodeCheckCircleHighlightPreset)preset;
 + (nullable SDCScanditIcon *)defaultCircleHighlightIconForPreset:
-    (SDCBarcodeArCircleHighlightPreset)preset;
+    (SDCBarcodeCheckCircleHighlightPreset)preset;
 
 @end
 

@@ -10,22 +10,22 @@ import ScanditFrameworksCore
 public typealias BarcodeId = String
 private typealias TrackedBarcodeId = Int
 
-public class BarcodeArAugmentationsCache {
+public class BarcodeCheckAugmentationsCache {
     private static let DELETION_DELAY: TimeInterval = 2.0
 
     private let instanceId = UUID().uuidString
-    private var annotationsCache = ConcurrentDictionary<BarcodeId, BarcodeArAnnotation>()
-    private var highlightsCache = ConcurrentDictionary<BarcodeId, BarcodeArHighlight>()
+    private var annotationsCache = ConcurrentDictionary<BarcodeId, BarcodeCheckAnnotation>()
+    private var highlightsCache = ConcurrentDictionary<BarcodeId, BarcodeCheckHighlight>()
     private var trackedBarcodeCache = ConcurrentDictionary<TrackedBarcodeId, BarcodeId>()
-    private var barcodeArHighlightProviderCallback = ConcurrentDictionary<BarcodeId, HighlightCallbackData>()
-    private var barcodeArAnnotationProviderCallback = ConcurrentDictionary<BarcodeId, AnnotationCallbackData>()
+    private var barcodeCheckHighlightProviderCallback = ConcurrentDictionary<BarcodeId, HighlightCallbackData>()
+    private var barcodeCheckAnnotationProviderCallback = ConcurrentDictionary<BarcodeId, AnnotationCallbackData>()
 
     // The native SDK has implemented a mechanism where the items are not immediately removed from the cache but
     // only marked for deletion and deleted after a delay. We need to have the same mechanism in the frameworks to
     // avoid not finding annotations or highlights in our cache.
     private var markedForDeletion = ConcurrentDictionary<BarcodeId, Timer>()
 
-    func updateFromSession(_ session: BarcodeArSession) {
+    func updateFromSession(_ session: BarcodeCheckSession) {
         for trackedBarcode in session.addedTrackedBarcodes {
             cancelDeletion(for: trackedBarcode.barcode.uniqueId)
             trackedBarcodeCache.setValue(trackedBarcode.barcode.uniqueId, for: trackedBarcode.identifier)
@@ -52,8 +52,8 @@ public class BarcodeArAugmentationsCache {
     private func performDeletion(for barcodeId: BarcodeId) {
         _ = annotationsCache.removeValue(for: barcodeId)
         _ = highlightsCache.removeValue(for: barcodeId)
-        _ = barcodeArHighlightProviderCallback.removeValue(for: barcodeId)
-        _ = barcodeArAnnotationProviderCallback.removeValue(for: barcodeId)
+        _ = barcodeCheckHighlightProviderCallback.removeValue(for: barcodeId)
+        _ = barcodeCheckAnnotationProviderCallback.removeValue(for: barcodeId)
     }
 
     func cancelDeletion(for barcodeId: BarcodeId) {
@@ -63,34 +63,34 @@ public class BarcodeArAugmentationsCache {
     }
 
     func addHighlightProviderCallback(barcodeId: BarcodeId, callback: HighlightCallbackData) {
-        barcodeArHighlightProviderCallback.setValue(callback, for: barcodeId)
+        barcodeCheckHighlightProviderCallback.setValue(callback, for: barcodeId)
     }
 
     func getHighlightProviderCallback(barcodeId: BarcodeId) -> HighlightCallbackData? {
-        return barcodeArHighlightProviderCallback.getValue(for: barcodeId)
+        return barcodeCheckHighlightProviderCallback.getValue(for: barcodeId)
     }
 
-    func addHighlight(barcodeId: BarcodeId, highlight: BarcodeArHighlight) {
+    func addHighlight(barcodeId: BarcodeId, highlight: BarcodeCheckHighlight) {
         highlightsCache.setValue(highlight, for: barcodeId)
     }
 
-    func getHighlight(barcodeId: BarcodeId) -> BarcodeArHighlight? {
+    func getHighlight(barcodeId: BarcodeId) -> BarcodeCheckHighlight? {
         return highlightsCache.getValue(for: barcodeId)
     }
 
     func addAnnotationProviderCallback(barcodeId: BarcodeId, callback: AnnotationCallbackData) {
-        barcodeArAnnotationProviderCallback.setValue(callback, for: barcodeId)
+        barcodeCheckAnnotationProviderCallback.setValue(callback, for: barcodeId)
     }
 
     func getAnnotationProviderCallback(barcodeId: BarcodeId) -> AnnotationCallbackData? {
-        return barcodeArAnnotationProviderCallback.getValue(for: barcodeId)
+        return barcodeCheckAnnotationProviderCallback.getValue(for: barcodeId)
     }
 
-    func addAnnotation(barcodeId: BarcodeId, annotation: BarcodeArAnnotation) {
+    func addAnnotation(barcodeId: BarcodeId, annotation: BarcodeCheckAnnotation) {
         annotationsCache.setValue(annotation, for: barcodeId)
     }
 
-    func getAnnotation(barcodeId: BarcodeId) -> BarcodeArAnnotation? {
+    func getAnnotation(barcodeId: BarcodeId) -> BarcodeCheckAnnotation? {
         return annotationsCache.getValue(for: barcodeId)
     }
 
@@ -102,7 +102,7 @@ public class BarcodeArAugmentationsCache {
         trackedBarcodeCache.removeAllValues()
         annotationsCache.removeAllValues()
         highlightsCache.removeAllValues()
-        barcodeArHighlightProviderCallback.removeAllValues()
-        barcodeArAnnotationProviderCallback.removeAllValues()
+        barcodeCheckHighlightProviderCallback.removeAllValues()
+        barcodeCheckAnnotationProviderCallback.removeAllValues()
     }
 }
