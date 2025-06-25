@@ -22,7 +22,7 @@ struct BarcodePickDefaults: DefaultsEncodable {
             "ViewSettings": viewSettingsDefaults.toEncodable(),
             "BarcodePickViewHighlightStyle": barcodePickViewHighlightStyleDefaults.toEncodable(),
             "SymbologySettings": barcodePickSymbologySettingsDefaults.toEncodable(),
-            "BarcodePickStatusIconSettingsDefaults": barcodePickStatusIconSettingsDefaults.toEncodable()
+            "BarcodePickStatusIconSettings": barcodePickStatusIconSettingsDefaults.toEncodable()
         ]
     }
 

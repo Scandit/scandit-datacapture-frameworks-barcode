@@ -7,30 +7,30 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-public enum BarcodeCheckAnnotationProviderEvents: String, CaseIterable {
-    case annotationForBarcode = "BarcodeCheckAnnotationProvider.annotationForBarcode"
+public enum BarcodeArAnnotationProviderEvents: String, CaseIterable {
+    case annotationForBarcode = "BarcodeArAnnotationProvider.annotationForBarcode"
 }
 
-open class FrameworksBarcodeCheckAnnotationProvider: NSObject, BarcodeCheckAnnotationProvider {
+open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationProvider {
 
     private let emitter: Emitter
 
-    private let parser: BarcodeCheckAnnotationParser
+    private let parser: BarcodeArAnnotationParser
 
-    private let cache: BarcodeCheckAugmentationsCache
+    private let cache: BarcodeArAugmentationsCache
 
-    public init(emitter: Emitter, parser: BarcodeCheckAnnotationParser, cache: BarcodeCheckAugmentationsCache) {
+    public init(emitter: Emitter, parser: BarcodeArAnnotationParser, cache: BarcodeArAugmentationsCache) {
         self.emitter = emitter
         self.parser = parser
         self.cache = cache
     }
 
     private let annotationForBarcode = Event(
-        name: BarcodeCheckAnnotationProviderEvents.annotationForBarcode.rawValue
+        name: BarcodeArAnnotationProviderEvents.annotationForBarcode.rawValue
     )
 
     public func annotation(
-        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeCheckAnnotation)?) -> Void
+        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeArAnnotation)?) -> Void
     ) {
         self.cache.addAnnotationProviderCallback(
             barcodeId: barcode.uniqueId,
@@ -79,16 +79,16 @@ open class FrameworksBarcodeCheckAnnotationProvider: NSObject, BarcodeCheckAnnot
         parser.updateAnnotation(annotation, json: json)
     }
 
-    public func updateBarcodeCheckPopoverButtonAtIndex(updateJson: String) {
+    public func updateBarcodeArPopoverButtonAtIndex(updateJson: String) {
         let json = JSONValue(string: updateJson)
 
         guard let barcodeId = json.optionalString(forKey: "barcodeId"),
-              let annotation = cache.getAnnotation(barcodeId: barcodeId) as? BarcodeCheckPopoverAnnotation else {
+              let annotation = cache.getAnnotation(barcodeId: barcodeId) as? BarcodeArPopoverAnnotation else {
             return
         }
 
         let buttonJson = json.object(forKey: "button")
-        parser.updateBarcodeCheckPopoverButton(annotation, json: buttonJson)
+        parser.updateBarcodeArPopoverButton(annotation, json: buttonJson)
     }
 
 }

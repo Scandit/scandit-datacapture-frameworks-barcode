@@ -75,7 +75,6 @@ extension JSONValue {
 
 extension Barcode {
     var uniqueId: String {
-        // TODO: Switch using native extension
-        return String(self.data.hashValue ^ self.symbology.hashValue)
+        return self.uniqueHash
     }
 }
