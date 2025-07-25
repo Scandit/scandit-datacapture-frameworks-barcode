@@ -13,14 +13,9 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
     var scanningListener: FrameworksBarcodePickScanningListener
     var viewListener: FrameworksBarcodePickViewListener
     var viewUiListener: FrameworksBarcodePickViewUiListener
-    var pickListener: FrameworksBarcodePickListener
-    var customViewProvider: FrameworksBarcodePickViewHighlightStyleCustomViewProvider? = nil
-    var highlightStyleProvider: FrameworksBarcodePickViewHighlightStyleAsyncProvider? = nil
-
-
     let deserializer = BarcodePickDeserializer()
-    private let captureContext = DefaultFrameworksCaptureContext.shared
 
+    private var context: DataCaptureContext?
     public var barcodePickView: BarcodePickView? {
         willSet {
             barcodePickView?.removeActionListener(actionListener)
@@ -36,10 +31,8 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
     private var barcodePick: BarcodePick? {
         willSet {
             barcodePick?.removeScanningListener(scanningListener)
-            barcodePick?.removeListener(pickListener)
         }
         didSet {
-            barcodePick?.addListener(pickListener)
             barcodePick?.addScanningListener(scanningListener)
         }
     }
@@ -51,7 +44,6 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
         scanningListener = FrameworksBarcodePickScanningListener(emitter: emitter)
         viewListener = FrameworksBarcodePickViewListener(emitter: emitter)
         viewUiListener = FrameworksBarcodePickViewUiListener(emitter: emitter)
-        pickListener = FrameworksBarcodePickListener(emitter: emitter)
     }
 
     public func didStart() {
@@ -63,17 +55,21 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
         actionListener.disable()
         viewListener.disable()
         viewUiListener.disable()
-        pickListener.disable()
         barcodePickView?.stop()
+        context = nil
         barcodePickView?.removeFromSuperview()
     }
 
+    public func dataCaptureContext(deserialized context: DataCaptureContext?) {
+        self.context = context
+    }
+    
     public func didDisposeDataCaptureContext() {
+        self.context = nil
         self.barcodePickView?.uiDelegate = nil
         self.barcodePickView?.removeListener(viewListener)
         self.barcodePickView?.removeActionListener(actionListener)
         self.barcodePick?.removeScanningListener(scanningListener)
-        self.barcodePick?.removeListener(pickListener)
         self.asyncMapperProductProviderCallback = nil
         self.barcodePickView = nil
     }
@@ -86,7 +82,7 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
                 result.reject(error: ScanditFrameworksCoreError.nilSelf)
                 return
             }
-            guard let context = self.captureContext.context else {
+            guard let context = self.context else {
                 result.reject(error: ScanditFrameworksCoreError.nilDataCaptureContext)
                 return
             }
@@ -108,24 +104,15 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
                                                              context: context,
                                                              productProvider: productProvider)
                 self.barcodePick = barcodePick
-                let hasScanningListeners = barcodePickJson.bool(forKey: "hasScanningListeners", default: false)
-                let hasModeListeners = barcodePickJson.bool(forKey: "hasListeners", default: false)
-                
-                if hasModeListeners {
-                    self.addBarcodePickListener(result: NoopFrameworksResult())
-                }
-                if hasScanningListeners {
-                    self.addScanningListener()
-                }
-                
                 let barcodePickViewJson = json.object(forKey: "View")
                 let hasActionListeners = barcodePickViewJson.bool(forKey: "hasActionListeners", default: false)
                 let isStarted = barcodePickViewJson.bool(forKey: "isStarted", default: false)
                 let hasViewListeners = barcodePickViewJson.bool(forKey: "hasViewListeners", default: false)
                 let hasViewUiListener = barcodePickViewJson.bool(forKey: "hasViewUiListener", default: false)
                 barcodePickViewJson.removeKeys(["hasActionListeners", "isStarted", "hasViewListeners", "hasViewUiListener"])
-                let barcodePickView = try self.deserializeBarcodePickView(barcodePickViewJson, context: context, mode: barcodePick)
-                
+                let barcodePickView = try self.deserializer.view(fromJSONString: barcodePickViewJson.jsonString(),
+                                                                 context: context,
+                                                                 mode: barcodePick)
                 container.addSubview(barcodePickView)
                 self.barcodePickView = barcodePickView
                 if hasActionListeners {
@@ -150,57 +137,6 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
         dispatchMain(block)
     }
 
-    private func deserializeBarcodePickView(
-        _ barcodePickViewJson: JSONValue,
-        context: DataCaptureContext,
-        mode: BarcodePick
-    ) throws -> BarcodePickView {
-        let viewSettingsJson = barcodePickViewJson.object(forKey: "viewSettings")
-        let highlightJson = viewSettingsJson.object(forKey: "highlightStyle")
-        let jsonString = barcodePickViewJson.jsonString()
-
-        // Common deserializer parameters
-        let baseParams = (
-            jsonString: jsonString,
-            context: context,
-            topLayoutAnchor: nil as NSLayoutYAxisAnchor?,
-            mode: mode
-        )
-
-        // If not using async provider or type is not specified, use the basic view
-        if !highlightJson.bool(forKey: "hasAsyncProvider", default: false) {
-            return try self.deserializer.view(fromJSONString: baseParams.jsonString,
-                                      context: baseParams.context,
-                                      topLayoutAnchor: baseParams.topLayoutAnchor,
-                                      mode: baseParams.mode)
-        }
-
-        // Handle different highlight style types
-        switch highlightJson.optionalString(forKey: "type") {
-        case "dotWithIcons", "rectangularWithIcons":
-            self.highlightStyleProvider = FrameworksBarcodePickViewHighlightStyleAsyncProvider(emitter: emitter)
-            return try self.deserializer.view(fromJSONString: baseParams.jsonString,
-                                      context: baseParams.context,
-                                      topLayoutAnchor: baseParams.topLayoutAnchor,
-                                      mode: baseParams.mode,
-                                      viewHighlightStyleDelegate: self.highlightStyleProvider)
-
-        case "customView":
-            self.customViewProvider = FrameworksBarcodePickViewHighlightStyleCustomViewProvider(emitter: emitter)
-            return try self.deserializer.view(fromJSONString: baseParams.jsonString,
-                                      context: baseParams.context,
-                                      topLayoutAnchor: baseParams.topLayoutAnchor,
-                                      mode: baseParams.mode,
-                                      customViewHighlightStyleDelegate: self.customViewProvider)
-
-        default:
-            return try self.deserializer.view(fromJSONString: baseParams.jsonString,
-                                      context: baseParams.context,
-                                      topLayoutAnchor: baseParams.topLayoutAnchor,
-                                      mode: baseParams.mode)
-        }
-    }
-
     public func updateView(viewJson: String, result: FrameworksResult) {
         let block = { [weak self] in
             guard let self = self else {
@@ -221,15 +157,6 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
         dispatchMain(block)
     }
 
-    public func removeBarcodePickView(result: FrameworksResult) {
-        actionListener.disable()
-        viewListener.disable()
-        viewUiListener.disable()
-        barcodePickView?.stop()
-        barcodePickView?.removeFromSuperview()
-        result.success(result: nil)
-    }
-
     public func addScanningListener() {
         scanningListener.enable()
     }
@@ -245,7 +172,7 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
     public func removeActionListener() {
         actionListener.disable()
     }
-
+    
     public func addViewListener() {
         viewListener.enable()
     }
@@ -289,76 +216,8 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
     public func viewFreeze() {
         barcodePickView?.freeze()
     }
-
+    
     public func viewStop() {
         barcodePickView?.stop()
-    }
-
-    public func addBarcodePickListener(result: FrameworksResult) {
-        pickListener.enable()
-        result.success()
-    }
-
-    public func removeBarcodePickListener(result: FrameworksResult) {
-        pickListener.disable()
-        result.success()
-    }
-
-    public func finishBarcodePickViewHighlightStyleCustomViewProviderViewForRequest(
-        response: [String: Any?],
-        result: FrameworksResult
-    ) {
-        guard let requestId = response["requestId"] as? Int else {
-            result.success()
-            return
-        }
-
-        var statusIconStyle: BarcodePickStatusIconStyle?
-        
-        let responseDict = response["response"] as? [String: Any]
-        
-        if let statusIconStyleJson = responseDict?["statusIconStyle"] as? String {
-            statusIconStyle = BarcodePickStatusIconStyle(jsonString: statusIconStyleJson)
-        }
-
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                result.reject(error: ScanditFrameworksCoreError.nilSelf)
-                return
-            }
-
-            var customView: UIImageView?
-            if let viewBytes = responseDict?["view"] as? Data {
-                customView = UIImageView()
-                if let image = UIImage(data: viewBytes) {
-                    customView?.image = image
-                }
-            }
-
-            self.customViewProvider?.finishViewForRequest(requestId: requestId, view: customView, statusIconStyle: statusIconStyle)
-            result.success()
-        }
-    }
-    
-    public func finishBarcodePickViewHighlightStyleAsyncProviderStyleForRequest(
-        response: [String: Any?],
-        result: FrameworksResult
-    ) {
-        guard let requestId = response["requestId"] as? Int else {
-            result.success()
-            return
-        }
-        
-        let responseJson = response["response"] as? String
-        
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                result.reject(error: ScanditFrameworksCoreError.nilSelf)
-                return
-            }
-
-            self.highlightStyleProvider?.finishStyleForRequest(requestId: requestId, responseJson: responseJson)
-            result.success()
-        }
     }
 }

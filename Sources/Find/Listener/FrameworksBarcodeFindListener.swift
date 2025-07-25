@@ -11,7 +11,6 @@ public enum FrameworksBarcodeFindEvent: String, CaseIterable {
     case didStartSearch = "BarcodeFindListener.onSearchStarted"
     case didPauseSearch = "BarcodeFindListener.onSearchPaused"
     case didStopSearch = "BarcodeFindListener.onSearchStopped"
-    case didUpdateSession = "BarcodeFindListener.didUpdateSession"
     case finishButtonTapped = "BarcodeFindViewUiListener.onFinishButtonTapped"
     case transformBarcodeData = "BarcodeFindTransformer.transformBarcodeData"
 }
@@ -34,7 +33,6 @@ open class FrameworksBarcodeFindListener: NSObject, BarcodeFindListener {
     private let didStartSearchEvent = Event(.didStartSearch)
     private let didPauseSearchEvent = Event(.didPauseSearch)
     private let didStopSearchEvent = Event(.didStopSearch)
-    private let didUpdateSessionEvent = Event(.didUpdateSession)
 
     public init(emitter: Emitter) {
         self.emitter = emitter
@@ -75,16 +73,5 @@ open class FrameworksBarcodeFindListener: NSObject, BarcodeFindListener {
             guard let self else { return }
             self.didStopSearchEvent.emit(on: self.emitter, payload: ["foundItems": foundItemsBarcodeData])
         }
-    }
-    
-    public func barcodeFind(_ barcodeFind: BarcodeFind, didUpdate session: BarcodeFindSession) {
-        guard isEnabled.value, emitter.hasListener(for: .didUpdateSession) else { return }
-        didUpdateSessionEvent.emit(
-            on: emitter,
-            payload: [
-                "session": session.jsonString,
-            ]
-        )
-
     }
 }

@@ -27,9 +27,8 @@ struct DefaultsBarcodeCountView: DefaultsEncodable {
             "shouldShowScanAreaGuides": ViewDefaults.defaultShouldShowScanAreaGuides,
             "toolbarSettings": barcodeCountToolbarSettingsDefaults.toEncodable(),
             "recognizedBrush": EncodableBrush(brush: BarcodeCountView.defaultRecognizedBrush).toEncodable(),
+            "unrecognizedBrush": EncodableBrush(brush: BarcodeCountView.defaultUnrecognizedBrush).toEncodable(),
             "notInListBrush": EncodableBrush(brush: BarcodeCountView.defaultNotInListBrush).toEncodable(),
-            "acceptedBrush": EncodableBrush(brush: BarcodeCountView.defaultAcceptedBrush).toEncodable(),
-            "rejectedBrush": EncodableBrush(brush: BarcodeCountView.defaultRejectedBrush).toEncodable(),
             "listButtonAccessibilityHint": ViewDefaults.defaultListButtonAccessibilityHint,
             "listButtonAccessibilityLabel": ViewDefaults.defaultListButtonAccessibilityLabel,
             "exitButtonAccessibilityHint": ViewDefaults.defaultExitButtonAccessibilityHint,
@@ -44,16 +43,14 @@ struct DefaultsBarcodeCountView: DefaultsEncodable {
             "singleScanButtonAccessibilityLabel": ViewDefaults.defaultSingleScanButtonAccessibilityLabel,
             "clearHighlightsButtonText": ViewDefaults.defaultClearHighlightsButtonText,
             "exitButtonText": ViewDefaults.defaultExitButtonText,
+            "textForUnrecognizedBarcodesDetectedHint": ViewDefaults.defaultTextForUnrecognizedBarcodesDetectedHint,
             "textForTapShutterToScanHint": ViewDefaults.defaultTextForTapShutterToScanHint,
             "textForScanningHint": ViewDefaults.defaultTextForScanningHint,
             "textForMoveCloserAndRescanHint": ViewDefaults.defaultTextForMoveCloserAndRescanHint,
             "textForMoveFurtherAndRescanHint": ViewDefaults.defaultTextForMoveFurtherAndRescanHint,
             "shouldShowListProgressBar": ViewDefaults.defaultShouldShowListProgressBar,
             "shouldShowTorchControl": ViewDefaults.defaultShouldShowTorchControl,
-            "torchControlPosition": ViewDefaults.defaultTorchControlPosition.jsonString,
-            "tapToUncountEnabled": ViewDefaults.defaultTapToUncountEnabled,
-            "textForTapToUncountHint": ViewDefaults.defaultTextForTapToUncountHint,
-            "shouldShowStatusModeButton": ViewDefaults.defaultShouldShowStatusModeButton,
+            "torchControlPosition": ViewDefaults.defaultTorchControlPosition.jsonString
         ]
     }
 }
