@@ -25,7 +25,6 @@ SDC_EXPORTED_SYMBOL
 @property (class, nonatomic, readonly) BOOL defaultShouldShowToolbar;
 @property (class, nonatomic, readonly) NSString *defaultExitButtonText;
 @property (class, nonatomic, readonly) NSString *defaultClearHighlightsButtonText;
-@property (class, nonatomic, readonly) NSString *defaultTextForUnrecognizedBarcodesDetectedHint;
 @property (class, nonatomic, readonly) NSString *defaultTextForTapShutterToScanHint;
 @property (class, nonatomic, readonly) NSString *defaultTextForScanningHint;
 @property (class, nonatomic, readonly) NSString *defaultTextForMoveCloserAndRescanHint;
@@ -45,6 +44,9 @@ SDC_EXPORTED_SYMBOL
 @property (class, nonatomic, readonly) BOOL defaultShouldShowListProgressBar;
 @property (class, nonatomic, readonly) BOOL defaultShouldShowTorchControl;
 @property (class, nonatomic, readonly) SDCAnchor defaultTorchControlPosition;
+@property (class, nonatomic, readonly) BOOL defaultTapToUncountEnabled;
+@property (class, nonatomic, readonly) NSString *defaultTextForTapToUncountHint;
+@property (class, nonatomic, readonly) BOOL defaultShouldShowStatusModeButton;
 @end
 
 NS_ASSUME_NONNULL_END

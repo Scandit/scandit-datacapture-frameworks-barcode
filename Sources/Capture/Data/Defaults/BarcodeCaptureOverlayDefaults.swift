@@ -7,36 +7,19 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-extension BarcodeCaptureOverlayStyle: CaseIterable {
+extension ScanditBarcodeCapture.BarcodeCaptureOverlayStyle: Swift.CaseIterable {
     public static var allCases: [BarcodeCaptureOverlayStyle] {
         [.frame]
     }
-}
-
-extension EncodableBrush {
-    public static let legacyBarcodeCaptureDefaultBrush = EncodableBrush(
-        brush: Brush(
-            fill: UIColor(
-                sdcHexString: "00000000"
-            )!,
-            stroke: UIColor(
-                sdcHexString: "2ec1ceff"
-            )!,
-            strokeWidth: 1
-        )
-    )
 }
 
 struct BarcodeCaptureOverlayDefaults: DefaultsEncodable {
     let defaultStyle: BarcodeCaptureOverlayStyle
 
     func toEncodable() -> [String: Any?] {
-        var allBrushses = Dictionary(uniqueKeysWithValues: BarcodeCaptureOverlayStyle.allCases.map {
+        let allBrushses = Dictionary(uniqueKeysWithValues: BarcodeCaptureOverlayStyle.allCases.map {
             ($0.jsonString, brushDefaultsFromOverlayStyle($0).toEncodable())
         })
-
-        // Deprecated BarcodeCaptureOverlayStyle
-        allBrushses["legacy"] = EncodableBrush.legacyBarcodeCaptureDefaultBrush.toEncodable()
 
         return [
             "defaultStyle": defaultStyle.jsonString,
