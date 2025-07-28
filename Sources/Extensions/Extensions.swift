@@ -14,6 +14,8 @@ public extension ScanIntention {
             return "manual"
         case .smart:
             return "smart"
+        case .smartSelection:
+            return "smartSelection"
         }
     }
 }

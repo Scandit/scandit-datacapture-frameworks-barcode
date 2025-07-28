@@ -46,28 +46,35 @@ fileprivate extension Emitter {
 
 open class FrameworksBarcodePickActionListener: NSObject, BarcodePickActionListener {
     private let emitter: Emitter
+    private let viewId: Int
     private var events: [String: (Bool) -> Void] = [:]
     private let coordinator = ReadWriteCoordinator()
-    private var hasListener = AtomicBool()
 
-    public init(emitter: Emitter) {
+    public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
+        self.viewId = viewId
     }
 
     public func didPickItem(withData data: String, completionHandler: @escaping (Bool) -> Void) {
-        guard hasListener.value else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickEvent.pick.rawValue) else { return }
         coordinator.blockingWrite {
             events[data] = completionHandler
         }
-        emitter.emit(.pick, payload: ["itemData": data])
+        emitter.emit(.pick, payload: [
+            "itemData": data,
+            "viewId": self.viewId
+        ])
     }
-    
+
     public func didUnpickItem(withData data: String, completionHandler: @escaping (Bool) -> Void) {
-        guard hasListener.value else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickEvent.unpick.rawValue) else { return }
         coordinator.blockingWrite {
             events[data] = completionHandler
         }
-        emitter.emit(.unpick, payload: ["itemData": data])
+        emitter.emit(.unpick, payload: [
+            "itemData": data,
+            "viewId": self.viewId
+        ])
     }
 
     public func finishPickAction(with data: String, result: Bool) {
@@ -75,17 +82,5 @@ open class FrameworksBarcodePickActionListener: NSObject, BarcodePickActionListe
             events.removeValue(forKey: data)
         }
         callback?(result)
-    }
-
-    public func enable() {
-        if !hasListener.value {
-            hasListener.value = true
-        }
-    }
-
-    public func disable() {
-        if hasListener.value {
-            hasListener.value = false
-        }
     }
 }
