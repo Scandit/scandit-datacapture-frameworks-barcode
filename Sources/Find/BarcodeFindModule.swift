@@ -101,7 +101,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
     }
 
     public func removeBarcodeFindView(_ viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+        guard let viewInstance = viewCache.remove(viewId: viewId) else {
             return
         }
 
