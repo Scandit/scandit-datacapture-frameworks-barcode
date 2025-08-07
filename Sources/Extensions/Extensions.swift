@@ -14,8 +14,6 @@ public extension ScanIntention {
             return "manual"
         case .smart:
             return "smart"
-        case .smartSelection:
-            return "smartSelection"
         }
     }
 }
@@ -77,6 +75,7 @@ extension JSONValue {
 
 extension Barcode {
     var uniqueId: String {
-        return self.uniqueHash
+        // TODO: Switch using native extension
+        return String(self.data.hashValue ^ self.symbology.hashValue)
     }
 }

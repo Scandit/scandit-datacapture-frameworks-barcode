@@ -8,9 +8,9 @@ import ScanditBarcodeCapture
 
 class AnnotationCallbackData {
     let barcode: Barcode
-    let callback: ((any UIView & BarcodeArAnnotation)?) -> Void
+    let callback: ((any UIView & BarcodeCheckAnnotation)?) -> Void
 
-    init(barcode: Barcode, callback: @escaping ((any UIView & BarcodeArAnnotation)?) -> Void) {
+    init(barcode: Barcode, callback: @escaping ((any UIView & BarcodeCheckAnnotation)?) -> Void) {
         self.barcode = barcode
         self.callback = callback
     }
