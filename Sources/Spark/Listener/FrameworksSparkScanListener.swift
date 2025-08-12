@@ -22,11 +22,17 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
     private static let asyncTimeoutInterval: TimeInterval = 600 // 10 mins
     private static let defaultTimeoutInterval: TimeInterval = 2
     private let emitter: Emitter
+    private let viewId: Int
 
     private let didScanEvent = EventWithResult<Bool>(event: Event(.didScan))
     private let didUpdateEvent = EventWithResult<Bool>(event: Event(.didUpdate))
 
-    private var isEnabled = AtomicBool()
+    private var isEnabled = AtomicValue<Bool>()
+
+    public init(emitter: Emitter, viewId: Int) {
+        self.emitter = emitter
+        self.viewId = viewId
+    }
 
     public func enable() {
         isEnabled.value = true
@@ -55,14 +61,10 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
 
     private weak var lastSession: SparkScanSession?
 
-    public init(emitter: Emitter) {
-        self.emitter = emitter
-    }
-
     public func sparkScan(_ sparkScan: SparkScan,
                           didScanIn session: SparkScanSession,
                           frameData: FrameData?) {
-        guard isEnabled.value, emitter.hasListener(for: FrameworksSparkScanEvent.didScan.rawValue) else { return }
+        guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId, for: FrameworksSparkScanEvent.didScan.rawValue) else { return }
         lastSession = session
         var frameId: String? = nil
 
@@ -74,7 +76,8 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
             on: emitter,
             payload: [
                 "session": session.jsonString,
-                "frameId": frameId
+                "frameId": frameId,
+                "viewId": viewId
             ]
         )
 
@@ -90,7 +93,7 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
     public func sparkScan(_ sparkScan: SparkScan,
                           didUpdate session: SparkScanSession,
                           frameData: FrameData?) {
-        guard isEnabled.value, emitter.hasListener(for: FrameworksSparkScanEvent.didUpdate.rawValue) else { return }
+        guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId, for: FrameworksSparkScanEvent.didUpdate.rawValue) else { return }
         lastSession = session
         var frameId: String? = nil
 
@@ -102,7 +105,8 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
             on: emitter,
             payload: [
                 "session": session.jsonString,
-                "frameId": frameId
+                "frameId": frameId,
+                "viewId": viewId
             ]
         )
 

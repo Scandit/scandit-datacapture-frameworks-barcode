@@ -39,9 +39,9 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
     private let emitter: Emitter
 
     private let didUpdateSelectionEvent = EventWithResult<Bool>(event: Event(.didUpdateSelection))
-    private let didUpdateSessionEvent = EventWithResult<Bool>(event: Event(.didUpdateSession))
+    private let didUpdateSessionEvent = EventWithResult<Bool>(event: Event(FrameworksBarcodeSelectionEvent.didUpdateSession))
 
-    private var isEnabled = AtomicBool()
+    private var isEnabled = AtomicValue<Bool>()
 
     private var lastSession: FrameworksBarcodeSelectionSession?
 
@@ -124,7 +124,7 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
     public func barcodeSelection(_ barcodeSelection: BarcodeSelection,
                                  didUpdate session: BarcodeSelectionSession,
                                  frameData: FrameData?) {
-        guard isEnabled.value, emitter.hasListener(for: .didUpdateSession) else { return }
+        guard isEnabled.value, emitter.hasListener(for: FrameworksBarcodeSelectionEvent.didUpdateSession) else { return }
         lastSession = FrameworksBarcodeSelectionSession.fromSelectionSession(session: session)
         var frameId: String? = nil
         

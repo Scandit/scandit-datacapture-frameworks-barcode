@@ -7,30 +7,30 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-public enum BarcodeCheckHighlightProviderEvents: String, CaseIterable {
-    case highlightForBarcode = "BarcodeCheckHighlightProvider.highlightForBarcode"
+public enum BarcodeArHighlightProviderEvents: String, CaseIterable {
+    case highlightForBarcode = "BarcodeArHighlightProvider.highlightForBarcode"
 }
 
-open class FrameworksBarcodeCheckHighlightProvider: NSObject, BarcodeCheckHighlightProvider {
+open class FrameworksBarcodeArHighlightProvider: NSObject, BarcodeArHighlightProvider {
 
     private let emitter: Emitter
+    private let viewId: Int
+    private let parser: BarcodeArHighlightParser
+    private let cache: BarcodeArAugmentationsCache
 
-    private let parser: BarcodeCheckHighlightParser
-
-    private let cache: BarcodeCheckAugmentationsCache
-
-    public init(emitter: Emitter, parser: BarcodeCheckHighlightParser, cache: BarcodeCheckAugmentationsCache) {
+    public init(emitter: Emitter, viewId: Int, parser: BarcodeArHighlightParser, cache: BarcodeArAugmentationsCache) {
         self.emitter = emitter
+        self.viewId = viewId
         self.parser = parser
         self.cache = cache
     }
 
     private let highlightForBarcode = Event(
-        name: BarcodeCheckHighlightProviderEvents.highlightForBarcode.rawValue
+        name: BarcodeArHighlightProviderEvents.highlightForBarcode.rawValue
     )
 
     public func highlight(
-        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeCheckHighlight)?) -> Void
+        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeArHighlight)?) -> Void
     ) {
         self.cache.addHighlightProviderCallback(
             barcodeId: barcode.uniqueId,
@@ -39,7 +39,8 @@ open class FrameworksBarcodeCheckHighlightProvider: NSObject, BarcodeCheckHighli
 
         highlightForBarcode.emit(on: emitter, payload: [
             "barcode": barcode.jsonString,
-            "barcodeId": barcode.uniqueId
+            "barcodeId": barcode.uniqueId,
+            "viewId": self.viewId
         ])
     }
 

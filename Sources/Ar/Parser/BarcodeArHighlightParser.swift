@@ -8,65 +8,64 @@ import Foundation
 
 import ScanditFrameworksCore
 
-public class BarcodeCheckHighlightParser {
-    private let emitter: Emitter
+public class BarcodeArHighlightParser {
 
-    init(emitter: Emitter) {
-        self.emitter = emitter
+    init() {
+        // Removed unused emitter parameter
     }
 
-    func get(json: JSONValue, barcode: Barcode) -> (UIView & BarcodeCheckHighlight)? {
+    func get(json: JSONValue, barcode: Barcode) -> (UIView & BarcodeArHighlight)? {
         guard let type = json.optionalString(forKey: "type") else {
             Log.error("Invalid JSON type.")
             return nil
         }
 
         switch type {
-        case "barcodeCheckCircleHighlight":
-            return getBarcodeCheckCircleHighlight(barcode: barcode, json: json)
-        case "barcodeCheckRectangleHighlight":
-            return getBarcodeCheckRectangleHighlight(barcode: barcode, json: json)
+        case "barcodeArCircleHighlight":
+            return getBarcodeArCircleHighlight(barcode: barcode, json: json)
+        case "barcodeArRectangleHighlight":
+            return getBarcodeArRectangleHighlight(barcode: barcode, json: json)
         default:
             Log.error("Not supported highlight type.", error: NSError(domain: "Type \(type)", code: -1))
             return nil
         }
     }
 
-    func updateHighlight(_ highlight: BarcodeCheckHighlight, json: JSONValue) {
+    func updateHighlight(_ highlight: BarcodeArHighlight, json: JSONValue) {
         switch highlight {
-        case let circleHighlight as BarcodeCheckCircleHighlight:
+        case let circleHighlight as BarcodeArCircleHighlight:
             updateCircleHighlight(circleHighlight, json: json)
-        case let rectangleHighlight as BarcodeCheckRectangleHighlight:
+        case let rectangleHighlight as BarcodeArRectangleHighlight:
             updateRectangleHighlight(rectangleHighlight, json: json)
         default:
             break
         }
     }
 
-    private func getBarcodeCheckCircleHighlight(barcode: Barcode, json: JSONValue) -> BarcodeCheckCircleHighlight? {
+    private func getBarcodeArCircleHighlight(barcode: Barcode, json: JSONValue) -> BarcodeArCircleHighlight? {
         guard let presetString = json.optionalString(forKey: "preset") else {
-            Log.error("Invalid data for BarcodeCheckCircleHighlight.")
+            Log.error("Invalid data for BarcodeArCircleHighlight.")
             return nil
         }
 
-        var preset = BarcodeCheckCircleHighlightPreset.dot
-        SDCBarcodeCheckCircleHighlightPresetFromJSONString(presetString, &preset)
+        var preset = BarcodeArCircleHighlightPreset.dot
+        SDCBarcodeArCircleHighlightPresetFromJSONString(presetString, &preset)
 
-        let highlight = BarcodeCheckCircleHighlight(barcode: barcode, preset: preset)
+        let highlight = BarcodeArCircleHighlight(barcode: barcode, preset: preset)
         updateCircleHighlight(highlight, json: json)
         return highlight
     }
 
-    private func getBarcodeCheckRectangleHighlight(
+    private func getBarcodeArRectangleHighlight(
         barcode: Barcode, json: JSONValue
-    ) -> BarcodeCheckRectangleHighlight? {
+    ) -> BarcodeArRectangleHighlight? {
 
-        let highlight = BarcodeCheckRectangleHighlight(barcode: barcode)
+        let highlight = BarcodeArRectangleHighlight(barcode: barcode)
         updateRectangleHighlight(highlight, json: json)
         return highlight
     }
 
-    private func updateCircleHighlight(_ highlight: BarcodeCheckCircleHighlight, json: JSONValue) {
+    private func updateCircleHighlight(_ highlight: BarcodeArCircleHighlight, json: JSONValue) {
         do {
             let sizeValue = json.cgFloat(forKey: "size")
 
@@ -82,11 +81,11 @@ public class BarcodeCheckHighlightParser {
                 }
             }
         } catch {
-            Log.error("Unable to parse the BarcodeCheckCircleHighlight from the provided json.", error: error)
+            Log.error("Unable to parse the BarcodeArCircleHighlight from the provided json.", error: error)
         }
     }
 
-    private func updateRectangleHighlight(_ highlight: BarcodeCheckRectangleHighlight, json: JSONValue) {
+    private func updateRectangleHighlight(_ highlight: BarcodeArRectangleHighlight, json: JSONValue) {
 
         do {
             if json.containsKey("icon") {
@@ -101,7 +100,7 @@ public class BarcodeCheckHighlightParser {
                 }
             }
         } catch {
-            Log.error("Unable to parse the BarcodeCheckRectangleHighlight from the provided json.", error: error)
+            Log.error("Unable to parse the BarcodeArRectangleHighlight from the provided json.", error: error)
         }
 
     }

@@ -7,30 +7,30 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-public enum BarcodeCheckAnnotationProviderEvents: String, CaseIterable {
-    case annotationForBarcode = "BarcodeCheckAnnotationProvider.annotationForBarcode"
+public enum BarcodeArAnnotationProviderEvents: String, CaseIterable {
+    case annotationForBarcode = "BarcodeArAnnotationProvider.annotationForBarcode"
 }
 
-open class FrameworksBarcodeCheckAnnotationProvider: NSObject, BarcodeCheckAnnotationProvider {
+open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationProvider {
 
     private let emitter: Emitter
+    private let viewId: Int
+    private let parser: BarcodeArAnnotationParser
+    private let cache: BarcodeArAugmentationsCache
 
-    private let parser: BarcodeCheckAnnotationParser
-
-    private let cache: BarcodeCheckAugmentationsCache
-
-    public init(emitter: Emitter, parser: BarcodeCheckAnnotationParser, cache: BarcodeCheckAugmentationsCache) {
+    public init(emitter: Emitter, viewId: Int, parser: BarcodeArAnnotationParser, cache: BarcodeArAugmentationsCache) {
         self.emitter = emitter
+        self.viewId = viewId
         self.parser = parser
         self.cache = cache
     }
 
     private let annotationForBarcode = Event(
-        name: BarcodeCheckAnnotationProviderEvents.annotationForBarcode.rawValue
+        name: BarcodeArAnnotationProviderEvents.annotationForBarcode.rawValue
     )
 
     public func annotation(
-        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeCheckAnnotation)?) -> Void
+        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeArAnnotation)?) -> Void
     ) {
         self.cache.addAnnotationProviderCallback(
             barcodeId: barcode.uniqueId,
@@ -39,7 +39,8 @@ open class FrameworksBarcodeCheckAnnotationProvider: NSObject, BarcodeCheckAnnot
 
         annotationForBarcode.emit(on: emitter, payload: [
             "barcode": barcode.jsonString,
-            "barcodeId": barcode.uniqueId
+            "barcodeId": barcode.uniqueId,
+            "viewId": self.viewId
         ])
     }
 
@@ -71,7 +72,7 @@ open class FrameworksBarcodeCheckAnnotationProvider: NSObject, BarcodeCheckAnnot
             Log.error("Invalid update call received. BarcodeId was not present in the json.")
             return
         }
-        
+
         guard let annotation = cache.getAnnotation(barcodeId: barcodeId) else {
             return
         }
@@ -79,16 +80,16 @@ open class FrameworksBarcodeCheckAnnotationProvider: NSObject, BarcodeCheckAnnot
         parser.updateAnnotation(annotation, json: json)
     }
 
-    public func updateBarcodeCheckPopoverButtonAtIndex(updateJson: String) {
+    public func updateBarcodeArPopoverButtonAtIndex(updateJson: String) {
         let json = JSONValue(string: updateJson)
 
         guard let barcodeId = json.optionalString(forKey: "barcodeId"),
-              let annotation = cache.getAnnotation(barcodeId: barcodeId) as? BarcodeCheckPopoverAnnotation else {
+              let annotation = cache.getAnnotation(barcodeId: barcodeId) as? BarcodeArPopoverAnnotation else {
             return
         }
 
         let buttonJson = json.object(forKey: "button")
-        parser.updateBarcodeCheckPopoverButton(annotation, json: buttonJson)
+        parser.updateBarcodeArPopoverButton(annotation, json: buttonJson)
     }
 
 }

@@ -15,24 +15,26 @@ open class FrameworksBarcodeCountViewUIListener: NSObject, BarcodeCountViewUIDel
     }
 
     private let emitter: Emitter
+    private let viewId: Int
 
     private let exitButtonTappedEvent = Event(name: Constants.exitButtonTapped)
     private let listButtonTappedEvent = Event(name: Constants.listButtonTapped)
     private let singleScanButtonTappedEvent = Event(name: Constants.singleScanButtonTapped)
 
-    public init(emitter: Emitter) {
+    public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
+        self.viewId = viewId
     }
 
     public func exitButtonTapped(for view: BarcodeCountView) {
-        exitButtonTappedEvent.emit(on: emitter, payload: [:])
+        exitButtonTappedEvent.emit(on: emitter, payload: ["viewId": self.viewId])
     }
 
     public func listButtonTapped(for view: BarcodeCountView) {
-        listButtonTappedEvent.emit(on: emitter, payload: [:])
+        listButtonTappedEvent.emit(on: emitter, payload: ["viewId": self.viewId])
     }
 
     public func singleScanButtonTapped(for view: BarcodeCountView) {
-        singleScanButtonTappedEvent.emit(on: emitter, payload: [:])
+        singleScanButtonTappedEvent.emit(on: emitter, payload: ["viewId": self.viewId])
     }
 }

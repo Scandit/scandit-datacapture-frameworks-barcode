@@ -8,7 +8,7 @@ import Foundation
 
 import ScanditBarcodeCapture
 
-internal class FrameworksBarcodeBatchSession {
+public class FrameworksBarcodeBatchSession {
     let frameSequenceId: Int
     let trackedBarcodes: [Int: TrackedBarcode]
     weak var batchSession: BarcodeBatchSession?

@@ -21,9 +21,9 @@ struct AdvancedOverlayOffsetData {
 
     init(dictionary: [String: Any?]) {
         var offset: PointWithUnit = .zero
-        SDCPointWithUnitFromJSONString(dictionary["offset"] as! String, &offset)
+        SDCPointWithUnitFromJSONString(dictionary["offsetJson"] as! String, &offset)
         self.init(offset: offset,
-                  trackedBarcodeId: dictionary["identifier"] as! Int,
+                  trackedBarcodeId: dictionary["trackedBarcodeIdentifier"] as! Int,
                   sessionFrameSequenceId: dictionary["sessionFrameSequenceID"] as? Int)
     }
 }
