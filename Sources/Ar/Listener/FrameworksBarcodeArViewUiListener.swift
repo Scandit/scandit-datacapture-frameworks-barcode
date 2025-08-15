@@ -14,22 +14,21 @@ public enum BarcodeArViewUiDelegateEvents: String, CaseIterable {
 
 open class FrameworksBarcodeArViewUiListener: NSObject, BarcodeArViewUIDelegate {
     private let emitter: Emitter
-    private let viewId: Int
 
-    public init(emitter: Emitter, viewId: Int) {
+    public init(emitter: Emitter) {
         self.emitter = emitter
-        self.viewId = viewId
     }
 
     private let didTapHighlightForBarcode = Event(
         name: BarcodeArViewUiDelegateEvents.didTapHighlightForBarcodeEvent.rawValue
     )
-    
-    public func barcodeAr(_ barcodeAr: BarcodeAr, didTapHighlightFor barcode: Barcode, highlight: any UIView & BarcodeArHighlight) {
+
+    public func barcodeArView(
+        _ barcodeArView: BarcodeArView, didTapHighlightFor barcode: Barcode, highlight: any UIView & BarcodeArHighlight
+    ) {
         didTapHighlightForBarcode.emit(on: emitter, payload: [
             "barcode": barcode.jsonString,
-            "barcodeId": barcode.uniqueId,
-            "viewId": self.viewId
+            "barcodeId": barcode.uniqueId
         ])
     }
 }

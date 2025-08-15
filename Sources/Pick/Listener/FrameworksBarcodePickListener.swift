@@ -13,23 +13,32 @@ public enum BarcodePickListenerEvent: String, CaseIterable {
 
 open class FrameworksBarcodePickListener: NSObject, BarcodePickListener {
     private let emitter: Emitter
-    private let viewId: Int
     private var events: [String: (Bool) -> Void] = [:]
     private let coordinator = ReadWriteCoordinator()
+    private var hasListener = AtomicBool()
 
-    public init(emitter: Emitter, viewId: Int) {
+    public init(emitter: Emitter) {
         self.emitter = emitter
-        self.viewId = viewId
     }
-
+    
     public func barcodePick(_ barcodePick: BarcodePick, didUpdate session: BarcodePickSession) {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickListenerEvent.didUpdateSession.rawValue) else { return }
+        guard hasListener.value else { return }
+        guard emitter.hasListener(for: BarcodePickListenerEvent.didUpdateSession.rawValue) else { return }
         emitter.emit(
             name: BarcodePickListenerEvent.didUpdateSession.rawValue,
-            payload: [
-                "session": session.jsonString,
-                "viewId": self.viewId
-            ]
+            payload: ["session" : session.jsonString]
         )
+    }
+
+    public func enable() {
+        if !hasListener.value {
+            hasListener.value = true
+        }
+    }
+
+    public func disable() {
+        if hasListener.value {
+            hasListener.value = false
+        }
     }
 }

@@ -9,18 +9,28 @@ import ScanditBarcodeCapture
 
 open class FrameworksBarcodeFindViewUIListener: NSObject, BarcodeFindViewUIDelegate {
     private let emitter: Emitter
-    private let viewId: Int
+    private var isEnabled = AtomicBool()
     private let didTapFinishButtonEvent = Event(.finishButtonTapped)
 
-    public init(emitter: Emitter, viewId: Int) {
+    public init(emitter: Emitter) {
         self.emitter = emitter
-        self.viewId = viewId
+    }
+
+    func enable() {
+        if isEnabled.value { return }
+        isEnabled.value = true
+    }
+
+    func disable() {
+        if isEnabled.value {
+            isEnabled.value = false
+        }
     }
 
     public func barcodeFindView(_ view: BarcodeFindView,
                                 didTapFinishButton foundItems: Set<BarcodeFindItem>) {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: .finishButtonTapped) else { return }
+        guard isEnabled.value, emitter.hasListener(for: .finishButtonTapped) else { return }
         let foundItemsBarcodeData = foundItems.map { $0.searchOptions.barcodeData }
-        didTapFinishButtonEvent.emit(on: emitter, payload: ["foundItems": foundItemsBarcodeData, "viewId": self.viewId])
+        didTapFinishButtonEvent.emit(on: emitter, payload: ["foundItems": foundItemsBarcodeData])
     }
 }

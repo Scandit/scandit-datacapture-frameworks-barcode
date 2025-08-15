@@ -8,7 +8,6 @@ import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
 public enum FrameworksBarcodeBatchEvent: String, CaseIterable {
-    case inCallback = "BarcodeBatchListener.inCallback"
     case sessionUpdated = "BarcodeBatchListener.didUpdateSession"
     case brushForTrackedBarcode = "BarcodeBatchBasicOverlayListener.brushForTrackedBarcode"
     case didTapOnTrackedBarcode = "BarcodeBatchBasicOverlayListener.didTapTrackedBarcode"
@@ -32,31 +31,30 @@ internal extension Emitter {
 
 open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
     internal let emitter: Emitter
-    private let cachedBatchSession: AtomicValue<FrameworksBarcodeBatchSession?>
-    private let modeId: Int
 
     private static let asyncTimeoutInterval: TimeInterval = 600 // 10 mins
     private static let defaultTimeoutInterval: TimeInterval = 2
 
-    public init(emitter: Emitter, modeId: Int, cachedBatchSession: AtomicValue<FrameworksBarcodeBatchSession?>) {
+    public init(emitter: Emitter) {
         self.emitter = emitter
-        self.modeId = modeId
-        self.cachedBatchSession = cachedBatchSession
     }
+    
+    private var latestSession: FrameworksBarcodeBatchSession?
+    private var isEnabled = AtomicBool()
 
     private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(.sessionUpdated))
 
     public func barcodeBatch(_ barcodeBatch: BarcodeBatch,
                                 didUpdate session: BarcodeBatchSession,
                                 frameData: FrameData) {
-        self.cachedBatchSession.value = FrameworksBarcodeBatchSession.fromBatchSession(session: session)
+        guard isEnabled.value, emitter.hasListener(for: .sessionUpdated) else { return }
+        latestSession = FrameworksBarcodeBatchSession.fromBatchSession(session: session)
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
         
         let payload =  [
             "session": session.jsonString,
-            "frameId": frameId,
-            "modeId": modeId
+            "frameId": frameId
         ] as [String : Any?]
 
         sessionUpdatedEvent.emit(
@@ -73,21 +71,35 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
 
     public func resetSession(with frameSequenceId: Int?) {
         guard
-            let session = self.cachedBatchSession.value,
+            let session = latestSession,
             frameSequenceId == nil || session.frameSequenceId == frameSequenceId else { return }
         session.batchSession?.reset()
     }
 
-    public func reset() {
-        self.cachedBatchSession.value = nil
+    public func enable() {
+        isEnabled.value = true
+    }
+
+    public func disable() {
+        isEnabled.value = false
+        latestSession = nil
         sessionUpdatedEvent.reset()
     }
 
     public func enableAsync() {
+        enable()
         sessionUpdatedEvent.timeout = Self.asyncTimeoutInterval
     }
 
     public func disableAsync() {
+        disable()
         sessionUpdatedEvent.timeout = Self.defaultTimeoutInterval
+    }
+
+    public func getTrackedBarcodeFromLastSession(barcodeId: Int, sessionId: Int?) -> TrackedBarcode? {
+        guard let session = latestSession, sessionId == nil || session.frameSequenceId == sessionId else {
+            return nil
+        }
+        return session.trackedBarcodes[barcodeId]
     }
 }
