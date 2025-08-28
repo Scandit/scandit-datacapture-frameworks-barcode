@@ -20,8 +20,8 @@ fileprivate extension Event {
 }
 
 fileprivate extension Emitter {
-    func hasListener(for event: BarcodeCountViewListenerEvent) -> Bool {
-        return hasListener(for: event.rawValue)
+    func hasViewSpecificListenersForEvent(_ viewId: Int, for event: BarcodeCountViewListenerEvent) -> Bool {
+        return hasViewSpecificListenersForEvent(viewId, for: event.rawValue)
     }
 }
 
@@ -40,6 +40,7 @@ public enum BarcodeCountViewListenerEvent: String {
 
 open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegate {
     private let emitter: Emitter
+    private let viewId: Int
 
     private let brushForRecognizedBarcodeEvent = Event(.brushForRecognizedBarcode)
     private let brushForRecognizedBarcodeNotInListEvent = Event(.brushForRecognizedBarcodeNotInList)
@@ -54,8 +55,9 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
 
     private var brushRequests: [String: TrackedBarcode] = [:]
 
-    public init(emitter: Emitter) {
+    public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
+        self.viewId = viewId
     }
 
     private func eventDescriptor(for event: BarcodeCountViewListenerEvent) -> Event {
@@ -82,18 +84,18 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
     }
 
     private func brush(for trackedBarcode: TrackedBarcode, event: BarcodeCountViewListenerEvent) -> Brush? {
-        if !emitter.hasListener(for: event) {
+        if !emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
             return nil
         }
-        eventDescriptor(for: event).emit(on: emitter, payload: ["trackedBarcode": trackedBarcode.jsonString])
+        eventDescriptor(for: event).emit(on: emitter, payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId])
         let key = trackedBarcode.identifier.key(for: event)
         brushRequests[key] = trackedBarcode
         return nil
     }
 
     private func emit(event: BarcodeCountViewListenerEvent, for trackedBarcode: TrackedBarcode) {
-        if emitter.hasListener(for: event) {
-            eventDescriptor(for: event).emit(on: emitter, payload: ["trackedBarcode": trackedBarcode.jsonString])
+        if emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
+            eventDescriptor(for: event).emit(on: emitter, payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId])
         }
     }
 

@@ -20,7 +20,7 @@ struct BrushAndTrackedBarcode {
 
     init(jsonValue: JSONValue) {
         let brush = Brush(jsonString: jsonValue.string(forKey: "brush"))
-        let trackedBarcodeId = jsonValue.integer(forKey: "trackedBarcodeID")
+        let trackedBarcodeId = jsonValue.integer(forKey: "trackedBarcodeIdentifier")
         var sessionFrameSequenceId: Int?
         if jsonValue.containsKey("sessionFrameSequenceID") {
             sessionFrameSequenceId = jsonValue.integer(forKey: "sessionFrameSequenceID")

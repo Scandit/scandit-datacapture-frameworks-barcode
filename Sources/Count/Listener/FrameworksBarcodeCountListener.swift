@@ -14,39 +14,32 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
     private static let asyncTimeoutInterval: TimeInterval = 600 // 10 mins
     private static let defaultTimeoutInterval: TimeInterval = 2
     private let emitter: Emitter
+    private let viewId: Int
     private let barcodeScannedEvent = EventWithResult<Bool>(event: Event(name: Constants.barcodeScanned))
 
-    public init(emitter: Emitter) {
+    public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
+        self.viewId = viewId
     }
-
-    private var isEnabled = AtomicBool()
+    
     private var lastSession: BarcodeCountSession?
 
-    func enable() {
-        isEnabled.value = true
-    }
-
-    func disable() {
-        isEnabled.value = false
+    func reset() {
         barcodeScannedEvent.reset()
         lastSession = nil
     }
     
     public func enableAsync() {
         barcodeScannedEvent.timeout = Self.asyncTimeoutInterval
-        enable()
     }
 
     public func disableAsync() {
-        disable()
         barcodeScannedEvent.timeout = Self.defaultTimeoutInterval
     }
 
     public func barcodeCount(_ barcodeCount: BarcodeCount,
                              didScanIn session: BarcodeCountSession,
                              frameData: FrameData) {
-        guard isEnabled.value, emitter.hasListener(for: Constants.barcodeScanned) else { return }
         lastSession = session
         
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
@@ -56,6 +49,7 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
             payload: [
                 "session": session.jsonString,
                 "frameId": frameId,
+                "viewId": self.viewId
             ],
             default: barcodeCount.isEnabled
         )
