@@ -14,13 +14,15 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
         self.emitter = emitter
     }
 
+    private var isEnabled = AtomicBool()
+
     private let offsetForTrackedBarcodeEvent = Event(.offsetForTrackedBarcode)
     private let anchorForTrackedBarcodeEvent = Event(.anchorForTrackedBarcode)
     private let widgetForTrackedBarcodeEvent = Event(.widgetForTrackedBarcode)
 
     public func barcodeBatchAdvancedOverlay(_ overlay: BarcodeBatchAdvancedOverlay,
                                                viewFor trackedBarcode: TrackedBarcode) -> UIView? {
-        if emitter.hasListener(for: widgetForTrackedBarcodeEvent) {
+        if isEnabled.value, emitter.hasListener(for: widgetForTrackedBarcodeEvent) {
             widgetForTrackedBarcodeEvent.emit(on: emitter,
                                               payload: ["trackedBarcode": trackedBarcode.jsonString])
         }
@@ -29,7 +31,7 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
 
     public func barcodeBatchAdvancedOverlay(_ overlay: BarcodeBatchAdvancedOverlay,
                                                anchorFor trackedBarcode: TrackedBarcode) -> Anchor {
-        if emitter.hasListener(for: anchorForTrackedBarcodeEvent) {
+        if isEnabled.value, emitter.hasListener(for: anchorForTrackedBarcodeEvent) {
             anchorForTrackedBarcodeEvent.emit(on: emitter,
                                               payload: ["trackedBarcode": trackedBarcode.jsonString])
         }
@@ -38,10 +40,20 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
 
     public func barcodeBatchAdvancedOverlay(_ overlay: BarcodeBatchAdvancedOverlay,
                                                offsetFor trackedBarcode: TrackedBarcode) -> PointWithUnit {
-        if emitter.hasListener(for: offsetForTrackedBarcodeEvent) {
+        if isEnabled.value, emitter.hasListener(for: offsetForTrackedBarcodeEvent) {
             offsetForTrackedBarcodeEvent.emit(on: emitter,
                                               payload: ["trackedBarcode": trackedBarcode.jsonString])
         }
         return .zero
+    }
+    
+
+
+    public func enable() {
+        isEnabled.value = true
+    }
+
+    public func disable() {
+        isEnabled.value = false
     }
 }

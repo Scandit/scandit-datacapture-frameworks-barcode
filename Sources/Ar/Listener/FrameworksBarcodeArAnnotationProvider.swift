@@ -14,13 +14,13 @@ public enum BarcodeArAnnotationProviderEvents: String, CaseIterable {
 open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationProvider {
 
     private let emitter: Emitter
-    private let viewId: Int
+
     private let parser: BarcodeArAnnotationParser
+
     private let cache: BarcodeArAugmentationsCache
 
-    public init(emitter: Emitter, viewId: Int, parser: BarcodeArAnnotationParser, cache: BarcodeArAugmentationsCache) {
+    public init(emitter: Emitter, parser: BarcodeArAnnotationParser, cache: BarcodeArAugmentationsCache) {
         self.emitter = emitter
-        self.viewId = viewId
         self.parser = parser
         self.cache = cache
     }
@@ -39,8 +39,7 @@ open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationP
 
         annotationForBarcode.emit(on: emitter, payload: [
             "barcode": barcode.jsonString,
-            "barcodeId": barcode.uniqueId,
-            "viewId": self.viewId
+            "barcodeId": barcode.uniqueId
         ])
     }
 
@@ -72,7 +71,7 @@ open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationP
             Log.error("Invalid update call received. BarcodeId was not present in the json.")
             return
         }
-
+        
         guard let annotation = cache.getAnnotation(barcodeId: barcodeId) else {
             return
         }

@@ -9,9 +9,10 @@ import Foundation
 import ScanditFrameworksCore
 
 public class BarcodeArHighlightParser {
+    private let emitter: Emitter
 
-    init() {
-        // Removed unused emitter parameter
+    init(emitter: Emitter) {
+        self.emitter = emitter
     }
 
     func get(json: JSONValue, barcode: Barcode) -> (UIView & BarcodeArHighlight)? {

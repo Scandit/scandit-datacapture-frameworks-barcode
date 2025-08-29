@@ -41,7 +41,7 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
     private let didUpdateSelectionEvent = EventWithResult<Bool>(event: Event(.didUpdateSelection))
     private let didUpdateSessionEvent = EventWithResult<Bool>(event: Event(FrameworksBarcodeSelectionEvent.didUpdateSession))
 
-    private var isEnabled = AtomicValue<Bool>()
+    private var isEnabled = AtomicBool()
 
     private var lastSession: FrameworksBarcodeSelectionSession?
 

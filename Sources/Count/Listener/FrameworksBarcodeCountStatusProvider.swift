@@ -16,12 +16,10 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
     private let eventsQueue = DispatchQueue(label: "scandit-frameworks-barcode-count", attributes: .concurrent)
 
     private let emitter: Emitter
-    private let viewId: Int
     private let onStatusRequestedEvent = Event(name: Constants.onStatusRequested)
 
-    public init(emitter: Emitter, viewId: Int) {
+    public init(emitter: Emitter) {
         self.emitter = emitter
-        self.viewId = viewId
     }
 
     public func statusRequested(for barcodes: [TrackedBarcode], callback: BarcodeCountStatusProviderCallback) {
@@ -35,8 +33,7 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
             on: emitter,
             payload: [
                 "barcodes": barcodes.map {  $0.jsonString },
-                BarcodeCountStatusProviderRequest.ID: request.requestId,
-                "viewId": self.viewId
+                BarcodeCountStatusProviderRequest.ID: request.requestId
             ]
         )
     }

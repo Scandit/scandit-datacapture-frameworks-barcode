@@ -27,7 +27,8 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
     private let didScanEvent = EventWithResult<Bool>(event: Event(.didScan))
     private let didUpdateEvent = EventWithResult<Bool>(event: Event(.didUpdate))
 
-    private var isEnabled = AtomicValue<Bool>()
+    private var isEnabled = AtomicBool()
+    
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter

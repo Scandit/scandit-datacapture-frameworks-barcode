@@ -21,15 +21,11 @@ fileprivate extension Emitter {
     func hasListener(for event: BarcodeArListenerEvents) -> Bool {
         hasListener(for: event.rawValue)
     }
-
-    func hasViewSpecificListenersForEvent(_ viewId: Int, for event: String) -> Bool {
-        hasListener(for: "\(event).\(viewId)")
-    }
 }
 
 open class FrameworksBarcodeArListener: NSObject, BarcodeArListener {
     private let emitter: Emitter
-    private let viewId: Int
+    private var isEnabled = AtomicBool()
 
     private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(BarcodeArListenerEvents.didUpdateSession))
 
@@ -37,16 +33,25 @@ open class FrameworksBarcodeArListener: NSObject, BarcodeArListener {
 
     private let cache: BarcodeArAugmentationsCache
 
-    public init(emitter: Emitter, viewId: Int, cache: BarcodeArAugmentationsCache) {
+    public init(emitter: Emitter, cache: BarcodeArAugmentationsCache) {
         self.emitter = emitter
-        self.viewId = viewId
         self.cache = cache
+    }
+
+    public func enable() {
+        if isEnabled.value { return }
+        isEnabled.value = true
+    }
+
+    public func disable() {
+        guard isEnabled.value else { return }
+        isEnabled.value = false
     }
 
     public func barcodeAr(
         _ barcodeAr: BarcodeAr, didUpdate session: BarcodeArSession, frameData: any FrameData
     ) {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodeArListenerEvents.didUpdateSession.rawValue) else { return }
+        guard isEnabled.value, emitter.hasListener(for: BarcodeArListenerEvents.didUpdateSession) else { return }
         latestSession = session
         cache.updateFromSession(session)
 
@@ -56,20 +61,18 @@ open class FrameworksBarcodeArListener: NSObject, BarcodeArListener {
             on: emitter,
             payload: [
                 "session": session.jsonString,
-                "frameId": frameId,
-                "viewId": self.viewId
+                "frameId": frameId
             ]
         )
 
         LastFrameData.shared.removeFromCache(frameId: frameId)
     }
 
-    public func finishDidUpdateSession(enabled: Bool) {
-        sessionUpdatedEvent.unlock(value: enabled)
+    public func finishDidUpdateSession() {
+        sessionUpdatedEvent.unlock(value: true)
     }
 
     public func resetSession() {
         latestSession?.reset()
-        sessionUpdatedEvent.reset()
     }
 }

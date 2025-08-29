@@ -35,7 +35,7 @@ open class FrameworksSparkScanViewUIListener: NSObject, SparkScanViewUIDelegate 
     private let barcodeCountButtonTappedEvent = Event(.barcodeCountButtonTapped)
     private let labelCaptureButtonTappedEvent = Event(.labelCaptureButtonTapped)
 
-    private var isEnabled = AtomicValue<Bool>()
+    private var isEnabled = AtomicBool()
 
     public func enable() {
         isEnabled.value = true
