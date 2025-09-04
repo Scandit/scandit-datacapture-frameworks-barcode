@@ -11,9 +11,11 @@ import ScanditFrameworksCore
 class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegate {
 
     private let emitter: Emitter
+    private let viewId: Int
 
-    public init(emitter: Emitter) {
+    public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
+        self.viewId = viewId
     }
 
     private let didTapInfoAnnotationHeader = Event(
@@ -21,7 +23,10 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
     )
 
     func barcodeArInfoAnnotationDidTapHeader(_ annotation: BarcodeArInfoAnnotation) {
-        didTapInfoAnnotationHeader.emit(on: self.emitter, payload: ["barcodeId": annotation.barcode.uniqueId])
+        didTapInfoAnnotationHeader.emit(on: self.emitter, payload: [
+            "barcodeId": annotation.barcode.uniqueId,
+            "viewId": self.viewId
+        ])
     }
 
     private let didTapInfoAnnotationFooter = Event(
@@ -29,7 +34,10 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
     )
 
     func barcodeArInfoAnnotationDidTapFooter(_ annotation: BarcodeArInfoAnnotation) {
-        didTapInfoAnnotationFooter.emit(on: self.emitter, payload: ["barcodeId": annotation.barcode.uniqueId])
+        didTapInfoAnnotationFooter.emit(on: self.emitter, payload: [
+            "barcodeId": annotation.barcode.uniqueId,
+            "viewId": self.viewId
+        ])
     }
 
     private let didTapInfoAnnotationLeftIcon = Event(
@@ -45,7 +53,8 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
             on: self.emitter,
             payload: [
                 "barcodeId": annotation.barcode.uniqueId,
-                "componentIndex": componentIndex
+                "componentIndex": componentIndex,
+                "viewId": self.viewId
             ]
         )
     }
@@ -63,7 +72,8 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
             on: self.emitter,
             payload: [
                 "barcodeId": annotation.barcode.uniqueId,
-                "componentIndex": componentIndex
+                "componentIndex": componentIndex,
+                "viewId": self.viewId
             ]
         )
     }
@@ -73,6 +83,9 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
     )
 
     func barcodeArInfoAnnotationDidTap(_ annotation: BarcodeArInfoAnnotation) {
-        didTapInfoAnnotation.emit(on: self.emitter, payload: ["barcodeId": annotation.barcode.uniqueId])
+        didTapInfoAnnotation.emit(on: self.emitter, payload: [
+            "barcodeId": annotation.barcode.uniqueId,
+            "viewId": self.viewId
+        ])
     }
 }

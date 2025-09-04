@@ -117,7 +117,6 @@ open class SparkScanModule: NSObject, FrameworkModule {
 
     public func updateView(viewId: Int, viewJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            
             result.success()
             return
         }

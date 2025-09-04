@@ -21,6 +21,8 @@ public class FrameworksSparkScanView: FrameworksBaseView {
     public var viewId: Int {
         return _viewId
     }
+    
+    public var parentId: Int? { nil }
 
     private var view: SparkScanView!
     private var mode: SparkScan!

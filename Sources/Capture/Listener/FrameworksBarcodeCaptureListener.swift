@@ -31,7 +31,7 @@ open class FrameworksBarcodeCaptureListener: NSObject, BarcodeCaptureListener {
     private let emitter: Emitter
 
     private var latestSession: BarcodeCaptureSession?
-    private var isEnabled = AtomicBool()
+    private var isEnabled = AtomicValue<Bool>()
     private let barcodeScannedEvent = EventWithResult<Bool>(event: Event(FrameworksBarcodeCaptureEvent.barcodeScanned))
     private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(FrameworksBarcodeCaptureEvent.sessionUpdated))
 

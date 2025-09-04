@@ -15,9 +15,11 @@ fileprivate extension Event {
 
 open class FrameworksBarcodePickAsyncMapperProductProviderCallback: NSObject, BarcodePickAsyncMapperProductProviderDelegate {
     private let emitter: Emitter
+    private let viewId: Int
 
-    public init(emitter: Emitter) {
+    public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
+        self.viewId = viewId
         identifiersForItemsEvent = EventWithResult(event: Event(.onProductIdentifierForItems))
     }
 
@@ -25,8 +27,12 @@ open class FrameworksBarcodePickAsyncMapperProductProviderCallback: NSObject, Ba
 
     public func mapItems(_ items: [String],
                   completionHandler: @escaping ([BarcodePickProductProviderCallbackItem]) -> Void) {
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickEvent.onProductIdentifierForItems.rawValue) else { return }
         let result = identifiersForItemsEvent.emit(on: emitter,
-                                                   payload: ["itemsData": items])
+                                                   payload: [
+                                                       "itemsData": items,
+                                                       "viewId": self.viewId
+                                                   ])
         if let result = result {
             completionHandler(result)
         }
