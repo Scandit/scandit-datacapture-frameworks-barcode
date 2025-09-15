@@ -43,16 +43,6 @@ open class SparkScanModule: NSObject, FrameworkModule {
         guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.disableSparkScanListener()
     }
-    
-    public func addAsyncSparkScanListener(viewId: Int) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
-        viewInstance.enableSparkScanListenerInAsyncMode()
-    }
-
-    public func removeAsyncSparkScanListener(viewId: Int) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
-        viewInstance.disableSparkScanListenerInAsyncMode()
-    }
 
     public func finishDidUpdateSession(viewId: Int, enabled: Bool) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else { return }

@@ -33,9 +33,6 @@ fileprivate extension Emitter {
 }
 
 open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListener {
-    private static let asyncTimeoutInterval: TimeInterval = 600 // 10 mins
-    private static let defaultTimeoutInterval: TimeInterval = 2
-    
     private let emitter: Emitter
 
     private let didUpdateSelectionEvent = EventWithResult<Bool>(event: Event(.didUpdateSelection))
@@ -58,20 +55,6 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
         lastSession = nil
         didUpdateSessionEvent.reset()
         didUpdateSelectionEvent.reset()
-    }
-    
-    public func enableAsync() {
-        [didUpdateSelectionEvent, didUpdateSessionEvent].forEach {
-            $0.timeout = Self.asyncTimeoutInterval
-        }
-        enable()
-    }
-
-    public func disableAsync() {
-        disable()
-        [didUpdateSelectionEvent, didUpdateSessionEvent].forEach {
-            $0.timeout = Self.defaultTimeoutInterval
-        }
     }
 
     public func finishDidSelect(enabled: Bool) {

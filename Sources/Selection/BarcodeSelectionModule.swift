@@ -68,14 +68,6 @@ open class BarcodeSelectionModule: NSObject, FrameworkModule {
     public func removeListener() {
         barcodeSelectionListener.disable()
     }
-    
-    public func addAsyncListener() {
-        barcodeSelectionListener.enableAsync()
-    }
-
-    public func removeAsyncListener() {
-        barcodeSelectionListener.disableAsync()
-    }
 
     public func unfreezeCamera() {
         barcodeSelection?.unfreezeCamera()

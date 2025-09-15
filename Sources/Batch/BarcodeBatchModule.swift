@@ -58,22 +58,6 @@ open class BarcodeBatchModule: BasicFrameworkModule<FrameworksBarcodeBatchMode> 
         }
     }
 
-    public func addAsyncBarcodeBatchListener(_ modeId: Int) {
-        guard let mode = getModeFromCache(modeId) else {
-            addPostModeCreationAction(modeId, action: {
-                self.addAsyncBarcodeBatchListener(modeId)
-            })
-            return
-        }
-        mode.addAsyncListener()
-    }
-
-    public func removeAsyncBarcodeBatchListener(_ modeId: Int) {
-        if let mode = getModeFromCache(modeId) {
-            mode.removeAsyncListener()
-        }
-    }
-
     public func finishDidUpdateSession(modeId: Int, enabled: Bool) {
         if let mode = getModeFromCache(modeId) {
             mode.finishDidUpdateSession(enabled: enabled)
@@ -353,7 +337,7 @@ open class BarcodeBatchModule: BasicFrameworkModule<FrameworksBarcodeBatchMode> 
 
         case "addBarcodeBatchListener":
             if let modeId: Int = method.argument(key: "modeId") {
-                addAsyncBarcodeBatchListener(modeId)
+                addBarcodeBatchListener(modeId)
                 result.success()
             } else {
                 result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
@@ -361,7 +345,7 @@ open class BarcodeBatchModule: BasicFrameworkModule<FrameworksBarcodeBatchMode> 
 
         case "removeBarcodeBatchListener":
             if let modeId: Int = method.argument(key: "modeId") {
-                removeAsyncBarcodeBatchListener(modeId)
+                removeBarcodeBatchListener(modeId)
                 result.success()
             } else {
                 result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
@@ -597,7 +581,7 @@ extension BarcodeBatchModule: DeserializationLifeCycleObserver {
         if parentId != -1 {
             mode = getModeFromCacheByParent(parentId) as? FrameworksBarcodeBatchMode
         } else {
-            mode = getTopmostMode()
+            mode = getModeFromCache(creationParams.modeId)
         }
         
         if mode == nil {
@@ -606,7 +590,9 @@ extension BarcodeBatchModule: DeserializationLifeCycleObserver {
                     try? self.dataCaptureView(addOverlay: overlayJson, to: view)
                 }
             } else {
-                Log.error("Unable to add the BarcodeBatchOverlay because the mode is null.")
+                addPostModeCreationAction(creationParams.modeId) {
+                    try? self.dataCaptureView(addOverlay: overlayJson, to: view)
+                }
             }
             return
         }

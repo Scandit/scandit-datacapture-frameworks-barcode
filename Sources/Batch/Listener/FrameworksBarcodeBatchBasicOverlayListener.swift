@@ -22,7 +22,7 @@ open class FrameworksBarcodeBatchBasicOverlayListener: NSObject, BarcodeBatchBas
         guard emitter.hasListener(for: brushForTrackedBarcodeEvent) else { return overlay.brush }
         brushForTrackedBarcodeEvent.emit(on: emitter,
                                          payload: ["trackedBarcode": trackedBarcode.jsonString])
-        return overlay.brush
+        return nil
     }
     
     public func barcodeBatchBasicOverlay(_ overlay: BarcodeBatchBasicOverlay,

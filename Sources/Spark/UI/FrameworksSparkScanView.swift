@@ -131,21 +131,13 @@ public class FrameworksSparkScanView: FrameworksBaseView {
         modeListener.enable()
     }
 
-    public func enableSparkScanListenerInAsyncMode() {
-        modeListener.enableAsync()
-    }
-
     public func disableSparkScanListener() {
         modeListener.disable()
     }
 
-    public func disableSparkScanListenerInAsyncMode() {
-        modeListener.disableAsync()
-    }
-
     public func dispose() {
         dispatchMain {
-            self.modeListener.disableAsync()
+            self.modeListener.disable()
             self.mode.removeListener(self.modeListener)
             self.view.uiDelegate = nil
             self.view.stopScanning()

@@ -50,10 +50,8 @@ public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
     ) throws {
         mode = try deserializer.mode(fromJSONString: creationData.modeJson, with: dataCaptureContext)
         captureContext.addMode(mode: mode)
-
-        if creationData.hasListener {
-            mode.addListener(listener)
-        }
+        mode.addListener(listener)
+        listener.setEnabled(enabled: creationData.hasListener)
 
         mode.isEnabled = creationData.isEnabled
         _modeId = creationData.modeId
@@ -67,21 +65,11 @@ public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
     }
 
     public func addListener() {
-        mode.addListener(listener)
+        listener.setEnabled(enabled: true)
     }
 
     public func removeListener() {
-        mode.removeListener(listener)
-    }
-
-    public func addAsyncListener() {
-        mode.addListener(listener)
-        listener.enableAsync()
-    }
-
-    public func removeAsyncListener() {
-        mode.removeListener(listener)
-        listener.disableAsync()
+        listener.setEnabled(enabled: false)
     }
 
     public func finishDidUpdateSession(enabled: Bool) {

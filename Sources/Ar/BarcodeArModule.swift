@@ -132,6 +132,16 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
             result.reject(error: error)
         }
     }
+    
+    public func updateMode(viewId: Int, modeJson: String, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+
+        viewInstance.updateMode(modeJson: modeJson)
+        result.success()
+    }
 
     public func addModeListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {

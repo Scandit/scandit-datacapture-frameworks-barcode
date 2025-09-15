@@ -34,9 +34,7 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
     internal let emitter: Emitter
     private let cachedBatchSession: AtomicValue<FrameworksBarcodeBatchSession?>
     private let modeId: Int
-
-    private static let asyncTimeoutInterval: TimeInterval = 600 // 10 mins
-    private static let defaultTimeoutInterval: TimeInterval = 2
+    private let isEnabled: AtomicValue<Bool> = AtomicValue(false)
 
     public init(emitter: Emitter, modeId: Int, cachedBatchSession: AtomicValue<FrameworksBarcodeBatchSession?>) {
         self.emitter = emitter
@@ -50,6 +48,10 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
                                 didUpdate session: BarcodeBatchSession,
                                 frameData: FrameData) {
         self.cachedBatchSession.value = FrameworksBarcodeBatchSession.fromBatchSession(session: session)
+        
+        if !isEnabled.value {
+            return
+        }
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
         
@@ -82,12 +84,8 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
         self.cachedBatchSession.value = nil
         sessionUpdatedEvent.reset()
     }
-
-    public func enableAsync() {
-        sessionUpdatedEvent.timeout = Self.asyncTimeoutInterval
-    }
-
-    public func disableAsync() {
-        sessionUpdatedEvent.timeout = Self.defaultTimeoutInterval
+    
+    public func setEnabled(enabled: Bool) {
+        isEnabled.value = enabled
     }
 }
