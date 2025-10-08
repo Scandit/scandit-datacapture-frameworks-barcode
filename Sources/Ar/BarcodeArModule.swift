@@ -8,19 +8,49 @@ import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
 open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleObserver {
-    private let emitter: Emitter
+    private let barcodeArListener: FrameworksBarcodeArListener
+    private let barcodeArViewUiDelegate: FrameworksBarcodeArViewUiListener
     private let deserializer: BarcodeArDeserializer
     private let viewDeserialzier: BarcodeArViewDeserializer
+    private let highlightProvider: FrameworksBarcodeArHighlightProvider
+    private let annotationProvider: FrameworksBarcodeArAnnotationProvider
     private let augmentationsCache: BarcodeArAugmentationsCache
     private let captureContext = DefaultFrameworksCaptureContext.shared
 
-    private let viewCache = FrameworksViewsCache<FrameworksBarcodeArView>()
-
     public init(emitter: Emitter) {
-        self.emitter = emitter
         self.deserializer = BarcodeArDeserializer()
         self.viewDeserialzier = BarcodeArViewDeserializer()
         self.augmentationsCache = BarcodeArAugmentationsCache()
+
+        self.barcodeArViewUiDelegate = FrameworksBarcodeArViewUiListener(emitter: emitter)
+        self.barcodeArListener = FrameworksBarcodeArListener(emitter: emitter, cache: augmentationsCache)
+        self.highlightProvider = FrameworksBarcodeArHighlightProvider(
+            emitter: emitter,
+            parser: BarcodeArHighlightParser(emitter: emitter),
+            cache: augmentationsCache
+        )
+        let infoAnnotationDelegate = FrameworksInfoAnnotationDelegate(emitter: emitter)
+        let popoverAnnotationDelegate = FrameworksPopoverAnnotationDelegate(emitter: emitter)
+        self.annotationProvider = FrameworksBarcodeArAnnotationProvider(
+            emitter: emitter,
+            parser: BarcodeArAnnotationParser(
+                infoAnnotationDelegate: infoAnnotationDelegate,
+                popoverAnnotationDelegate: popoverAnnotationDelegate,
+                cache: augmentationsCache
+            ),
+            cache: augmentationsCache
+        )
+    }
+
+    public var barcodeArView: BarcodeArView?
+
+    private var barcodeAr: BarcodeAr? {
+        willSet {
+            barcodeAr?.removeListener(barcodeArListener)
+        }
+        didSet {
+            barcodeAr?.addListener(barcodeArListener)
+        }
     }
 
     public func didStart() {
@@ -38,135 +68,93 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
 
     private func cleanup() {
         augmentationsCache.clear()
-        viewCache.disposeAll()
+        if let view = self.barcodeArView {
+            view.stop()
+            view.uiDelegate = nil
+            view.highlightProvider = nil
+            view.annotationProvider = nil
+            view.removeFromSuperview()
+        }
+        self.barcodeArView = nil
+
+        self.barcodeAr?.removeListener(barcodeArListener)
+        self.barcodeAr = nil
     }
 
     public let defaults: DefaultsEncodable = BarcodeArDefaults.shared
 
-    public func registerBarcodeArViewUiListener(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.addBarcodeArViewUiListener()
+    public func registerBarcodeArViewUiListener(result: FrameworksResult) {
+        self.barcodeArView?.uiDelegate = self.barcodeArViewUiDelegate
         result.success()
     }
 
-    public func unregisterBarcodeArViewUiListener(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.removeBarcodeArViewUiListener()
+    public func unregisterBarcodeArViewUiListener(result: FrameworksResult) {
+        self.barcodeArView?.uiDelegate = nil
         result.success()
     }
 
-    public func registerBarcodeArHighlightProvider(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.addBarcodeArHighlightProvider()
+    public func registerBarcodeArHighlightProvider(result: FrameworksResult) {
+        self.barcodeArView?.highlightProvider = self.highlightProvider
         result.success()
     }
 
-    public func unregisterBarcodeArHighlightProvider(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.removeBarcodeArHighlightProvider()
+    public func unregisterBarcodeArHighlightProvider(result: FrameworksResult) {
+        self.barcodeArView?.highlightProvider = nil
         result.success()
     }
 
-    public func registerBarcodeArAnnotationProvider(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.addBarcodeArAnnotationProvider()
+    public func registerBarcodeArAnnotationProvider(result: FrameworksResult) {
+        self.barcodeArView?.annotationProvider = self.annotationProvider
         result.success()
     }
 
-    public func unregisterBarcodeArAnnotationProvider(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.removeBarcodeArAnnotationProvider()
+    public func unregisterBarcodeArAnnotationProvider(result: FrameworksResult) {
+        self.barcodeArView?.annotationProvider = nil
         result.success()
     }
 
-    public func updateFeedback(viewId: Int, feedbackJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func updateFeedback(feedbackJson: String, result: FrameworksResult) {
         do {
-            try viewInstance.updateFeedback(feedbackJson: feedbackJson)
+            barcodeAr?.feedback = try BarcodeArFeedback(fromJSONString: feedbackJson)
             result.success(result: nil)
         } catch {
             result.reject(error: error)
         }
     }
 
-    public func resetLatestBarcodeArSession(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.resetSession()
+    public func resetLatestBarcodeArSession(result: FrameworksResult) {
+        barcodeArListener.resetSession()
         result.success()
     }
 
-    public func applyBarcodeArModeSettings(viewId: Int, modeSettingsJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+    public func applyBarcodeArModeSettings(modeSettingsJson: String, result: FrameworksResult) {
+        guard let mode = barcodeAr else {
             result.success()
             return
         }
 
         do {
-            try viewInstance.applySettings(settingsJson: modeSettingsJson)
+            let settings = try self.deserializer.settings(fromJSONString: modeSettingsJson)
+            mode.apply(settings)
+
             result.success()
         } catch {
             result.reject(error: error)
         }
     }
-    
-    public func updateMode(viewId: Int, modeJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
 
-        viewInstance.updateMode(modeJson: modeJson)
+    public func addModeListener(result: FrameworksResult) {
+        barcodeArListener.enable()
         result.success()
     }
 
-    public func addModeListener(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.addBarcodeArListener()
+    public func removeModeListener(result: FrameworksResult) {
+        barcodeArListener.disable()
         result.success()
     }
 
-    public func removeModeListener(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.removeBarcodeArListener()
-        result.success()
-    }
-
-    public func finishDidUpdateSession(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.finishDidUpdateSession(enabled: true)
+    public func finishDidUpdateSession(result: FrameworksResult) {
+        barcodeArListener.finishDidUpdateSession()
         result.success()
     }
 
@@ -176,131 +164,58 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         }
     }
 
-    public func finishHighlightForBarcode(viewId: Int, highlightJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func finishHighlightForBarcode(highlightJson: String, result: FrameworksResult) {
         let block = { [weak self] in
-            guard let _ = self else {
+            guard let self = self else {
                 return
             }
-            viewInstance.finishHighlightForBarcode(highlightJson: highlightJson)
+            self.highlightProvider.finishHighlightForBarcode(highlightJson: highlightJson)
         }
         dispatchMain(block)
         result.success()
     }
 
-    public func finishAnnotationForBarcode(viewId: Int, annotationJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func finishAnnotationForBarcode(annotationJson: String, result: FrameworksResult) {
         let block = { [weak self] in
-            guard let _ = self else {
+            guard let self = self else {
                 return
             }
-            viewInstance.finishAnnotationForBarcode(annotationJson: annotationJson)
+            self.annotationProvider.finishAnnotationForBarcode(annotationJson: annotationJson)
         }
         dispatchMain(block)
         result.success()
     }
 
-    public func updateBarcodeArPopoverButtonAtIndex(viewId: Int, updateJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func updateBarcodeArPopoverButtonAtIndex(updateJson: String, result: FrameworksResult) {
         let block = { [weak self] in
-            guard let _ = self else {
+            guard let self = self else {
                 return
             }
-            viewInstance.updateBarcodeArPopoverButtonAtIndex(updateJson: updateJson)
+            self.annotationProvider.updateBarcodeArPopoverButtonAtIndex(updateJson: updateJson)
         }
         dispatchMain(block)
         result.success()
     }
 
-    public func updateHighlight(viewId: Int, highlightJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func updateHighlight(highlightJson: String, result: FrameworksResult) {
         let block = { [weak self] in
-            guard let _ = self else {
+            guard let self = self else {
                 return
             }
-            viewInstance.updateHighlight(highlightJson: highlightJson)
+            self.highlightProvider.updateHighlight(highlightJson: highlightJson)
         }
         dispatchMain(block)
         result.success()
     }
 
-    public func updateAnnotation(viewId: Int, annotationJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func updateAnnotation(annotationJson: String, result: FrameworksResult) {
         let block = { [weak self] in
-            guard let _ = self else {
+            guard let self = self else {
                 return
             }
-            viewInstance.updateAnnotation(annotationJson: annotationJson)
+            self.annotationProvider.updateAnnotation(annotationJson: annotationJson)
         }
         dispatchMain(block)
-        result.success()
-    }
-
-    public func updateView(viewId: Int, viewJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.updateView(viewJson: viewJson)
-        result.success()
-    }
-
-    public func viewStart(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.startMode()
-        result.success()
-    }
-
-    public func viewStop(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.stopMode()
-        result.success()
-    }
-
-    public func showView(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.show()
-        result.success()
-    }
-
-    public func hideView(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.hide()
-        result.success()
-    }
-
-    public func removeView(viewId: Int, result: FrameworksResult) {
-        viewCache.remove(viewId: viewId)?.dispose()
-        if let previousView = viewCache.getTopMost() {
-            previousView.show()
-        }
         result.success()
     }
 }
@@ -308,83 +223,105 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
 public extension BarcodeArModule {
 
     // swiftlint:disable function_body_length
-    func addViewFromJson(parent: UIView, viewJson: String, result: FrameworksResult) {
-        
-        guard let context = self.captureContext.context else {
-            result.reject(error: ScanditFrameworksCoreError.nilDataCaptureContext)
-            return
-        }
-        let json = JSONValue(string: viewJson)
-        guard json.containsKey("View") else {
-            result.reject(error: ScanditFrameworksCoreError.deserializationError(error: nil, json: viewJson))
-            return
-        }
-        
-        do {
-            let viewCreationParams = try BarcodeArViewCreationData.fromJson(viewJson)
-            
-            print("ilber -> Let's create a view with id \(viewCreationParams.viewId)")
-            
-            let block = { [weak self] in
-                guard let self = self else {
-                    result.reject(error: ScanditFrameworksCoreError.nilSelf)
-                    return
-                }
-               
-                do {
-                   
-                    if let existingView = viewCache.getView(viewId: viewCreationParams.viewId) {
-                        existingView.dispose()
-                        _ = viewCache.remove(viewId: existingView.viewId)
-                    }
-                    
-                    if let previousView = viewCache.getTopMost() {
-                        previousView.hide()
-                    }
-
-                    let frameworksView = try FrameworksBarcodeArView.create(
-                        emitter: self.emitter,
-                        parent: parent,
-                        context: context,
-                        viewCreationParams: viewCreationParams,
-                        augmentationsCache: self.augmentationsCache
-                    )
-                    viewCache.addView(view: frameworksView)
-                    result.success()
-                } catch {
-                    result.reject(error: error)
-                }
+    func addViewToContainer(container: UIView, jsonString: String, result: FrameworksResult) {
+        let block = { [weak self] in
+            guard let self = self else {
+                result.reject(error: ScanditFrameworksCoreError.nilSelf)
+                return
             }
-            dispatchMain(block)
-        } catch {
-            result.reject(error: error)
+            guard let context = self.captureContext.context else {
+                result.reject(error: ScanditFrameworksCoreError.nilDataCaptureContext)
+                return
+            }
+            let json = JSONValue(string: jsonString)
+            guard json.containsKey("BarcodeAr"), json.containsKey("View") else {
+                result.reject(error: ScanditFrameworksCoreError.deserializationError(error: nil,
+                                                                                     json: jsonString))
+                return
+            }
+            let barcodeArJson = json.object(forKey: "BarcodeAr")
+
+            do {
+                let barcodeAr = try self.deserializer.mode(fromJSONString: barcodeArJson.jsonString(),
+                                                             context: context)
+                self.barcodeAr = barcodeAr
+
+                let barcodeArViewJson = json.object(forKey: "View")
+                let hasUiListener = barcodeArViewJson.bool(forKey: "hasUiListener", default: false)
+                let hasHighlightProvider = barcodeArViewJson.bool(forKey: "hasHighlightProvider", default: false)
+                let hasAnnotationProvider = barcodeArViewJson.bool(forKey: "hasAnnotationProvider", default: false)
+                let isStarted = barcodeArViewJson.bool(forKey: "isStarted", default: false)
+
+                barcodeArViewJson.removeKeys(
+                    ["hasUiListener", "hasHighlightProvider", "hasAnnotationProvider", "isStarted"]
+                )
+                let barcodeArView = try self.viewDeserialzier.view(
+                    fromJSONString: barcodeArViewJson.jsonString(),
+                    parentView: container,
+                    mode: barcodeAr
+                )
+
+                self.barcodeArView = barcodeArView
+                if hasUiListener {
+                    self.registerBarcodeArViewUiListener(result: NoopFrameworksResult())
+                }
+                if hasHighlightProvider {
+                    self.registerBarcodeArHighlightProvider(result: NoopFrameworksResult())
+                }
+                if hasAnnotationProvider {
+                    self.registerBarcodeArAnnotationProvider(result: NoopFrameworksResult())
+                }
+                if isStarted {
+                    self.viewStart(result: NoopFrameworksResult())
+                }
+                result.success(result: nil)
+            } catch let error {
+                result.reject(error: ScanditFrameworksCoreError.deserializationError(error: error,
+                                                                                     json: nil))
+                return
+            }
         }
+        dispatchMain(block)
     }
     // swiftlint:enable function_body_length
 
-    func addViewToContainer(container: UIView, jsonString: String, result: FrameworksResult) {
-        addViewFromJson(parent: container, viewJson: jsonString, result: result)
+    func updateView(viewJson: String, result: FrameworksResult) {
+        let block = { [weak self] in
+            guard let self = self else {
+                result.reject(error: ScanditFrameworksCoreError.nilSelf)
+                return
+            }
+            guard let view = self.barcodeArView else {
+                result.reject(code: "-3", message: "BarcodeArView is nil", details: nil)
+                return
+            }
+            do {
+                self.barcodeArView = try self.viewDeserialzier.update(view, fromJSONString: viewJson)
+            } catch let error {
+                result.reject(error: error)
+                return
+            }
+        }
+        dispatchMain(block)
     }
 
-    func viewPause(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.view.pause()
+    func viewStart(result: FrameworksResult) {
+        self.barcodeArView?.start()
         result.success()
     }
 
-    func viewReset(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.view.reset()
+    func viewStop(result: FrameworksResult) {
+        self.barcodeArView?.stop()
         result.success()
     }
 
-    func getTopMostView() -> BarcodeArView? {
-        return viewCache.getTopMost()?.view
+    func viewPause(result: FrameworksResult) {
+        self.barcodeArView?.pause()
+        result.success()
+    }
+    
+    func viewReset(result: FrameworksResult) {
+        self.barcodeArView?.reset()
+        result.success()
     }
 }

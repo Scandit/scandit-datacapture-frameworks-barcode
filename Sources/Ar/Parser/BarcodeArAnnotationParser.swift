@@ -20,15 +20,12 @@ public enum FrameworksBarcodeArAnnotationEvents: String, CaseIterable {
 }
 
 public class BarcodeArAnnotationParser {
-    private var infoAnnotationDelegate: FrameworksInfoAnnotationDelegate?
-    private var popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate?
-    private var cache: BarcodeArAugmentationsCache?
+    private let infoAnnotationDelegate: FrameworksInfoAnnotationDelegate
+    
+    private let popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate
+    private let cache: BarcodeArAugmentationsCache
 
-    init() {
-        // Initialize without delegates - they will be set later
-    }
-
-    func setDelegates(
+    init(
         infoAnnotationDelegate: FrameworksInfoAnnotationDelegate,
         popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate,
         cache: BarcodeArAugmentationsCache
@@ -88,7 +85,7 @@ public class BarcodeArAnnotationParser {
             )
             return
         }
-
+        
         if index > annotation.buttons.count - 1 {
             Log.error(
                 "Invalid index received when trying to update the updateBarcodeArPopoverButton",
@@ -96,7 +93,7 @@ public class BarcodeArAnnotationParser {
             )
             return
         }
-
+        
         let button = annotation.buttons[index]
         if let textColorHex = json.optionalString(forKey: "textColor"),
            let textColor = UIColor(sdcHexString: textColorHex) {
