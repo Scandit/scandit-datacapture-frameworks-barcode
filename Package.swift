@@ -14,7 +14,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(path: "../scandit-datacapture-frameworks-core"),
+        .package(url: "https://github.com/Scandit/scandit-datacapture-frameworks-core.git", exact: "8.0.0-beta.1"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
