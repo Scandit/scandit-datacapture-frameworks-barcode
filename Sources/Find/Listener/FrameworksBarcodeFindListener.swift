@@ -11,14 +11,13 @@ public enum FrameworksBarcodeFindEvent: String, CaseIterable {
     case didStartSearch = "BarcodeFindListener.onSearchStarted"
     case didPauseSearch = "BarcodeFindListener.onSearchPaused"
     case didStopSearch = "BarcodeFindListener.onSearchStopped"
-    case didUpdateSession = "BarcodeFindListener.didUpdateSession"
     case finishButtonTapped = "BarcodeFindViewUiListener.onFinishButtonTapped"
     case transformBarcodeData = "BarcodeFindTransformer.transformBarcodeData"
 }
 
 extension Emitter {
-    func hasViewSpecificListenersForEvent(_ viewId: Int, for event: FrameworksBarcodeFindEvent) -> Bool {
-        return hasViewSpecificListenersForEvent(viewId, for: event.rawValue)
+    func hasListener(for event: FrameworksBarcodeFindEvent) -> Bool {
+        hasListener(for: event.rawValue)
     }
 }
 
@@ -30,54 +29,49 @@ extension Event {
 
 open class FrameworksBarcodeFindListener: NSObject, BarcodeFindListener {
     private let emitter: Emitter
-    private let viewId: Int
+    private var isEnabled = AtomicBool()
     private let didStartSearchEvent = Event(.didStartSearch)
     private let didPauseSearchEvent = Event(.didPauseSearch)
     private let didStopSearchEvent = Event(.didStopSearch)
-    private let didUpdateSessionEvent = Event(.didUpdateSession)
 
-    public init(emitter: Emitter, viewId: Int) {
+    public init(emitter: Emitter) {
         self.emitter = emitter
-        self.viewId = viewId
+    }
+
+    public func enable() {
+        if isEnabled.value { return }
+        isEnabled.value = true
+    }
+
+    public func disable() {
+        if isEnabled.value {
+            isEnabled.value = false
+        }
     }
 
     public func barcodeFindDidStartSearch(_ barcodeFind: BarcodeFind) {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: .didStartSearch) else { return }
+        guard isEnabled.value, emitter.hasListener(for: .didStartSearch) else { return }
         dispatchMain { [weak self] in
             guard let self else { return }
-            self.didStartSearchEvent.emit(on: self.emitter, payload: ["viewId": self.viewId])
+            self.didStartSearchEvent.emit(on: self.emitter, payload: [:])
         }
     }
 
     public func barcodeFind(_ barcodeFind: BarcodeFind, didPauseSearch foundItems: Set<BarcodeFindItem>) {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: .didPauseSearch) else { return }
+        guard isEnabled.value, emitter.hasListener(for: .didPauseSearch) else { return }
         let foundItemsBarcodeData = foundItems.map { $0.searchOptions.barcodeData }
         dispatchMain { [weak self] in
             guard let self else { return }
-            self.didPauseSearchEvent.emit(on: self.emitter, payload: ["foundItems": foundItemsBarcodeData,
-                                                                      "viewId": self.viewId])
+            self.didPauseSearchEvent.emit(on: self.emitter, payload: ["foundItems": foundItemsBarcodeData])
         }
     }
 
     public func barcodeFind(_ barcodeFind: BarcodeFind, didStopSearch foundItems: Set<BarcodeFindItem>) {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: .didStopSearch) else { return }
+        guard isEnabled.value, emitter.hasListener(for: .didStopSearch) else { return }
         let foundItemsBarcodeData = foundItems.map { $0.searchOptions.barcodeData }
         dispatchMain { [weak self] in
             guard let self else { return }
-            self.didStopSearchEvent.emit(on: self.emitter, payload: ["foundItems": foundItemsBarcodeData,
-                                                                     "viewId": self.viewId])
+            self.didStopSearchEvent.emit(on: self.emitter, payload: ["foundItems": foundItemsBarcodeData])
         }
-    }
-    
-    public func barcodeFind(_ barcodeFind: BarcodeFind, didUpdate session: BarcodeFindSession) {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: .didUpdateSession) else { return }
-        didUpdateSessionEvent.emit(
-            on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "viewId": self.viewId
-            ]
-        )
-
     }
 }
