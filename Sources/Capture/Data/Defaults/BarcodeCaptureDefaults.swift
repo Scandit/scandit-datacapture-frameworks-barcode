@@ -19,7 +19,7 @@ struct BarcodeCaptureDefaults: DefaultsEncodable {
         let settings = BarcodeCaptureSettings()
         let mode = BarcodeCapture(context: nil, settings: settings)
         let overlay = BarcodeCaptureOverlay(barcodeCapture: mode)
-        let barcodeCaptureOverlayDefaults = BarcodeCaptureOverlayDefaults(defaultStyle: overlay.style)
+        let barcodeCaptureOverlayDefaults = BarcodeCaptureOverlayDefaults()
         return BarcodeCaptureDefaults(recommendedCameraSettings: cameraSettingsDefaults,
                                       barcodeCaptureSettingsDefaults: barcodeCaptureSettingsDefaults,
                                       barcodeCaptureOverlayDefaults: barcodeCaptureOverlayDefaults)

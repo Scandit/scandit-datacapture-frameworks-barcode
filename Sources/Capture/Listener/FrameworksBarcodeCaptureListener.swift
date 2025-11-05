@@ -25,59 +25,58 @@ fileprivate extension Emitter {
 }
 
 open class FrameworksBarcodeCaptureListener: NSObject, BarcodeCaptureListener {
-    private static let asyncTimeoutInterval: TimeInterval = 600 // 10 mins
-    private static let defaultTimeoutInterval: TimeInterval = 2
+    internal let emitter: Emitter
+    private let cachedCaptureSession: AtomicValue<FrameworksBarcodeCaptureSession?>
+    private let modeId: Int
 
-    private let emitter: Emitter
+    public init(emitter: Emitter, modeId: Int, cachedCaptureSession: AtomicValue<FrameworksBarcodeCaptureSession?>) {
+        self.emitter = emitter
+        self.modeId = modeId
+        self.cachedCaptureSession = cachedCaptureSession
+    }
 
-    private var latestSession: BarcodeCaptureSession?
-    private var isEnabled = AtomicBool()
     private let barcodeScannedEvent = EventWithResult<Bool>(event: Event(FrameworksBarcodeCaptureEvent.barcodeScanned))
     private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(FrameworksBarcodeCaptureEvent.sessionUpdated))
-
-    public init(emitter: Emitter) {
-        self.emitter = emitter
-    }
 
     public func barcodeCapture(_ barcodeCapture: BarcodeCapture,
                         didScanIn session: BarcodeCaptureSession,
                         frameData: FrameData) {
-        guard isEnabled.value, emitter.hasListener(for: .barcodeScanned) else { return }
-        latestSession = session
+        self.cachedCaptureSession.value = FrameworksBarcodeCaptureSession.fromCaptureSession(session: session)
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
+        let payload = [
+            "session": session.jsonString,
+            "frameId": frameId,
+            "modeId": modeId
+        ] as [String : Any?]
+
         barcodeScannedEvent.emit(
             on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "frameId": frameId
-            ]
+            payload: payload
         )
-        
-        LastFrameData.shared.removeFromCache(frameId: frameId)
-    }
 
-    public func finishDidScan(enabled: Bool) {
-        barcodeScannedEvent.unlock(value: enabled)
+        LastFrameData.shared.removeFromCache(frameId: frameId)
     }
 
     public func barcodeCapture(_ barcodeCapture: BarcodeCapture,
                         didUpdate session: BarcodeCaptureSession,
                         frameData: FrameData) {
-        guard isEnabled.value, emitter.hasListener(for: FrameworksBarcodeCaptureEvent.sessionUpdated) else { return }
-        latestSession = session
+        self.cachedCaptureSession.value = FrameworksBarcodeCaptureSession.fromCaptureSession(session: session)
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
+        let payload = [
+            "session": session.jsonString,
+            "frameId": frameId,
+            "modeId": modeId
+        ] as [String : Any?]
+
         sessionUpdatedEvent.emit(
             on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "frameId": frameId
-            ]
+            payload: payload
         )
-        
+
         LastFrameData.shared.removeFromCache(frameId: frameId)
     }
 
@@ -85,39 +84,20 @@ open class FrameworksBarcodeCaptureListener: NSObject, BarcodeCaptureListener {
         sessionUpdatedEvent.unlock(value: enabled)
     }
 
+    public func finishDidScan(enabled: Bool) {
+        barcodeScannedEvent.unlock(value: enabled)
+    }
+
     public func resetSession(with frameSequenceId: Int?) {
-        guard let session = latestSession, frameSequenceId == nil || session.frameSequenceId == frameSequenceId else {
-            return
-        }
-        session.reset()
+        guard
+            let session = self.cachedCaptureSession.value,
+            frameSequenceId == nil || session.frameSequenceId == frameSequenceId else { return }
+        session.captureSession?.reset()
     }
 
-    public func clearCache() {
-        latestSession = nil
-    }
-
-    public func enable() {
-        isEnabled.value = true
-    }
-
-    public func disable() {
-        isEnabled.value = false
-        latestSession = nil
-        barcodeScannedEvent.reset()
+    public func reset() {
+        self.cachedCaptureSession.value = nil
         sessionUpdatedEvent.reset()
-    }
-    
-    public func enableAsync() {
-        [barcodeScannedEvent, sessionUpdatedEvent].forEach {
-            $0.timeout = Self.asyncTimeoutInterval
-        }
-        enable()
-    }
-
-    public func disableAsync() {
-        disable()
-        [barcodeScannedEvent, sessionUpdatedEvent].forEach {
-            $0.timeout = Self.defaultTimeoutInterval
-        }
+        barcodeScannedEvent.reset()
     }
 }
