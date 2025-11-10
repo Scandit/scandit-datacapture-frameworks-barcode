@@ -65,7 +65,7 @@ class AdvancedOverlayViewPool {
         return imageView
     }
 
-    public func parse(data: Data) -> UIImage? {
+    private func parse(data: Data) -> UIImage? {
         guard let image = UIImage(data: data) else {
             return nil
         }
