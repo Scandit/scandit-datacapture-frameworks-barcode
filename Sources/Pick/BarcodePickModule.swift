@@ -9,41 +9,13 @@ import ScanditFrameworksCore
 
 open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycleObserver {
     let emitter: Emitter
-    var actionListener: FrameworksBarcodePickActionListener
-    var scanningListener: FrameworksBarcodePickScanningListener
-    var viewListener: FrameworksBarcodePickViewListener
-    var viewUiListener: FrameworksBarcodePickViewUiListener
-    let deserializer = BarcodePickDeserializer()
+
     private let captureContext = DefaultFrameworksCaptureContext.shared
 
-    public var barcodePickView: BarcodePickView? {
-        willSet {
-            barcodePickView?.removeActionListener(actionListener)
-            barcodePickView?.removeListener(viewListener)
-            barcodePickView?.uiDelegate = nil
-        }
-        didSet {
-            barcodePickView?.addActionListener(actionListener)
-            barcodePickView?.addListener(viewListener)
-            barcodePickView?.uiDelegate = viewUiListener
-        }
-    }
-    private var barcodePick: BarcodePick? {
-        willSet {
-            barcodePick?.removeScanningListener(scanningListener)
-        }
-        didSet {
-            barcodePick?.addScanningListener(scanningListener)
-        }
-    }
-    private var asyncMapperProductProviderCallback: FrameworksBarcodePickAsyncMapperProductProviderCallback?
+    private let viewCache = FrameworksViewsCache<FrameworksBarcodePickView>()
 
     public init(emitter: Emitter) {
         self.emitter = emitter
-        actionListener = FrameworksBarcodePickActionListener(emitter: emitter)
-        scanningListener = FrameworksBarcodePickScanningListener(emitter: emitter)
-        viewListener = FrameworksBarcodePickViewListener(emitter: emitter)
-        viewUiListener = FrameworksBarcodePickViewUiListener(emitter: emitter)
     }
 
     public func didStart() {
@@ -52,20 +24,15 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
 
     public func didStop() {
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
-        actionListener.disable()
-        viewListener.disable()
-        viewUiListener.disable()
-        barcodePickView?.stop()
-        barcodePickView?.removeFromSuperview()
+        cleanup()
     }
 
     public func didDisposeDataCaptureContext() {
-        self.barcodePickView?.uiDelegate = nil
-        self.barcodePickView?.removeListener(viewListener)
-        self.barcodePickView?.removeActionListener(actionListener)
-        self.barcodePick?.removeScanningListener(scanningListener)
-        self.asyncMapperProductProviderCallback = nil
-        self.barcodePickView = nil
+        cleanup()
+    }
+
+    private func cleanup() {
+        viewCache.disposeAll()
     }
 
     public let defaults: DefaultsEncodable = BarcodePickDefaults.shared
@@ -81,46 +48,33 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
                 return
             }
             let json = JSONValue(string: jsonString)
-            guard json.containsKey("BarcodePick"), json.containsKey("View") else {
+            guard json.containsKey("View") else {
                 result.reject(error: ScanditFrameworksCoreError.deserializationError(error: nil,
                                                                                      json: jsonString))
                 return
             }
-            let barcodePickJson = json.object(forKey: "BarcodePick")
-            let productMapperJson = barcodePickJson.object(forKey: "ProductProvider").jsonString()
 
             do {
-                let delegate = FrameworksBarcodePickAsyncMapperProductProviderCallback(emitter: self.emitter)
-                let productProvider = try self.deserializer.asyncMapperProductProvider(fromJSONString: productMapperJson,
-                                                                                       delegate: delegate)
-                self.asyncMapperProductProviderCallback = delegate
-                let barcodePick = try self.deserializer.mode(fromJSONString: barcodePickJson.jsonString(),
-                                                             context: context,
-                                                             productProvider: productProvider)
-                self.barcodePick = barcodePick
-                let barcodePickViewJson = json.object(forKey: "View")
-                let hasActionListeners = barcodePickViewJson.bool(forKey: "hasActionListeners", default: false)
-                let isStarted = barcodePickViewJson.bool(forKey: "isStarted", default: false)
-                let hasViewListeners = barcodePickViewJson.bool(forKey: "hasViewListeners", default: false)
-                let hasViewUiListener = barcodePickViewJson.bool(forKey: "hasViewUiListener", default: false)
-                barcodePickViewJson.removeKeys(["hasActionListeners", "isStarted", "hasViewListeners", "hasViewUiListener"])
-                let barcodePickView = try self.deserializer.view(fromJSONString: barcodePickViewJson.jsonString(),
-                                                                 context: context,
-                                                                 mode: barcodePick)
-                container.addSubview(barcodePickView)
-                self.barcodePickView = barcodePickView
-                if hasActionListeners {
-                    self.addActionListener()
+                let viewCreationParams = try BarcodePickViewCreationData.fromJson(jsonString)
+
+                if let existingView = viewCache.getView(viewId: viewCreationParams.viewId) {
+                    existingView.dispose()
+                    _ = viewCache.remove(viewId: existingView.viewId)
                 }
-                if hasViewListeners {
-                    self.addViewListener()
+
+                if let previousView = viewCache.getTopMost() {
+                    previousView.hide()
                 }
-                if hasViewUiListener {
-                    self.addViewUiListener()
-                }
-                if isStarted {
-                    self.viewStart()
-                }
+
+                let frameworksView = try FrameworksBarcodePickView.create(
+                    emitter: self.emitter,
+                    parent: container,
+                    context: context,
+                    viewCreationParams: viewCreationParams
+                )
+
+                viewCache.addView(view: frameworksView)
+
                 result.success(result: nil)
             } catch let error {
                 result.reject(error: ScanditFrameworksCoreError.deserializationError(error: error,
@@ -130,97 +84,258 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
         }
         dispatchMain(block)
     }
+}
 
-    public func updateView(viewJson: String, result: FrameworksResult) {
-        let block = { [weak self] in
-            guard let self = self else {
-                result.reject(error: ScanditFrameworksCoreError.nilSelf)
-                return
-            }
-            guard let view = self.barcodePickView else {
-                result.reject(code: "-3", message: "BarcodePickView is nil", details: nil)
-                return
-            }
-            do {
-                self.barcodePickView = try self.deserializer.update(view, fromJSONString: viewJson)
-            } catch let error {
-                result.reject(error: error)
-                return
-            }
+public extension BarcodePickModule {
+
+    func viewStart(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
         }
-        dispatchMain(block)
+        viewInstance.startMode()
+        result.success()
     }
 
-    public func removeBarcodePickView(result: FrameworksResult) {
-        actionListener.disable()
-        viewListener.disable()
-        viewUiListener.disable()
-        barcodePickView?.stop()
-        barcodePickView?.removeFromSuperview()
-        result.success(result: nil)
+    func viewStop(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.stopMode()
+        result.success()
     }
 
-    public func addScanningListener() {
-        scanningListener.enable()
+    func viewFreeze(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        DispatchQueue.main.async {
+            viewInstance.view.freeze()
+        }
+        result.success()
     }
 
-    public func removeScanningListener() {
-        scanningListener.disable()
+
+    func removeView(viewId: Int, result: FrameworksResult) {
+        viewCache.remove(viewId: viewId)?.dispose()
+        if let previousView = viewCache.getTopMost() {
+            previousView.show()
+        }
+        result.success()
     }
 
-    public func addActionListener() {
-        actionListener.enable()
+    func updateView(viewId: Int, viewJson: String, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.updateView(viewJson: viewJson)
+        result.success()
     }
 
-    public func removeActionListener() {
-        actionListener.disable()
+    func finishProductIdentifierForItems(viewId: Int, barcodePickProductProviderCallbackItemsJson: String, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.finishProductIdentifierForItems(barcodePickProductProviderCallbackItemsJson: barcodePickProductProviderCallbackItemsJson)
+        result.success()
     }
 
-    public func addViewListener() {
-        viewListener.enable()
+    func finishPickAction(viewId: Int, data: String, actionResult: Bool, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.finishPickAction(data: data, result: actionResult)
+        result.success()
     }
 
-    public func removeViewListener() {
-        viewListener.disable()
+    func addActionListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.addBarcodePickActionListener()
+        result.success()
     }
 
-    public func addViewUiListener() {
-        viewUiListener.enable()
+    func removeActionListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.removeBarcodePickActionListener()
+        result.success()
     }
 
-    public func removeViewUiListener() {
-        viewUiListener.disable()
+    func addScanningListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.addBarcodePickScanningListener()
+        result.success()
     }
 
-    public func finishProductIdentifierForItems(barcodePickProductProviderCallbackItemsJson: String) {
-        asyncMapperProductProviderCallback?.finishMapIdentifiersForEvents(
-            itemsJson: barcodePickProductProviderCallbackItemsJson
-        )
+    func removeScanningListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.removeBarcodePickScanningListener()
+        result.success()
     }
 
-    public func finishPickAction(data: String, result: Bool) {
-        actionListener.finishPickAction(with: data, result: result)
+    func addViewListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.addBarcodePickViewListener()
+        result.success()
     }
 
-    public func finishPickAction(data: String, result: FrameworksResult) {
-        let data = BarcodePickActionData(jsonString: data)
-        actionListener.finishPickAction(with: data.pickActionData, result: data.result)
-        result.success(result: nil)
+    func removeViewListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.removeBarcodePickViewListener()
+        result.success()
     }
 
-    public func viewStart() {
-        dispatchMain { [weak self] in self?.barcodePickView?.start() }
+    func addViewUiListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.addBarcodePickViewUiListener()
+        result.success()
     }
 
-    public func viewPause() {
-        barcodePickView?.pause()
+    func removeViewUiListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.removeBarcodePickViewUiListener()
+        result.success()
     }
 
-    public func viewFreeze() {
-        barcodePickView?.freeze()
+    func addBarcodePickListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.addBarcodePickListener()
+        result.success()
     }
 
-    public func viewStop() {
-        barcodePickView?.stop()
+    func removeBarcodePickListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.removeBarcodePickListener()
+        result.success()
+    }
+
+    func viewReset(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        DispatchQueue.main.async {
+            viewInstance.view.reset()
+        }
+        result.success()
+    }
+
+    func viewPause(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        DispatchQueue.main.async {
+            viewInstance.view.pause()
+        }
+        result.success()
+    }
+    
+    func viewResume(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        DispatchQueue.main.async {
+            viewInstance.view.start()
+        }
+        result.success()
+    }
+
+    func finishBarcodePickViewHighlightStyleCustomViewProviderViewForRequest(viewId: Int, response: [String: Any?], result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+
+        guard let requestId = response["requestId"] as? Int else {
+            result.success()
+            return
+        }
+
+        var statusIconStyle: BarcodePickStatusIconStyle?
+
+        let responseDict = response["response"] as? [String: Any]
+
+        if let statusIconStyleJson = responseDict?["statusIconStyle"] as? String {
+            statusIconStyle = BarcodePickStatusIconStyle(jsonString: statusIconStyleJson)
+        }
+
+        dispatchMain {
+            var customView: UIImageView?
+            if let viewBytes = responseDict?["view"] as? Data {
+                customView = UIImageView()
+                if let image = UIImage(data: viewBytes) {
+                    customView?.image = image
+                }
+            }
+
+            viewInstance.finishBarcodePickViewHighlightStyleCustomViewProviderViewForRequest(
+                requestId: requestId,
+                customView: customView,
+                statusIconStyle: statusIconStyle
+            )
+            result.success()
+        }
+    }
+
+    func finishBarcodePickViewHighlightStyleAsyncProviderStyleForRequest(viewId: Int, response: [String: Any?], result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+
+        guard let requestId = response["requestId"] as? Int else {
+            result.success()
+            return
+        }
+
+        let responseJson = response["response"] as? String
+
+        dispatchMain {
+            viewInstance.finishBarcodePickViewHighlightStyleAsyncProviderStyleForRequest(
+                requestId: requestId,
+                responseJson: responseJson
+            )
+            result.success()
+        }
+    }
+
+    func getTopMostView() -> BarcodePickView? {
+        return viewCache.getTopMost()?.view
     }
 }
