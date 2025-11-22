@@ -14,13 +14,13 @@ public enum BarcodeArHighlightProviderEvents: String, CaseIterable {
 open class FrameworksBarcodeArHighlightProvider: NSObject, BarcodeArHighlightProvider {
 
     private let emitter: Emitter
-    private let viewId: Int
+
     private let parser: BarcodeArHighlightParser
+
     private let cache: BarcodeArAugmentationsCache
 
-    public init(emitter: Emitter, viewId: Int, parser: BarcodeArHighlightParser, cache: BarcodeArAugmentationsCache) {
+    public init(emitter: Emitter, parser: BarcodeArHighlightParser, cache: BarcodeArAugmentationsCache) {
         self.emitter = emitter
-        self.viewId = viewId
         self.parser = parser
         self.cache = cache
     }
@@ -39,8 +39,7 @@ open class FrameworksBarcodeArHighlightProvider: NSObject, BarcodeArHighlightPro
 
         highlightForBarcode.emit(on: emitter, payload: [
             "barcode": barcode.jsonString,
-            "barcodeId": barcode.uniqueId,
-            "viewId": self.viewId
+            "barcodeId": barcode.uniqueId
         ])
     }
 

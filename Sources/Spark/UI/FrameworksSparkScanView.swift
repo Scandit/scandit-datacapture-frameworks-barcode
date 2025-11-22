@@ -21,8 +21,6 @@ public class FrameworksSparkScanView: FrameworksBaseView {
     public var viewId: Int {
         return _viewId
     }
-    
-    public var parentId: Int? { nil }
 
     private var view: SparkScanView!
     private var mode: SparkScan!
@@ -131,13 +129,21 @@ public class FrameworksSparkScanView: FrameworksBaseView {
         modeListener.enable()
     }
 
+    public func enableSparkScanListenerInAsyncMode() {
+        modeListener.enableAsync()
+    }
+
     public func disableSparkScanListener() {
         modeListener.disable()
     }
 
+    public func disableSparkScanListenerInAsyncMode() {
+        modeListener.disableAsync()
+    }
+
     public func dispose() {
         dispatchMain {
-            self.modeListener.disable()
+            self.modeListener.disableAsync()
             self.mode.removeListener(self.modeListener)
             self.view.uiDelegate = nil
             self.view.stopScanning()

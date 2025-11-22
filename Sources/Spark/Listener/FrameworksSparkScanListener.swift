@@ -19,13 +19,16 @@ fileprivate extension Event {
 }
 
 open class FrameworksSparkScanListener: NSObject, SparkScanListener {
+    private static let asyncTimeoutInterval: TimeInterval = 600 // 10 mins
+    private static let defaultTimeoutInterval: TimeInterval = 2
     private let emitter: Emitter
     private let viewId: Int
 
     private let didScanEvent = EventWithResult<Bool>(event: Event(.didScan))
     private let didUpdateEvent = EventWithResult<Bool>(event: Event(.didUpdate))
 
-    private var isEnabled = AtomicValue<Bool>()
+    private var isEnabled = AtomicBool()
+    
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
@@ -43,6 +46,19 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
         lastSession = nil
     }
 
+    public func enableAsync() {
+        [didScanEvent, didUpdateEvent].forEach {
+            $0.timeout = Self.asyncTimeoutInterval
+        }
+        enable()
+    }
+
+    public func disableAsync() {
+        disable()
+        [didScanEvent, didUpdateEvent].forEach {
+            $0.timeout = Self.defaultTimeoutInterval
+        }
+    }
 
     private weak var lastSession: SparkScanSession?
 
