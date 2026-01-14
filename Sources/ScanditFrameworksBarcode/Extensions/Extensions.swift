@@ -4,10 +4,11 @@
  * Copyright (C) 2024- Scandit AG. All rights reserved.
  */
 import Foundation
+
 import ScanditBarcodeCapture
 
 public extension ScanIntention {
-    var jsonString: String {
+    var jsonString : String {
         switch self {
         case .manual:
             return "manual"
@@ -19,6 +20,7 @@ public extension ScanIntention {
     }
 }
 
+
 extension JSONValue {
     func getObjectAsString(forKey: String) -> String {
         if self.containsObject(withKey: forKey) {
@@ -29,7 +31,7 @@ extension JSONValue {
     }
 
     func getObjectAsBool(forKey: String) -> Bool {
-        self.bool(forKey: forKey, default: false)
+        return self.bool(forKey: forKey, default: false)
     }
 
     func getTextAlignment(forKey: String) -> NSTextAlignment {
@@ -53,7 +55,7 @@ extension JSONValue {
         }
     }
 
-    func getFont(forSizeKey: String, andFamilyKey: String) -> UIFont {
+    func getFont(forSizeKey: String, andFamilyKey: String ) -> UIFont {
         guard let fontFamily = self.optionalString(forKey: andFamilyKey), self.containsKey(forSizeKey) else {
             return UIFont.systemFont(ofSize: UIFont.systemFontSize)
         }
@@ -75,6 +77,6 @@ extension JSONValue {
 
 extension Barcode {
     var uniqueId: String {
-        self.uniqueHash
+        return self.uniqueHash
     }
 }

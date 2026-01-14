@@ -4,9 +4,9 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
-import ScanditCaptureCore
 import ScanditFrameworksCore
+import ScanditCaptureCore
+import ScanditBarcodeCapture
 
 struct BarcodeFindItemsData {
     private let backingJson: JSONValue
@@ -25,10 +25,10 @@ struct BarcodeFindItemsData {
     private func barcodeFindItem(from json: JSONValue) -> BarcodeFindItem? {
         guard json.containsObject(withKey: "searchOptions") else { return nil }
         let searchOptions = json.object(forKey: "searchOptions")
-
+        
         let barcodeData = searchOptions.string(forKey: "barcodeData")
         var findItemContent: BarcodeFindItemContent? = nil
-
+        
         if json.containsKey("content") {
             let content = json.object(forKey: "content")
             let info = content.optionalString(forKey: "info")
@@ -56,8 +56,7 @@ struct BarcodeFindItemsData {
             string = String(string[string.startIndex...index])
         }
         guard let data = string.data(using: .utf8),
-            let image = UIImage(data: data)
-        else { return nil }
+              let image = UIImage(data: data) else { return nil }
         return image
     }
 }

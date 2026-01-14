@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 public enum FrameworksBarcodeFindEvent: String, CaseIterable {
     case didStartSearch = "BarcodeFindListener.onSearchStarted"
@@ -18,7 +18,7 @@ public enum FrameworksBarcodeFindEvent: String, CaseIterable {
 
 extension Emitter {
     func hasViewSpecificListenersForEvent(_ viewId: Int, for event: FrameworksBarcodeFindEvent) -> Bool {
-        hasViewSpecificListenersForEvent(viewId, for: event.rawValue)
+        return hasViewSpecificListenersForEvent(viewId, for: event.rawValue)
     }
 }
 
@@ -54,13 +54,8 @@ open class FrameworksBarcodeFindListener: NSObject, BarcodeFindListener {
         let foundItemsBarcodeData = foundItems.map { $0.searchOptions.barcodeData }
         dispatchMain { [weak self] in
             guard let self else { return }
-            self.didPauseSearchEvent.emit(
-                on: self.emitter,
-                payload: [
-                    "foundItems": foundItemsBarcodeData,
-                    "viewId": self.viewId,
-                ]
-            )
+            self.didPauseSearchEvent.emit(on: self.emitter, payload: ["foundItems": foundItemsBarcodeData,
+                                                                      "viewId": self.viewId])
         }
     }
 
@@ -69,23 +64,18 @@ open class FrameworksBarcodeFindListener: NSObject, BarcodeFindListener {
         let foundItemsBarcodeData = foundItems.map { $0.searchOptions.barcodeData }
         dispatchMain { [weak self] in
             guard let self else { return }
-            self.didStopSearchEvent.emit(
-                on: self.emitter,
-                payload: [
-                    "foundItems": foundItemsBarcodeData,
-                    "viewId": self.viewId,
-                ]
-            )
+            self.didStopSearchEvent.emit(on: self.emitter, payload: ["foundItems": foundItemsBarcodeData,
+                                                                     "viewId": self.viewId])
         }
     }
-
+    
     public func barcodeFind(_ barcodeFind: BarcodeFind, didUpdate session: BarcodeFindSession) {
         guard emitter.hasViewSpecificListenersForEvent(viewId, for: .didUpdateSession) else { return }
         didUpdateSessionEvent.emit(
             on: emitter,
             payload: [
                 "session": session.jsonString,
-                "viewId": self.viewId,
+                "viewId": self.viewId
             ]
         )
 

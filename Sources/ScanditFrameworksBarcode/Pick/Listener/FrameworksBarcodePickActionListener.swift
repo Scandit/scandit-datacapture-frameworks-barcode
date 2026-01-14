@@ -8,29 +8,27 @@ import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
 final class ReadWriteCoordinator {
-    private let queue = DispatchQueue(
-        label: "com.scandit.frameworks.barcodepickactionlistener.ReadWriteCoordinator",
-        attributes: .concurrent
-    )
+    private let queue = DispatchQueue(label: "com.scandit.frameworks.barcodepickactionlistener.ReadWriteCoordinator",
+                                      attributes: .concurrent)
 
-    public func read<R>(
-        _ fn: () -> R
-    )
+    public func read<R>(_ fn: () -> R)
         -> R
     {
+        var result: R?
         queue.sync {
-            fn()
+            result = fn()
         }
+        return result!
     }
 
-    public func blockingWrite<R>(
-        _ fn: () -> R
-    )
+    public func blockingWrite<R>(_ fn: () -> R)
         -> R
     {
+        var result: R?
         queue.sync(flags: .barrier) {
-            fn()
+            result = fn()
         }
+        return result!
     }
 }
 
@@ -62,13 +60,10 @@ open class FrameworksBarcodePickActionListener: NSObject, BarcodePickActionListe
         coordinator.blockingWrite {
             events[data] = completionHandler
         }
-        emitter.emit(
-            .pick,
-            payload: [
-                "itemData": data,
-                "viewId": self.viewId,
-            ]
-        )
+        emitter.emit(.pick, payload: [
+            "itemData": data,
+            "viewId": self.viewId
+        ])
     }
 
     public func didUnpickItem(withData data: String, completionHandler: @escaping (Bool) -> Void) {
@@ -76,13 +71,10 @@ open class FrameworksBarcodePickActionListener: NSObject, BarcodePickActionListe
         coordinator.blockingWrite {
             events[data] = completionHandler
         }
-        emitter.emit(
-            .unpick,
-            payload: [
-                "itemData": data,
-                "viewId": self.viewId,
-            ]
-        )
+        emitter.emit(.unpick, payload: [
+            "itemData": data,
+            "viewId": self.viewId
+        ])
     }
 
     public func finishPickAction(with data: String, result: Bool) {

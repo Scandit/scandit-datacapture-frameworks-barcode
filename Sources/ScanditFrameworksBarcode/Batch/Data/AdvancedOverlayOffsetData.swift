@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditCaptureCore
+import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
 struct AdvancedOverlayOffsetData {
@@ -21,13 +21,9 @@ struct AdvancedOverlayOffsetData {
 
     init(dictionary: [String: Any?]) {
         var offset: PointWithUnit = .zero
-        if let offsetString = dictionary["offsetJson"] as? String {
-            SDCPointWithUnitFromJSONString(offsetString, &offset)
-        }
-        self.init(
-            offset: offset,
-            trackedBarcodeId: dictionary["trackedBarcodeIdentifier"] as? Int ?? 0,
-            sessionFrameSequenceId: dictionary["sessionFrameSequenceID"] as? Int
-        )
+        SDCPointWithUnitFromJSONString(dictionary["offsetJson"] as! String, &offset)
+        self.init(offset: offset,
+                  trackedBarcodeId: dictionary["trackedBarcodeIdentifier"] as! Int,
+                  sessionFrameSequenceId: dictionary["sessionFrameSequenceID"] as? Int)
     }
 }

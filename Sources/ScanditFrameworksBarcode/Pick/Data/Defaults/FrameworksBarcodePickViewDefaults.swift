@@ -4,10 +4,9 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
+import ScanditFrameworksCore
 import ScanditBarcodeCapture
 import ScanditCaptureCore
-import ScanditFrameworksCore
-
 #if SWIFT_PACKAGE
 private import _ScanditFrameworksBarcodePrivate
 #endif
@@ -24,8 +23,7 @@ struct FrameworksBarcodePickViewDefaults: DefaultsEncodable {
             "onFirstItemPickCompletedHintText": BarcodePickViewSettingsDefaults.onFirstItemPickCompletedHintText,
             "onFirstItemToPickFoundHintText": BarcodePickViewSettingsDefaults.onFirstItemToPickFoundHintText,
             "onFirstItemUnpickCompletedHintText": BarcodePickViewSettingsDefaults.onFirstItemUnpickCompletedHintText,
-            "onFirstUnmarkedItemPickCompletedHintText": BarcodePickViewSettingsDefaults
-                .onFirstUnmarkedItemPickCompletedHintText,
+            "onFirstUnmarkedItemPickCompletedHintText": BarcodePickViewSettingsDefaults.onFirstUnmarkedItemPickCompletedHintText,
             "showGuidelines": BarcodePickViewSettingsDefaults.showGuidelines,
             "showHints": BarcodePickViewSettingsDefaults.showHints,
             "showFinishButton": BarcodePickViewSettingsDefaults.showFinishButton,
@@ -35,12 +33,12 @@ struct FrameworksBarcodePickViewDefaults: DefaultsEncodable {
             "showTorchButton": BarcodePickViewSettingsDefaults.showTorchButton,
             "torchButtonPosition": BarcodePickViewSettingsDefaults.torchButtonPosition.jsonString,
             "tapShutterToPauseGuidelineText": BarcodePickViewSettingsDefaults.tapShutterToPauseGuidelineText,
-            "uiButtonsOffset": nil,  // doesn't exist in iOS
-            "hardwareTriggerEnabled": true,  // Always enabled on iOS
+            "uiButtonsOffset": nil, // doesn't exist in iOS
+            "hardwareTriggerEnabled": true, // Always enabled on iOS
             "hardwareTriggerKeyCode": nil,
             "filterHighlightSettings": BarcodeFilterHighlightSettingsDefaults.create(
                 filterSettings: BarcodePickViewSettingsDefaults.filterHighlightSettings
-            ),
+            )
         ]
     }
 }

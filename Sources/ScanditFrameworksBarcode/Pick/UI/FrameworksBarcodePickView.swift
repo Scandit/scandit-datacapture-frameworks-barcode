@@ -5,8 +5,8 @@
  */
 
 import Foundation
-import ScanditBarcodeCapture
 import ScanditCaptureCore
+import ScanditBarcodeCapture
 import ScanditFrameworksCore
 import UIKit
 
@@ -17,14 +17,13 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
     private let barcodePickListener: FrameworksBarcodePickListener
     private let barcodePickScanningListener: FrameworksBarcodePickScanningListener
     private var barcodePickViewHighlightStyleAsyncProvider: FrameworksBarcodePickViewHighlightStyleAsyncProvider? = nil
-    private var barcodePickViewHighlightStyleCustomViewProvider:
-        FrameworksBarcodePickViewHighlightStyleCustomViewProvider? = nil
+    private var barcodePickViewHighlightStyleCustomViewProvider: FrameworksBarcodePickViewHighlightStyleCustomViewProvider? = nil
     private let barcodePickViewListener: FrameworksBarcodePickViewListener
     private let barcodePickViewUiListener: FrameworksBarcodePickViewUiListener
     private let deserializer: BarcodePickDeserializer
 
-    public var internalViewId: Int = -1
-    public var viewId: Int { internalViewId }
+    public var _viewId: Int = -1
+    public var viewId: Int { _viewId }
     public var view: BarcodePickView!
     public var parentId: Int? { nil }
 
@@ -61,18 +60,11 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
         context: DataCaptureContext,
         viewCreationParams: BarcodePickViewCreationData
     ) throws {
-        internalViewId = viewCreationParams.viewId
+        _viewId = viewCreationParams.viewId
 
-        let provider = try deserializer.asyncMapperProductProvider(
-            fromJSONString: viewCreationParams.productProviderJson,
-            delegate: barcodePickAsyncMapperProductProviderCallback
-        )
+        let provider = try deserializer.asyncMapperProductProvider(fromJSONString: viewCreationParams.productProviderJson, delegate: barcodePickAsyncMapperProductProviderCallback)
 
-        mode = try deserializer.mode(
-            fromJSONString: viewCreationParams.modeJson,
-            context: context,
-            productProvider: provider
-        )
+        mode = try deserializer.mode(fromJSONString: viewCreationParams.modeJson, context: context, productProvider: provider)
 
         // Common deserializer parameters
         let baseParams = (
@@ -83,59 +75,47 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
         // Use parsed highlight style information from viewCreationParams - match original logic exactly
         if !viewCreationParams.hasAsyncProvider {
             // If not using async provider, use the basic view
-            view = try deserializer.view(
-                fromJSONString: baseParams.jsonString,
-                context: context,
-                topLayoutAnchor: baseParams.topLayoutAnchor,
-                mode: mode
-            )
+            view = try deserializer.view(fromJSONString: baseParams.jsonString,
+                                       context: context,
+                                       topLayoutAnchor: baseParams.topLayoutAnchor,
+                                       mode: mode)
         } else {
             // Handle different highlight style types when async provider is enabled
             switch viewCreationParams.highlightType {
             case .dotWithIcons, .rectangularWithIcons:
                 if let asyncProvider = barcodePickViewHighlightStyleAsyncProvider {
-                    view = try deserializer.view(
-                        fromJSONString: baseParams.jsonString,
-                        context: context,
-                        topLayoutAnchor: baseParams.topLayoutAnchor,
-                        mode: mode,
-                        viewHighlightStyleDelegate: asyncProvider
-                    )
+                    view = try deserializer.view(fromJSONString: baseParams.jsonString,
+                                               context: context,
+                                               topLayoutAnchor: baseParams.topLayoutAnchor,
+                                               mode: mode,
+                                               viewHighlightStyleDelegate: asyncProvider)
                 } else {
-                    view = try deserializer.view(
-                        fromJSONString: baseParams.jsonString,
-                        context: context,
-                        topLayoutAnchor: baseParams.topLayoutAnchor,
-                        mode: mode
-                    )
+                    view = try deserializer.view(fromJSONString: baseParams.jsonString,
+                                               context: context,
+                                               topLayoutAnchor: baseParams.topLayoutAnchor,
+                                               mode: mode)
                 }
 
             case .customView:
                 if let customProvider = barcodePickViewHighlightStyleCustomViewProvider {
-                    view = try deserializer.view(
-                        fromJSONString: baseParams.jsonString,
-                        context: context,
-                        topLayoutAnchor: baseParams.topLayoutAnchor,
-                        mode: mode,
-                        customViewHighlightStyleDelegate: customProvider
-                    )
+                    view = try deserializer.view(fromJSONString: baseParams.jsonString,
+                                               context: context,
+                                               topLayoutAnchor: baseParams.topLayoutAnchor,
+                                               mode: mode,
+                                               customViewHighlightStyleDelegate: customProvider)
                 } else {
-                    view = try deserializer.view(
-                        fromJSONString: baseParams.jsonString,
-                        context: context,
-                        topLayoutAnchor: baseParams.topLayoutAnchor,
-                        mode: mode
-                    )
+                    view = try deserializer.view(fromJSONString: baseParams.jsonString,
+                                               context: context,
+                                               topLayoutAnchor: baseParams.topLayoutAnchor,
+                                               mode: mode)
                 }
 
             default:
                 // Fallback to basic view for unknown types with async provider
-                view = try deserializer.view(
-                    fromJSONString: baseParams.jsonString,
-                    context: context,
-                    topLayoutAnchor: baseParams.topLayoutAnchor,
-                    mode: mode
-                )
+                view = try deserializer.view(fromJSONString: baseParams.jsonString,
+                                           context: context,
+                                           topLayoutAnchor: baseParams.topLayoutAnchor,
+                                           mode: mode)
             }
         }
 
@@ -279,52 +259,29 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
         context: DataCaptureContext,
         viewCreationParams: BarcodePickViewCreationData
     ) throws -> FrameworksBarcodePickView {
-        let barcodePickActionListener = FrameworksBarcodePickActionListener(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
-        let barcodePickAsyncMapperProductProviderCallback = FrameworksBarcodePickAsyncMapperProductProviderCallback(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
+        let barcodePickActionListener = FrameworksBarcodePickActionListener(emitter: emitter, viewId: viewCreationParams.viewId)
+        let barcodePickAsyncMapperProductProviderCallback = FrameworksBarcodePickAsyncMapperProductProviderCallback(emitter: emitter, viewId: viewCreationParams.viewId)
         let barcodePickListener = FrameworksBarcodePickListener(emitter: emitter, viewId: viewCreationParams.viewId)
-        let barcodePickScanningListener = FrameworksBarcodePickScanningListener(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
+        let barcodePickScanningListener = FrameworksBarcodePickScanningListener(emitter: emitter, viewId: viewCreationParams.viewId)
 
         // Create providers based on highlight type upfront - only create when needed
         let barcodePickViewHighlightStyleAsyncProvider: FrameworksBarcodePickViewHighlightStyleAsyncProvider?
-        if viewCreationParams.hasAsyncProvider
-            && (viewCreationParams.highlightType == .dotWithIcons
-                || viewCreationParams.highlightType == .rectangularWithIcons)
-        {
-            barcodePickViewHighlightStyleAsyncProvider = FrameworksBarcodePickViewHighlightStyleAsyncProvider(
-                emitter: emitter,
-                viewId: viewCreationParams.viewId
-            )
+        if viewCreationParams.hasAsyncProvider &&
+           (viewCreationParams.highlightType == .dotWithIcons || viewCreationParams.highlightType == .rectangularWithIcons) {
+            barcodePickViewHighlightStyleAsyncProvider = FrameworksBarcodePickViewHighlightStyleAsyncProvider(emitter: emitter, viewId: viewCreationParams.viewId)
         } else {
             barcodePickViewHighlightStyleAsyncProvider = nil
         }
 
         let barcodePickViewHighlightStyleCustomViewProvider: FrameworksBarcodePickViewHighlightStyleCustomViewProvider?
         if viewCreationParams.highlightType == .customView {
-            barcodePickViewHighlightStyleCustomViewProvider = FrameworksBarcodePickViewHighlightStyleCustomViewProvider(
-                emitter: emitter,
-                viewId: viewCreationParams.viewId
-            )
+            barcodePickViewHighlightStyleCustomViewProvider = FrameworksBarcodePickViewHighlightStyleCustomViewProvider(emitter: emitter, viewId: viewCreationParams.viewId)
         } else {
             barcodePickViewHighlightStyleCustomViewProvider = nil
         }
 
-        let barcodePickViewListener = FrameworksBarcodePickViewListener(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
-        let barcodePickViewUiListener = FrameworksBarcodePickViewUiListener(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
+        let barcodePickViewListener = FrameworksBarcodePickViewListener(emitter: emitter, viewId: viewCreationParams.viewId)
+        let barcodePickViewUiListener = FrameworksBarcodePickViewUiListener(emitter: emitter, viewId: viewCreationParams.viewId)
 
         let instance = FrameworksBarcodePickView(
             barcodePickActionListener: barcodePickActionListener,

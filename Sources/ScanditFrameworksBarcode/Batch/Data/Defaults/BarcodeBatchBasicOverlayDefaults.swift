@@ -15,15 +15,13 @@ struct BarcodeBatchBasicOverlayDefaults: DefaultsEncodable {
     let defaultStyle: BarcodeBatchBasicOverlayStyle
 
     func toEncodable() -> [String: Any?] {
-        let allBrushses = Dictionary(
-            uniqueKeysWithValues: BarcodeBatchBasicOverlayStyle.allCases.map {
-                ($0.jsonString, brushDefaults(of: $0).toEncodable())
-            }
-        )
+        let allBrushses = Dictionary(uniqueKeysWithValues: BarcodeBatchBasicOverlayStyle.allCases.map {
+            ($0.jsonString, brushDefaults(of: $0).toEncodable())
+        })
 
         return [
             "defaultStyle": defaultStyle.jsonString,
-            "Brushes": allBrushses,
+            "Brushes": allBrushses
         ]
     }
 

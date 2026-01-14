@@ -5,8 +5,8 @@
  */
 
 import Foundation
-import ScanditBarcodeCapture
 import ScanditCaptureCore
+import ScanditBarcodeCapture
 import ScanditFrameworksCore
 import UIKit
 
@@ -29,8 +29,8 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
 
     private var mode: BarcodeAr!
 
-    private var internalViewId: Int = 0
-    public var viewId: Int { internalViewId }
+    private var _viewId: Int = 0
+    public var viewId: Int { _viewId }
 
     private init(
         barcodeArListener: FrameworksBarcodeArListener,
@@ -61,7 +61,7 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         context: DataCaptureContext,
         viewCreationParams: BarcodeArViewCreationData
     ) throws {
-        internalViewId = viewCreationParams.viewId
+        _viewId = viewCreationParams.viewId
 
         mode = try deserializer.mode(fromJSONString: viewCreationParams.modeJson, context: context)
 
@@ -207,11 +207,12 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
             self.view.start()
         }
     }
-
+    
     public func dispose() {
+        print("ilber -> Dispose view \(viewId)")
         barcodeArListener.finishDidUpdateSession(enabled: true)
         mode.removeListener(barcodeArListener)
-
+        
         dispatchMain { [weak self] in
             guard let self = self else { return }
             self.view.uiDelegate = nil
@@ -228,29 +229,16 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         viewCreationParams: BarcodeArViewCreationData,
         augmentationsCache: BarcodeArAugmentationsCache
     ) throws -> FrameworksBarcodeArView {
-        let barcodeArListener = FrameworksBarcodeArListener(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId,
-            cache: augmentationsCache
-        )
-        let barcodeArViewUiDelegate = FrameworksBarcodeArViewUiListener(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
+        let barcodeArListener = FrameworksBarcodeArListener(emitter: emitter, viewId: viewCreationParams.viewId, cache: augmentationsCache)
+        let barcodeArViewUiDelegate = FrameworksBarcodeArViewUiListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let highlightProvider = FrameworksBarcodeArHighlightProvider(
             emitter: emitter,
             viewId: viewCreationParams.viewId,
             parser: BarcodeArHighlightParser(emitter: emitter),
             cache: augmentationsCache
         )
-        let infoAnnotationDelegate = FrameworksInfoAnnotationDelegate(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
-        let popoverAnnotationDelegate = FrameworksPopoverAnnotationDelegate(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
+        let infoAnnotationDelegate = FrameworksInfoAnnotationDelegate(emitter: emitter, viewId: viewCreationParams.viewId)
+        let popoverAnnotationDelegate = FrameworksPopoverAnnotationDelegate(emitter: emitter, viewId: viewCreationParams.viewId)
 
         let annotationParser = BarcodeArAnnotationParser()
         annotationParser.setDelegates(
@@ -295,9 +283,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
 
     public func updateHighlight(highlightJson: String) {
         highlightProvider.updateHighlight(highlightJson: highlightJson)
-    }
-    public func onCustomHighlightClicked(barcodeId: String) {
-        highlightProvider.onCustomHighlightClicked(barcodeId: barcodeId)
     }
 
     public func updateAnnotation(annotationJson: String) {

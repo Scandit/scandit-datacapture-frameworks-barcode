@@ -14,26 +14,22 @@ struct BarcodeCaptureDefaults: DefaultsEncodable {
 
     static let shared: BarcodeCaptureDefaults = {
         let cameraSettingsDefaults = CameraSettingsDefaults(cameraSettings: BarcodeCapture.recommendedCameraSettings)
-        let barcodeCaptureSettingsDefaults = BarcodeCaptureSettingsDefaults(
-            barcodeCaptureSettings: BarcodeCaptureSettings()
-        )
+        let barcodeCaptureSettingsDefaults = BarcodeCaptureSettingsDefaults(barcodeCaptureSettings: BarcodeCaptureSettings())
 
         let settings = BarcodeCaptureSettings()
         let mode = BarcodeCapture(context: nil, settings: settings)
         let overlay = BarcodeCaptureOverlay(barcodeCapture: mode)
         let barcodeCaptureOverlayDefaults = BarcodeCaptureOverlayDefaults()
-        return BarcodeCaptureDefaults(
-            recommendedCameraSettings: cameraSettingsDefaults,
-            barcodeCaptureSettingsDefaults: barcodeCaptureSettingsDefaults,
-            barcodeCaptureOverlayDefaults: barcodeCaptureOverlayDefaults
-        )
+        return BarcodeCaptureDefaults(recommendedCameraSettings: cameraSettingsDefaults,
+                                      barcodeCaptureSettingsDefaults: barcodeCaptureSettingsDefaults,
+                                      barcodeCaptureOverlayDefaults: barcodeCaptureOverlayDefaults)
     }()
 
     func toEncodable() -> [String: Any?] {
         [
             "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
             "BarcodeCaptureSettings": barcodeCaptureSettingsDefaults.toEncodable(),
-            "BarcodeCaptureOverlay": barcodeCaptureOverlayDefaults.toEncodable(),
+            "BarcodeCaptureOverlay": barcodeCaptureOverlayDefaults.toEncodable()
         ]
     }
 }

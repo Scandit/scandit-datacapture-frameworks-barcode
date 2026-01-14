@@ -5,34 +5,35 @@
  */
 
 import Foundation
+
 import ScanditBarcodeCapture
 
 internal class BarcodeCountStatusProviderResult {
     private enum FieldNames {
-        static let status = "status"
-        static let barcodeId = "barcodeId"
-        static let statusList = "statusList"
-        static let errorMessage = "errorMessage"
-        static let enabledMessage = "statusModeEnabledMessage"
-        static let disabledMessage = "statusModeDisabledMessage"
-        static let resultType = "type"
+        static let Status = "status"
+        static let BarcodeId = "barcodeId"
+        static let StatusList = "statusList"
+        static let ErrorMessage = "errorMessage"
+        static let EnabledMessage = "statusModeEnabledMessage"
+        static let DisabledMessage = "statusModeDisabledMessage"
+        static let ResultType = "type"
     }
-
+    
     private let json: [String: Any]
-
+    
     private init(json: [String: Any]) {
         self.json = json
     }
-
+    
     var requestId: String {
-        json[BarcodeCountStatusProviderRequest.id] as? String ?? ""
+        return json[BarcodeCountStatusProviderRequest.ID] as? String ?? ""
     }
-
+    
     func get(barcodesFromEvent: [TrackedBarcode]) throws -> BarcodeCountStatusResult {
-        guard let resultType = json[FieldNames.resultType] as? String else {
+        guard let resultType = json[FieldNames.ResultType] as? String else {
             throw NSError(domain: "Invalid BarcodeCountStatusResult type", code: -1, userInfo: nil)
         }
-
+        
         switch resultType {
         case "barcodeCountStatusResultSuccess":
             return getSuccess(barcodesFromEvent: barcodesFromEvent)
@@ -44,50 +45,48 @@ internal class BarcodeCountStatusProviderResult {
             throw NSError(domain: "Invalid BarcodeCountStatusResult type", code: -1, userInfo: nil)
         }
     }
-
+    
     private func getSuccess(barcodesFromEvent: [TrackedBarcode]) -> BarcodeCountStatusResult {
-        BarcodeCountStatusSuccessResult(
-            statusList: getStatusList(barcodesFromEvent: barcodesFromEvent),
-            statusModeEnabledMessage: json[FieldNames.enabledMessage] as? String,
-            statusModeDisabledMessage: json[FieldNames.disabledMessage] as? String
+        return BarcodeCountStatusSuccessResult(
+            statusList:getStatusList(barcodesFromEvent: barcodesFromEvent),
+            statusModeEnabledMessage: json[FieldNames.EnabledMessage] as? String,
+            statusModeDisabledMessage: json[FieldNames.DisabledMessage] as? String
         )
     }
-
+    
     private func getError(barcodesFromEvent: [TrackedBarcode]) -> BarcodeCountStatusResult {
-        BarcodeCountStatusErrorResult(
+        return BarcodeCountStatusErrorResult(
             statusList: getStatusList(barcodesFromEvent: barcodesFromEvent),
-            errorMessage: json[FieldNames.errorMessage] as? String,
-            statusModeDisabledMessage: json[FieldNames.disabledMessage] as? String
+            errorMessage: json[FieldNames.ErrorMessage] as? String,
+            statusModeDisabledMessage: json[FieldNames.DisabledMessage] as? String
         )
     }
-
+    
     private func getAbort() -> BarcodeCountStatusResult {
-        BarcodeCountStatusAbortResult(errorMessage: json[FieldNames.errorMessage] as? String)
+        return BarcodeCountStatusAbortResult(errorMessage: json[FieldNames.ErrorMessage] as? String)
     }
-
+    
     private func getStatusList(barcodesFromEvent: [TrackedBarcode]) -> [BarcodeCountStatusItem] {
-        guard let jsonItems = json[FieldNames.statusList] as? [[String: Any]] else { return [] }
-
-        var items: [BarcodeCountStatusItem] = []
+        guard let jsonItems = json[FieldNames.StatusList] as? [[String: Any]] else { return [] }
+        
+        var items = [BarcodeCountStatusItem]()
         for item in jsonItems {
-            if let trackedBarcodeId = item[FieldNames.barcodeId] as? Int,
-                let barcode = barcodesFromEvent.first(where: { $0.identifier == trackedBarcodeId }),
-                let statusString = item[FieldNames.status] as? String
-            {
+            if let trackedBarcodeId = item[FieldNames.BarcodeId] as? Int,
+               let barcode = barcodesFromEvent.first(where: { $0.identifier == trackedBarcodeId }),
+               let statusString = item[FieldNames.Status] as? String {
                 let status = statusString.toBarcodeCountStatus()
                 items.append(BarcodeCountStatusItem(barcode: barcode, status: status))
             }
         }
         return items
     }
-
+    
     static func createFromJson(statusJson: String) -> BarcodeCountStatusProviderResult? {
         guard let data = statusJson.data(using: .utf8),
-            let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-        else {
+              let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
             return nil
         }
-
+        
         return BarcodeCountStatusProviderResult(json: json)
     }
 }
@@ -114,3 +113,4 @@ private extension String {
         }
     }
 }
+

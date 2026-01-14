@@ -4,13 +4,13 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
-import ScanditCaptureCore
-import ScanditFrameworksCore
 
-#if SWIFT_PACKAGE
-private import _ScanditFrameworksBarcodePrivate
-#endif
+import ScanditCaptureCore
+import ScanditBarcodeCapture
+import ScanditFrameworksCore
+ #if SWIFT_PACKAGE
+ private import _ScanditFrameworksBarcodePrivate
+ #endif
 
 private typealias ViewDefaults = BarcodeCountViewDefaults
 

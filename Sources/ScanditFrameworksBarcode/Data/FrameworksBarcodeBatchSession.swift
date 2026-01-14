@@ -5,6 +5,7 @@
  */
 
 import Foundation
+
 import ScanditBarcodeCapture
 
 public class FrameworksBarcodeBatchSession {
@@ -19,7 +20,7 @@ public class FrameworksBarcodeBatchSession {
     }
 
     static func fromBatchSession(session: BarcodeBatchSession) -> FrameworksBarcodeBatchSession {
-        FrameworksBarcodeBatchSession(
+        return FrameworksBarcodeBatchSession(
             frameSequenceId: session.frameSequenceId,
             trackedBarcodes: session.trackedBarcodes,
             batchSession: session

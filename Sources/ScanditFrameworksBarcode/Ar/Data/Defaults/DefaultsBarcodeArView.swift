@@ -7,7 +7,6 @@
 import ScanditBarcodeCapture
 import ScanditCaptureCore
 import ScanditFrameworksCore
-
 #if SWIFT_PACKAGE
 private import _ScanditFrameworksBarcodePrivate
 #endif
@@ -75,15 +74,15 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
                 ViewDefaults.defaultInfoAnnotationBodyComponentLeftIcon?.jsonString,
             "defaultInfoAnnotationBodyElementRightIcon":
                 ViewDefaults.defaultInfoAnnotationBodyComponentRightIcon?.jsonString,
-            "defaultBarcodeArPopoverAnnotationButtonEnabled": ViewDefaults.defaultPopoverAnnotationButtonEnabled,
+            "defaultBarcodeArPopoverAnnotationButtonEnabled": ViewDefaults.defaultPopoverAnnotationButtonEnabled
         ]
     }
     // swiftlint:enable function_body_length
 
     private func getDefaultCircleHighlightFromPreset(preset: BarcodeArCircleHighlightPreset) -> [String: Any] {
-        [
+        return [
             "brush": ViewDefaults.defaultCircleHighlightBrush(for: preset).jsonString,
-            "size": ViewDefaults.defaultCircleHighlightSize(for: preset),
+            "size": ViewDefaults.defaultCircleHighlightSize(for: preset)
         ]
     }
 
@@ -92,7 +91,7 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
         let allPresets: [BarcodeArCircleHighlightPreset] = [.dot, .icon]
 
         for preset in allPresets {
-            presets[preset.jsonString] = getDefaultCircleHighlightFromPreset(preset: preset)
+            presets[ preset.jsonString] = getDefaultCircleHighlightFromPreset(preset: preset)
         }
         return presets
     }

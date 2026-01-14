@@ -30,30 +30,25 @@ open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationP
     )
 
     public func annotation(
-        for barcode: Barcode,
-        completionHandler: @escaping ((any UIView & BarcodeArAnnotation)?) -> Void
+        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeArAnnotation)?) -> Void
     ) {
         self.cache.addAnnotationProviderCallback(
             barcodeId: barcode.uniqueId,
             callback: AnnotationCallbackData(barcode: barcode, callback: completionHandler)
         )
 
-        annotationForBarcode.emit(
-            on: emitter,
-            payload: [
-                "barcode": barcode.jsonString,
-                "barcodeId": barcode.uniqueId,
-                "viewId": self.viewId,
-            ]
-        )
+        annotationForBarcode.emit(on: emitter, payload: [
+            "barcode": barcode.jsonString,
+            "barcodeId": barcode.uniqueId,
+            "viewId": self.viewId
+        ])
     }
 
     public func finishAnnotationForBarcode(annotationJson: String) {
-        let json = JSONValue(string: annotationJson)
+        let json =  JSONValue(string: annotationJson)
 
         guard let barcodeId = json.optionalString(forKey: "barcodeId"),
-            let callbackData = cache.getAnnotationProviderCallback(barcodeId: barcodeId)
-        else {
+              let callbackData = cache.getAnnotationProviderCallback(barcodeId: barcodeId) else {
             return
         }
 
@@ -64,12 +59,7 @@ open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationP
 
         let annotationJson = json.object(forKey: "annotation")
 
-        if let annotation = self.parser.get(
-            json: annotationJson,
-            barcode: callbackData.barcode,
-            emitter: emitter,
-            viewId: viewId
-        ) {
+        if let annotation = self.parser.get(json: annotationJson, barcode: callbackData.barcode) {
             cache.addAnnotation(barcodeId: barcodeId, annotation: annotation)
             callbackData.callback(annotation)
         }
@@ -94,8 +84,7 @@ open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationP
         let json = JSONValue(string: updateJson)
 
         guard let barcodeId = json.optionalString(forKey: "barcodeId"),
-            let annotation = cache.getAnnotation(barcodeId: barcodeId) as? BarcodeArPopoverAnnotation
-        else {
+              let annotation = cache.getAnnotation(barcodeId: barcodeId) as? BarcodeArPopoverAnnotation else {
             return
         }
 

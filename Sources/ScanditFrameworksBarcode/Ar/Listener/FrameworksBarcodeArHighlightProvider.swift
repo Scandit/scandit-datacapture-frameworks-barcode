@@ -30,30 +30,25 @@ open class FrameworksBarcodeArHighlightProvider: NSObject, BarcodeArHighlightPro
     )
 
     public func highlight(
-        for barcode: Barcode,
-        completionHandler: @escaping ((any UIView & BarcodeArHighlight)?) -> Void
+        for barcode: Barcode, completionHandler: @escaping ((any UIView & BarcodeArHighlight)?) -> Void
     ) {
         self.cache.addHighlightProviderCallback(
             barcodeId: barcode.uniqueId,
             callback: HighlightCallbackData(barcode: barcode, callback: completionHandler)
         )
 
-        highlightForBarcode.emit(
-            on: emitter,
-            payload: [
-                "barcode": barcode.jsonString,
-                "barcodeId": barcode.uniqueId,
-                "viewId": self.viewId,
-            ]
-        )
+        highlightForBarcode.emit(on: emitter, payload: [
+            "barcode": barcode.jsonString,
+            "barcodeId": barcode.uniqueId,
+            "viewId": self.viewId
+        ])
     }
 
     public func finishHighlightForBarcode(highlightJson: String) {
         let json = JSONValue(string: highlightJson)
 
         guard let barcodeId = json.optionalString(forKey: "barcodeId"),
-            let callbackData = cache.getHighlightProviderCallback(barcodeId: barcodeId)
-        else {
+              let callbackData = cache.getHighlightProviderCallback(barcodeId: barcodeId) else {
             return
         }
 
@@ -64,7 +59,7 @@ open class FrameworksBarcodeArHighlightProvider: NSObject, BarcodeArHighlightPro
 
         let highlightJson = json.object(forKey: "highlight")
 
-        if let highlight = self.parser.get(json: highlightJson, barcode: callbackData.barcode, viewId: self.viewId) {
+        if let highlight = self.parser.get(json: highlightJson, barcode: callbackData.barcode) {
             cache.addHighlight(barcodeId: barcodeId, highlight: highlight)
             callbackData.callback(highlight)
         }
@@ -74,20 +69,10 @@ open class FrameworksBarcodeArHighlightProvider: NSObject, BarcodeArHighlightPro
         let json = JSONValue(string: highlightJson)
 
         guard let barcodeId = json.optionalString(forKey: "barcodeId"),
-            let highlight = cache.getHighlight(barcodeId: barcodeId)
-        else {
+              let highlight = cache.getHighlight(barcodeId: barcodeId) else {
             return
         }
 
         parser.updateHighlight(highlight, json: json)
-    }
-
-    public func onCustomHighlightClicked(barcodeId: String) {
-        guard let highlight = cache.getHighlight(barcodeId: barcodeId) else {
-            return
-        }
-        if let customHighlight = highlight as? BarcodeArCustomHighlight {
-            customHighlight.triggerClick()
-        }
     }
 }

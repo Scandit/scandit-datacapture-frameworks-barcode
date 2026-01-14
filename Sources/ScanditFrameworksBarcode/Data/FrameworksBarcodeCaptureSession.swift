@@ -5,6 +5,7 @@
  */
 
 import Foundation
+
 import ScanditBarcodeCapture
 
 public class FrameworksBarcodeCaptureSession {
@@ -13,12 +14,7 @@ public class FrameworksBarcodeCaptureSession {
     let newlyLocalizedBarcodes: [LocalizedOnlyBarcode]
     weak var captureSession: BarcodeCaptureSession?
 
-    init(
-        frameSequenceId: Int,
-        newlyRecognizedBarcode: Barcode?,
-        newlyLocalizedBarcodes: [LocalizedOnlyBarcode],
-        captureSession: BarcodeCaptureSession?
-    ) {
+    init(frameSequenceId: Int, newlyRecognizedBarcode: Barcode?, newlyLocalizedBarcodes: [LocalizedOnlyBarcode], captureSession: BarcodeCaptureSession?) {
         self.frameSequenceId = frameSequenceId
         self.newlyRecognizedBarcode = newlyRecognizedBarcode
         self.newlyLocalizedBarcodes = newlyLocalizedBarcodes
@@ -26,7 +22,7 @@ public class FrameworksBarcodeCaptureSession {
     }
 
     static func fromCaptureSession(session: BarcodeCaptureSession) -> FrameworksBarcodeCaptureSession {
-        FrameworksBarcodeCaptureSession(
+        return FrameworksBarcodeCaptureSession(
             frameSequenceId: session.frameSequenceId,
             newlyRecognizedBarcode: session.newlyRecognizedBarcode,
             newlyLocalizedBarcodes: session.newlyLocalizedBarcodes,

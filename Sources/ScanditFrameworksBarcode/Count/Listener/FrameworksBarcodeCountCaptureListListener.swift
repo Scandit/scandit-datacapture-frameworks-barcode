@@ -21,10 +21,8 @@ open class FrameworksBarcodeCountCaptureListListener: NSObject, BarcodeCountCapt
         self.viewId = viewId
     }
 
-    public func captureList(
-        _ captureList: BarcodeCountCaptureList,
-        didUpdate session: BarcodeCountCaptureListSession
-    ) {
+    public func captureList(_ captureList: BarcodeCountCaptureList,
+                            didUpdate session: BarcodeCountCaptureListSession) {
         sessionUpdatedEvent.emit(on: emitter, payload: ["session": session.jsonString, "viewId": self.viewId])
     }
 }

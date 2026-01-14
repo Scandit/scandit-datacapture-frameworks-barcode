@@ -49,12 +49,8 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
             }
             let json = JSONValue(string: jsonString)
             guard json.containsKey("View") else {
-                result.reject(
-                    error: ScanditFrameworksCoreError.deserializationError(
-                        error: nil,
-                        json: jsonString
-                    )
-                )
+                result.reject(error: ScanditFrameworksCoreError.deserializationError(error: nil,
+                                                                                     json: jsonString))
                 return
             }
 
@@ -81,12 +77,8 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
 
                 result.success(result: nil)
             } catch let error {
-                result.reject(
-                    error: ScanditFrameworksCoreError.deserializationError(
-                        error: error,
-                        json: nil
-                    )
-                )
+                result.reject(error: ScanditFrameworksCoreError.deserializationError(error: error,
+                                                                                     json: nil))
                 return
             }
         }
@@ -125,6 +117,7 @@ public extension BarcodePickModule {
         result.success()
     }
 
+
     func removeView(viewId: Int, result: FrameworksResult) {
         viewCache.remove(viewId: viewId)?.dispose()
         if let previousView = viewCache.getTopMost() {
@@ -142,18 +135,12 @@ public extension BarcodePickModule {
         result.success()
     }
 
-    func finishProductIdentifierForItems(
-        viewId: Int,
-        barcodePickProductProviderCallbackItemsJson: String,
-        result: FrameworksResult
-    ) {
+    func finishProductIdentifierForItems(viewId: Int, barcodePickProductProviderCallbackItemsJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        viewInstance.finishProductIdentifierForItems(
-            barcodePickProductProviderCallbackItemsJson: barcodePickProductProviderCallbackItemsJson
-        )
+        viewInstance.finishProductIdentifierForItems(barcodePickProductProviderCallbackItemsJson: barcodePickProductProviderCallbackItemsJson)
         result.success()
     }
 
@@ -277,7 +264,7 @@ public extension BarcodePickModule {
         }
         result.success()
     }
-
+    
     func viewResume(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
@@ -289,11 +276,7 @@ public extension BarcodePickModule {
         result.success()
     }
 
-    func finishBarcodePickViewHighlightStyleCustomViewProviderViewForRequest(
-        viewId: Int,
-        response: [String: Any?],
-        result: FrameworksResult
-    ) {
+    func finishBarcodePickViewHighlightStyleCustomViewProviderViewForRequest(viewId: Int, response: [String: Any?], result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -330,11 +313,7 @@ public extension BarcodePickModule {
         }
     }
 
-    func finishBarcodePickViewHighlightStyleAsyncProviderStyleForRequest(
-        viewId: Int,
-        response: [String: Any?],
-        result: FrameworksResult
-    ) {
+    func finishBarcodePickViewHighlightStyleAsyncProviderStyleForRequest(viewId: Int, response: [String: Any?], result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -357,6 +336,6 @@ public extension BarcodePickModule {
     }
 
     func getTopMostView() -> BarcodePickView? {
-        viewCache.getTopMost()?.view
+        return viewCache.getTopMost()?.view
     }
 }

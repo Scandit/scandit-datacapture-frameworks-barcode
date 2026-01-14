@@ -4,6 +4,7 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
+
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
@@ -14,7 +15,7 @@ public enum BarcodePickViewListenerEvents: String, CaseIterable {
     case didStopScanning = "BarcodePickViewListener.didStopScanning"
 }
 
-open class FrameworksBarcodePickViewListener: NSObject, BarcodePickViewListener {
+open class FrameworksBarcodePickViewListener : NSObject, BarcodePickViewListener {
     private let emitter: Emitter
     private let viewId: Int
 
@@ -24,42 +25,22 @@ open class FrameworksBarcodePickViewListener: NSObject, BarcodePickViewListener 
     }
 
     public func barcodePickViewDidFreezeScanning(_ view: BarcodePickView) {
-        guard
-            emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: BarcodePickViewListenerEvents.didFreezeScanning.rawValue
-            )
-        else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickViewListenerEvents.didFreezeScanning.rawValue) else { return }
         emitter.emit(name: BarcodePickViewListenerEvents.didFreezeScanning.rawValue, payload: ["viewId": self.viewId])
     }
 
     public func barcodePickViewDidStopScanning(_ view: BarcodePickView) {
-        guard
-            emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: BarcodePickViewListenerEvents.didStopScanning.rawValue
-            )
-        else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickViewListenerEvents.didStopScanning.rawValue) else { return }
         emitter.emit(name: BarcodePickViewListenerEvents.didStopScanning.rawValue, payload: ["viewId": self.viewId])
     }
 
     public func barcodePickViewDidPauseScanning(_ view: BarcodePickView) {
-        guard
-            emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: BarcodePickViewListenerEvents.didPauseScanning.rawValue
-            )
-        else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickViewListenerEvents.didPauseScanning.rawValue) else { return }
         emitter.emit(name: BarcodePickViewListenerEvents.didPauseScanning.rawValue, payload: ["viewId": self.viewId])
     }
 
     public func barcodePickViewDidStartScanning(_ view: BarcodePickView) {
-        guard
-            emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: BarcodePickViewListenerEvents.didStartScanning.rawValue
-            )
-        else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickViewListenerEvents.didStartScanning.rawValue) else { return }
         emitter.emit(name: BarcodePickViewListenerEvents.didStartScanning.rawValue, payload: ["viewId": self.viewId])
     }
 }

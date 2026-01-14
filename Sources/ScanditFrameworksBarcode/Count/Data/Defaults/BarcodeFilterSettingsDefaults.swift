@@ -16,7 +16,7 @@ struct BarcodeFilterSettingsDefaults: DefaultsEncodable {
             "excludeUpca": barcodeFilterSettings.excludeUPCA,
             "excludedCodesRegex": barcodeFilterSettings.excludedCodesRegex,
             "excludedSymbolCounts": barcodeFilterSettings.excludedSymbolCounts.mapValues { Array($0) },
-            "excludedSymbologies": Array(barcodeFilterSettings.excludedSymbologies),
+            "excludedSymbologies": Array(barcodeFilterSettings.excludedSymbologies)
         ]
     }
 }

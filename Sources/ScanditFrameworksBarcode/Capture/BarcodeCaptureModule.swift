@@ -7,6 +7,7 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
+
 open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMode> {
 
     private enum FunctionNames {
@@ -52,12 +53,9 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
 
     public func addListener(modeId: Int) {
         guard let mode = getModeFromCache(modeId) else {
-            addPostModeCreationAction(
-                modeId,
-                action: {
-                    self.addListener(modeId: modeId)
-                }
-            )
+            addPostModeCreationAction(modeId, action: {
+                self.addListener(modeId: modeId)
+            })
             return
         }
         mode.addListener()
@@ -92,7 +90,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
     }
 
     public func isModeEnabled() -> Bool {
-        getTopmostMode()?.isEnabled == true
+        return getTopmostMode()?.isEnabled == true
     }
 
     public func updateModeFromJson(modeJson: String, result: FrameworksResult) {
@@ -137,8 +135,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
             }
 
             guard let dcView = self.captureViewHandler.getView(viewId),
-                let overlay: BarcodeCaptureOverlay = dcView.findFirstOfType()
-            else {
+               let overlay: BarcodeCaptureOverlay = dcView.findFirstOfType() else {
                 result.success()
                 return
             }
@@ -220,7 +217,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
             result.success()
 
         case FunctionNames.getLastFrameData:
-            if let frameId: String = method.argument(key: "frameId") {
+            if let frameId: String = method.arguments() {
                 getLastFrameDataBytes(frameId: frameId, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid frameId argument", details: nil)
@@ -228,8 +225,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
 
         case FunctionNames.setModeEnabledState:
             if let modeId: Int = method.argument(key: "modeId"),
-                let enabled: Bool = method.argument(key: "enabled")
-            {
+               let enabled: Bool = method.argument(key: "enabled") {
                 setModeEnabled(modeId: modeId, enabled: enabled)
                 result.success()
             } else {
@@ -237,7 +233,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
             }
 
         case FunctionNames.updateBarcodeCaptureMode:
-            if let modeJson: String = method.argument(key: "modeJson") {
+            if let modeJson: String = method.arguments() {
                 updateModeFromJson(modeJson: modeJson, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid mode JSON argument", details: nil)
@@ -245,8 +241,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
 
         case FunctionNames.applyBarcodeCaptureModeSettings:
             if let modeId: Int = method.argument(key: "modeId"),
-                let modeSettingsJson: String = method.argument(key: "modeSettingsJson")
-            {
+               let modeSettingsJson: String = method.argument(key: "modeSettingsJson") {
                 applyModeSettings(modeId: modeId, modeSettingsJson: modeSettingsJson, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid modeId or modeSettingsJson argument", details: nil)
@@ -254,8 +249,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
 
         case FunctionNames.updateBarcodeCaptureOverlay:
             if let viewId: Int = method.argument(key: "viewId"),
-                let overlayJson: String = method.argument(key: "overlayJson")
-            {
+               let overlayJson: String = method.argument(key: "overlayJson") {
                 updateOverlay(viewId, overlayJson: overlayJson, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid viewId or overlayJson argument", details: nil)
@@ -263,8 +257,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
 
         case FunctionNames.updateFeedback:
             if let modeId: Int = method.argument(key: "modeId"),
-                let feedbackJson: String = method.argument(key: "feedbackJson")
-            {
+               let feedbackJson: String = method.argument(key: "feedbackJson") {
                 updateFeedback(modeId: modeId, feedbackJson: feedbackJson, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid modeId or feedbackJson argument", details: nil)
@@ -296,8 +289,7 @@ extension BarcodeCaptureModule: DeserializationLifeCycleObserver {
                 captureContext: DefaultFrameworksCaptureContext.shared,
                 creationData: creationParams,
                 dataCaptureContext: dcContext,
-                cachedCaptureSession: self.cachedCaptureSession
-            )
+                cachedCaptureSession: self.cachedCaptureSession)
 
             addModeToCache(modeId: creationParams.modeId, mode: captureMode)
             for action in getPostModeCreationActions(creationParams.modeId) {
@@ -365,23 +357,19 @@ extension BarcodeCaptureModule: DeserializationLifeCycleObserver {
             }
             return
         }
-
-        dispatchMain { [weak self] in
+        
+        dispatchMain{[weak self] in
             guard let self = self else {
                 return
             }
-
+            
             do {
-                guard let barcodeMode = mode?.mode else {
-                    Log.error("Barcode capture mode is not available for overlay creation")
-                    return
-                }
                 let overlay = try self.barcodeCaptureDeserializer.overlay(
                     fromJSONString: overlayJson,
-                    withMode: barcodeMode
+                    withMode: mode!.mode
                 )
                 view.addOverlay(overlay)
-
+                
             } catch {
                 Log.error(error)
             }

@@ -14,14 +14,10 @@ struct BarcodeCountDefaults: DefaultsEncodable {
     let barcodeCountView: DefaultsBarcodeCountView
 
     static let shared = {
-        BarcodeCountDefaults(
-            recommendedCameraSettings: CameraSettingsDefaults(cameraSettings: BarcodeCount.recommendedCameraSettings),
-            barcodeCountSettings: BarcodeCountSettingsDefaults(barcodeCountSettings: BarcodeCountSettings()),
-            barcodeCountFeedback: .default,
-            barcodeCountView: DefaultsBarcodeCountView(
-                barcodeCountToolbarSettingsDefaults: BarcodeCountToolbarSettingsDefaults()
-            )
-        )
+        BarcodeCountDefaults(recommendedCameraSettings: CameraSettingsDefaults(cameraSettings: BarcodeCount.recommendedCameraSettings),
+                             barcodeCountSettings: BarcodeCountSettingsDefaults(barcodeCountSettings: BarcodeCountSettings()),
+                             barcodeCountFeedback: .default,
+                             barcodeCountView: DefaultsBarcodeCountView(barcodeCountToolbarSettingsDefaults: BarcodeCountToolbarSettingsDefaults()))
     }()
 
     func toEncodable() -> [String: Any?] {
@@ -29,7 +25,7 @@ struct BarcodeCountDefaults: DefaultsEncodable {
             "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
             "BarcodeCountSettings": barcodeCountSettings.toEncodable(),
             "BarcodeCountFeedback": barcodeCountFeedback.jsonString,
-            "BarcodeCountView": barcodeCountView.toEncodable(),
+            "BarcodeCountView": barcodeCountView.toEncodable()
         ]
     }
 }

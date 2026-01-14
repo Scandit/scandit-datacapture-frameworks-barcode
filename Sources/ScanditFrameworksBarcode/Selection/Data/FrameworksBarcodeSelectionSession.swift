@@ -1,3 +1,4 @@
+
 /*
  * This file is part of the Scandit Data Capture SDK
  *
@@ -5,6 +6,7 @@
  */
 
 import Foundation
+
 import ScanditBarcodeCapture
 
 internal class FrameworksBarcodeSelectionSession {
@@ -19,7 +21,7 @@ internal class FrameworksBarcodeSelectionSession {
     }
 
     static func fromSelectionSession(session: BarcodeSelectionSession) -> FrameworksBarcodeSelectionSession {
-        FrameworksBarcodeSelectionSession(
+        return FrameworksBarcodeSelectionSession(
             frameSequenceId: session.frameSequenceId,
             selectedBarcodes: session.selectedBarcodes,
             selectionSession: session

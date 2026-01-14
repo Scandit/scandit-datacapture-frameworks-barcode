@@ -12,11 +12,9 @@ struct BarcodeCountSettingsDefaults: DefaultsEncodable {
 
     func toEncodable() -> [String: Any?] {
         [
-            "barcodeFilterSettings": BarcodeFilterSettingsDefaults(
-                barcodeFilterSettings: barcodeCountSettings.filterSettings
-            ).toEncodable(),
+            "barcodeFilterSettings": BarcodeFilterSettingsDefaults(barcodeFilterSettings: barcodeCountSettings.filterSettings).toEncodable(),
             "expectOnlyUniqueBarcodes": barcodeCountSettings.expectsOnlyUniqueBarcodes,
-            "mappingEnabled": barcodeCountSettings.mappingEnabled,
+            "mappingEnabled": barcodeCountSettings.mappingEnabled
         ]
     }
 }

@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 struct BarcodePickDefaults: DefaultsEncodable {
     private let recommendedCameraSettings: CameraSettingsDefaults
@@ -22,7 +22,7 @@ struct BarcodePickDefaults: DefaultsEncodable {
             "ViewSettings": viewSettingsDefaults.toEncodable(),
             "BarcodePickViewHighlightStyle": barcodePickViewHighlightStyleDefaults.toEncodable(),
             "SymbologySettings": barcodePickSymbologySettingsDefaults.toEncodable(),
-            "BarcodePickStatusIconSettings": barcodePickStatusIconSettingsDefaults.toEncodable(),
+            "BarcodePickStatusIconSettings": barcodePickStatusIconSettingsDefaults.toEncodable()
         ]
     }
 

@@ -23,28 +23,25 @@ fileprivate extension Emitter {
     }
 }
 
-open class FrameworksSparkScanFeedbackDelegate: NSObject, SparkScanFeedbackDelegate {
+
+open class FrameworksSparkScanFeedbackDelegate : NSObject, SparkScanFeedbackDelegate {
     private let emitter: Emitter
     private let viewId: Int
-
+    
     private let feedbackForBarcodeEvent = EventWithResult<String?>(event: Event(.feedbackForBarcode))
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
         self.viewId = viewId
     }
-
+    
     public func feedback(for barcode: Barcode) -> SparkScanBarcodeFeedback? {
         guard emitter.hasViewSpecificListenersForEvent(viewId, for: .feedbackForBarcode) else { return nil }
-        guard
-            let feedbackJson = feedbackForBarcodeEvent.emit(
-                on: emitter,
-                payload: ["barcode": barcode.jsonString, "viewId": viewId]
-            ) ?? nil
-        else {
+        guard let feedbackJson = feedbackForBarcodeEvent.emit(
+            on: emitter, payload: ["barcode": barcode.jsonString, "viewId": viewId]) ?? nil else {
             return nil
         }
-
+        
         do {
             return try SparkScanBarcodeFeedback(jsonString: feedbackJson)
         } catch {
@@ -52,12 +49,8 @@ open class FrameworksSparkScanFeedbackDelegate: NSObject, SparkScanFeedbackDeleg
             return nil
         }
     }
-
+    
     public func submitFeedback(feedbackJson: String?) {
         feedbackForBarcodeEvent.unlock(value: feedbackJson)
-    }
-
-    public func cancel() {
-        feedbackForBarcodeEvent.reset()
     }
 }

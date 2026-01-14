@@ -19,11 +19,9 @@ struct BarcodeSelectionBasicOverlayDefaults: DefaultsEncodable {
             "defaultStyle": overlay.style.jsonString,
             "shouldShowHints": overlay.shouldShowHints,
             "frozenBackgroundColor": overlay.frozenBackgroundColor.sdcHexString,
-            "styles": Dictionary(
-                uniqueKeysWithValues: BarcodeSelectionBasicOverlayStyle.allCases.map {
-                    ($0.jsonString, brushDefaults(for: $0))
-                }
-            ),
+            "styles": Dictionary(uniqueKeysWithValues: BarcodeSelectionBasicOverlayStyle.allCases.map {
+                ($0.jsonString, brushDefaults(for: $0))
+            })
         ]
     }
 
@@ -34,7 +32,7 @@ struct BarcodeSelectionBasicOverlayDefaults: DefaultsEncodable {
             "DefaultAimedBrush": EncodableBrush(brush: overlay.aimedBrush).toEncodable(),
             "DefaultSelectedBrush": EncodableBrush(brush: overlay.selectedBrush).toEncodable(),
             "DefaultSelectingBrush": EncodableBrush(brush: overlay.selectingBrush).toEncodable(),
-            "DefaultTrackedBrush": EncodableBrush(brush: overlay.trackedBrush).toEncodable(),
+            "DefaultTrackedBrush": EncodableBrush(brush: overlay.trackedBrush).toEncodable()
         ]
     }
 }

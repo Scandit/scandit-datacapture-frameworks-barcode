@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 struct BarcodeFindDefaults: DefaultsEncodable {
     private let feedback: BarcodeFindFeedback
@@ -13,12 +13,10 @@ struct BarcodeFindDefaults: DefaultsEncodable {
     private let viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults
     private let recommendedCameraSettings: CameraSettingsDefaults
 
-    init(
-        feedback: BarcodeFindFeedback,
-        viewDefaults: FrameworksBarcodeFindViewDefaults,
-        viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults,
-        recommendedCameraSettings: CameraSettingsDefaults
-    ) {
+    init(feedback: BarcodeFindFeedback,
+         viewDefaults: FrameworksBarcodeFindViewDefaults,
+         viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults,
+         recommendedCameraSettings: CameraSettingsDefaults) {
         self.feedback = feedback
         self.viewDefaults = viewDefaults
         self.viewSettingsDefaults = viewSettingsDefaults
@@ -29,9 +27,7 @@ struct BarcodeFindDefaults: DefaultsEncodable {
         BarcodeFindDefaults(
             feedback: .default,
             viewDefaults: FrameworksBarcodeFindViewDefaults(),
-            viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults(
-                barcodeFindViewSettings: BarcodeFindViewSettings()
-            ),
+            viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults(barcodeFindViewSettings: BarcodeFindViewSettings()),
             recommendedCameraSettings: CameraSettingsDefaults(
                 cameraSettings: BarcodeFind.recommendedCameraSettings
             )

@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 open class FrameworksBarcodeFindViewUIListener: NSObject, BarcodeFindViewUIDelegate {
     private let emitter: Emitter
@@ -17,15 +17,10 @@ open class FrameworksBarcodeFindViewUIListener: NSObject, BarcodeFindViewUIDeleg
         self.viewId = viewId
     }
 
-    public func barcodeFindView(
-        _ view: BarcodeFindView,
-        didTapFinishButton foundItems: Set<BarcodeFindItem>
-    ) {
+    public func barcodeFindView(_ view: BarcodeFindView,
+                                didTapFinishButton foundItems: Set<BarcodeFindItem>) {
         guard emitter.hasViewSpecificListenersForEvent(viewId, for: .finishButtonTapped) else { return }
         let foundItemsBarcodeData = foundItems.map { $0.searchOptions.barcodeData }
-        didTapFinishButtonEvent.emit(
-            on: emitter,
-            payload: ["foundItems": foundItemsBarcodeData, "viewId": self.viewId]
-        )
+        didTapFinishButtonEvent.emit(on: emitter, payload: ["foundItems": foundItemsBarcodeData, "viewId": self.viewId])
     }
 }

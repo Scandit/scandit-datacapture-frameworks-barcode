@@ -11,14 +11,11 @@ public enum BarcodePickViewHighlightStyleCustomViewProviderEvent: String, CaseIt
     case viewForRequest = "BarcodePickViewHighlightStyleCustomViewProvider.viewForRequest"
 }
 
-open class FrameworksBarcodePickViewHighlightStyleCustomViewProvider: NSObject,
-    BarcodePickViewHighlightStyleCustomViewDelegate
-{
+open class FrameworksBarcodePickViewHighlightStyleCustomViewProvider: NSObject, BarcodePickViewHighlightStyleCustomViewDelegate {
 
     private let emitter: Emitter
     private let viewId: Int
-    private let cache: ConcurrentDictionary<Int, (BarcodePickHighlightCustomViewResponse?) -> Void> =
-        ConcurrentDictionary()
+    private let cache: ConcurrentDictionary<Int, (BarcodePickHighlightCustomViewResponse?) -> Void> = ConcurrentDictionary()
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
@@ -29,21 +26,13 @@ open class FrameworksBarcodePickViewHighlightStyleCustomViewProvider: NSObject,
         for request: BarcodePickHighlightStyleRequest,
         completionHandler: @escaping (BarcodePickHighlightCustomViewResponse?) -> Void
     ) {
-        guard
-            emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: BarcodePickViewHighlightStyleCustomViewProviderEvent.viewForRequest.rawValue
-            )
-        else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickViewHighlightStyleCustomViewProviderEvent.viewForRequest.rawValue) else { return }
         let requestId = request.hashValue
-        emitter.emit(
-            name: BarcodePickViewHighlightStyleCustomViewProviderEvent.viewForRequest.rawValue,
-            payload: [
-                "requestId": requestId,
-                "request": request.jsonString,
-                "viewId": self.viewId,
-            ]
-        )
+        emitter.emit(name: BarcodePickViewHighlightStyleCustomViewProviderEvent.viewForRequest.rawValue, payload: [
+            "requestId": requestId,
+            "request": request.jsonString,
+            "viewId": self.viewId
+        ])
 
         cache.setValue(completionHandler, for: requestId)
 

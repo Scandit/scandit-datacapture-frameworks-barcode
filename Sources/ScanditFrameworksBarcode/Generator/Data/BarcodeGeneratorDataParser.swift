@@ -15,25 +15,25 @@ struct BarcodeGeneratorDataParser {
     let versionNumber: Int?
     let minimumErrorCorrectionPercent: Int?
     let layers: Int?
-
+    
     init(jsonString: String) {
         let jsonValue = JSONValue(string: jsonString)
-
+        
         self.id = jsonValue.string(forKey: "id")
         self.type = jsonValue.string(forKey: "type")
-
+        
         let backgroundColorHex = jsonValue.optionalString(forKey: "backgroundColor")
-        self.backgroundColor = backgroundColorHex.flatMap { hexString in
+        self.backgroundColor = backgroundColorHex.flatMap{  hexString in
             UIColor(sdcHexString: hexString)
         }
         let foregroundColorHex = jsonValue.optionalString(forKey: "foregroundColor")
-        self.foregroundColor = foregroundColorHex.flatMap { hexString in
+        self.foregroundColor = foregroundColorHex.flatMap{  hexString in
             UIColor(sdcHexString: hexString)
         }
-
+        
         let errorCorrectionLevel: QRCodeErrorCorrectionLevel?
 
-        if let levelString = jsonValue.optionalString(forKey: "errorCorrectionLevel") {
+        if let levelString = jsonValue.optionalString(forKey: "errorCorrectionLevel"){
             switch levelString {
             case "low":
                 errorCorrectionLevel = .low

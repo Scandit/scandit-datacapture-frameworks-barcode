@@ -4,16 +4,16 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 extension JSONValue {
     func optionalString(forKey: String) -> String? {
-        containsKey(forKey) ? string(forKey: forKey) : nil
+        return containsKey(forKey) ? string(forKey: forKey) : nil
     }
-
+    
     func optionalInt(forKey: String) -> Int? {
-        containsKey(forKey) ? integer(forKey: forKey) : nil
+        return containsKey(forKey) ? integer(forKey: forKey) : nil
     }
 }
 
@@ -33,9 +33,7 @@ struct BarcodePickProductProviderCallbackItemData {
     private func barcodeFindItemFromJsonValue(_ jsonValue: JSONValue) -> BarcodePickProductProviderCallbackItem {
         let itemData = jsonValue.string(forKey: "itemData")
         let productIdentifier = jsonValue.optionalString(forKey: "productIdentifier")
-        return BarcodePickProductProviderCallbackItem(
-            itemData: itemData,
-            productIdentifier: productIdentifier
-        )
+        return BarcodePickProductProviderCallbackItem(itemData: itemData,
+                                                      productIdentifier: productIdentifier)
     }
 }

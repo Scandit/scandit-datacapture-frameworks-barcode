@@ -69,18 +69,13 @@ open class SparkScanModule: NSObject, FrameworkModule {
         viewInstance.removeSparkScanViewUiListener()
     }
 
-    public func addViewToContainer(
-        _ container: UIView,
-        jsonString: String,
-        result: FrameworksResult,
-        completion: ((Int) -> Void)? = nil
-    ) {
+    public func addViewToContainer(_ container: UIView, jsonString: String, result: FrameworksResult, completion: ((Int) -> Void)? = nil) {
         guard let context = self.captureContext.context else {
             Log.error(SparkScanError.nilContext)
             result.reject(error: SparkScanError.nilContext)
             return
         }
-        dispatchMain { [weak self] in
+        dispatchMain {[weak self] in
             guard let self = self else {
                 return
             }
@@ -145,7 +140,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
         guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.stopScanning()
     }
-
+    
     public func onHostPause() {
         guard let viewInstance = viewCache.getTopMost() else { return }
         viewInstance.stopScanning()
@@ -187,7 +182,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
     }
 
     public func isModeEnabled() -> Bool {
-        viewCache.getTopMost()?.isModeEnabled() ?? false
+        return viewCache.getTopMost()?.isModeEnabled() ?? false
     }
 
     public func submitFeedbackForBarcode(viewId: Int, feedbackJson: String?, result: FrameworksResult) {

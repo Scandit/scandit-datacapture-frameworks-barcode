@@ -4,6 +4,7 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
+
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
@@ -11,7 +12,7 @@ public enum BarcodePickViewUiListenerEvents: String, CaseIterable {
     case didTapFinishButton = "BarcodePickViewUiListener.didTapFinishButton"
 }
 
-open class FrameworksBarcodePickViewUiListener: NSObject, BarcodePickViewUIDelegate {
+open class FrameworksBarcodePickViewUiListener : NSObject, BarcodePickViewUIDelegate {
     private let emitter: Emitter
     private let viewId: Int
 
@@ -21,15 +22,7 @@ open class FrameworksBarcodePickViewUiListener: NSObject, BarcodePickViewUIDeleg
     }
 
     public func barcodePickViewDidTapFinishButton(_ view: BarcodePickView) {
-        guard
-            emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: BarcodePickViewUiListenerEvents.didTapFinishButton.rawValue
-            )
-        else { return }
-        emitter.emit(
-            name: BarcodePickViewUiListenerEvents.didTapFinishButton.rawValue,
-            payload: ["viewId": self.viewId]
-        )
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickViewUiListenerEvents.didTapFinishButton.rawValue) else { return }
+        emitter.emit(name: BarcodePickViewUiListenerEvents.didTapFinishButton.rawValue, payload: ["viewId": self.viewId])
     }
 }

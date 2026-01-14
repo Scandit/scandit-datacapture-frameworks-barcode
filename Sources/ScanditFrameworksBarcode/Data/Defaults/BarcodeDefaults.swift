@@ -16,18 +16,14 @@ public struct BarcodeDefaults: DefaultsEncodable {
         let captureSettings = BarcodeCaptureSettings()
         let symbologyDescriptions = SymbologyDescription.all
         let compositeTypeDescriptions = CompositeTypeDescription.all
-        return .init(
-            symbologySettingsDefaults: SymbologySettingsDefaults(barcodeCaptureSettings: captureSettings).toEncodable(),
-            symbologyDescriptionDefaults: symbologyDescriptions.map { $0.jsonString },
-            compositeTypeDescriptions: compositeTypeDescriptions.map { $0.jsonString }
-        )
+        return .init(symbologySettingsDefaults: SymbologySettingsDefaults(barcodeCaptureSettings: captureSettings).toEncodable(),
+                     symbologyDescriptionDefaults: symbologyDescriptions.map { $0.jsonString },
+                     compositeTypeDescriptions: compositeTypeDescriptions.map { $0.jsonString })
     }()
 
-    init(
-        symbologySettingsDefaults: [String: Any?],
-        symbologyDescriptionDefaults: [String],
-        compositeTypeDescriptions: [String]
-    ) {
+    init(symbologySettingsDefaults: [String: Any?],
+         symbologyDescriptionDefaults: [String],
+         compositeTypeDescriptions: [String]) {
         self.symbologySettingsDefaults = symbologySettingsDefaults
         self.symbologyDescriptionDefaults = symbologyDescriptionDefaults
         self.compositeTypeDescriptions = compositeTypeDescriptions
@@ -37,7 +33,7 @@ public struct BarcodeDefaults: DefaultsEncodable {
         [
             "SymbologySettings": symbologySettingsDefaults,
             "SymbologyDescriptions": symbologyDescriptionDefaults,
-            "CompositeTypeDescriptions": compositeTypeDescriptions,
+            "CompositeTypeDescriptions": compositeTypeDescriptions
         ]
     }
 }

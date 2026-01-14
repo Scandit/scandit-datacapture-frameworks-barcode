@@ -19,7 +19,7 @@ extension SDCBarcodeFilterHighlightType {
     }
 }
 
-public struct BarcodeFilterHighlightSettingsDefaults: DefaultsEncodable {
+public struct BarcodeFilterHighlightSettingsDefaults : DefaultsEncodable {
     private let filterSettings: BarcodeFilterHighlightSettings
 
     fileprivate init(filterSettings: BarcodeFilterHighlightSettings) {
@@ -29,12 +29,12 @@ public struct BarcodeFilterHighlightSettingsDefaults: DefaultsEncodable {
     public func toEncodable() -> [String: Any?] {
         var encodableBrush: [String: Any?]?
         if let brush = filterSettings.brush {
-            encodableBrush = EncodableBrush(brush: brush).toEncodable()
+            encodableBrush =  EncodableBrush(brush: brush).toEncodable()
         }
-
+        
         return [
             "brush": encodableBrush,
-            "highlightType": filterSettings.highlightType.jsonString,
+            "highlightType": filterSettings.highlightType.jsonString
         ]
     }
 

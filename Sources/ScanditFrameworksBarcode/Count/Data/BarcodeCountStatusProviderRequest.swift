@@ -18,5 +18,5 @@ class BarcodeCountStatusProviderRequest {
         self.requestId = UUID().uuidString
     }
 
-    static let id = "requestId"
+    static let ID = "requestId"
 }

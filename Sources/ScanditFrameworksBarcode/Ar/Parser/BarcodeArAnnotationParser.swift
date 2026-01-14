@@ -5,10 +5,10 @@
  */
 
 import Foundation
-import ScanditBarcodeCapture
-import ScanditCaptureCore
-import ScanditFrameworksCore
 import UIKit
+import ScanditCaptureCore
+import ScanditBarcodeCapture
+import ScanditFrameworksCore
 
 public enum FrameworksBarcodeArAnnotationEvents: String, CaseIterable {
     case didTapPopover = "BarcodeArPopoverAnnotationListener.didTapPopover"
@@ -39,7 +39,7 @@ public class BarcodeArAnnotationParser {
         self.cache = cache
     }
 
-    func get(json: JSONValue, barcode: Barcode, emitter: Emitter, viewId: Int) -> (UIView & BarcodeArAnnotation)? {
+    func get(json: JSONValue, barcode: Barcode) -> (UIView & BarcodeArAnnotation)? {
         guard let type = json.optionalString(forKey: "type") else {
             Log.error("Missing type in JSON.")
             return nil
@@ -52,8 +52,6 @@ public class BarcodeArAnnotationParser {
             return getPopoverAnnotation(barcode: barcode, json: json)
         case "barcodeArStatusIconAnnotation":
             return getStatusIconAnnotation(barcode: barcode, json: json)
-        case "barcodeArCustomAnnotation":
-            return BarcodeArCustomAnnotation(barcode: barcode, emitter: emitter, json: json, viewId: viewId)
         default:
             Log.error("Not supported annotation type.", error: NSError(domain: "Type \(type)", code: -1))
             return nil
@@ -73,10 +71,6 @@ public class BarcodeArAnnotationParser {
             updateStatusIconAnnotation(statusIconAnnotation, iconJson, json)
         case let popoverAnnotation as BarcodeArPopoverAnnotation:
             updatePopoverAnnotation(popoverAnnotation, json, popoverAnnotation.barcode)
-        case let customAnnotation as BarcodeArCustomAnnotation:
-            var trigger = customAnnotation.annotationTrigger
-            SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
-            customAnnotation.annotationTrigger = trigger
         default:
             Log.error("Unsupported annotation type")
         }
@@ -88,7 +82,7 @@ public class BarcodeArAnnotationParser {
             return
         }
 
-        if index < 0 {
+        if  index < 0 {
             Log.error(
                 "Invalid index received when trying to update the updateBarcodeArPopoverButton.",
                 error: NSError(domain: "Index \(index)", code: -1)
@@ -106,12 +100,11 @@ public class BarcodeArAnnotationParser {
 
         let button = annotation.buttons[index]
         if let textColorHex = json.optionalString(forKey: "textColor"),
-            let textColor = UIColor(sdcHexString: textColorHex)
-        {
+           let textColor = UIColor(sdcHexString: textColorHex) {
             button.textColor = textColor
         }
         button.font = json.getFont(forSizeKey: "textSize", andFamilyKey: "fontFamily")
-        button.isEnabled = json.bool(forKey: "enabled", default: true)
+        button.isEnabled = json.bool(forKey: "enabled", default: false)
     }
 }
 
@@ -155,7 +148,7 @@ private extension BarcodeArAnnotationParser {
         }
 
         let bodyComponentsJson = json.array(forKey: "body")
-        var bodyComponents: [BarcodeArInfoAnnotationBodyComponent] = []
+        var bodyComponents = [BarcodeArInfoAnnotationBodyComponent]()
         for index in 0..<bodyComponentsJson.count() {
             let bodyJson = bodyComponentsJson.atIndex(index)
             if let component = getBarcodeArInfoAnnotationBodyComponent(json: bodyJson) {
@@ -187,13 +180,11 @@ private extension BarcodeArAnnotationParser {
             }
             annotationHeader.text = json.optionalString(forKey: "text")
             if let headerBackgroundColorHex = json.optionalString(forKey: "backgroundColor"),
-                let headerBackgroundColor = UIColor(sdcHexString: headerBackgroundColorHex)
-            {
+               let headerBackgroundColor = UIColor(sdcHexString: headerBackgroundColorHex) {
                 annotationHeader.backgroundColor = headerBackgroundColor
             }
             if let headerTextColorHex = json.optionalString(forKey: "textColor"),
-                let headerTextColor = UIColor(sdcHexString: headerTextColorHex)
-            {
+               let headerTextColor = UIColor(sdcHexString: headerTextColorHex) {
                 annotationHeader.textColor = headerTextColor
             }
             annotationHeader.font = json.getFont(forSizeKey: "textSize", andFamilyKey: "fontFamily")
@@ -213,13 +204,11 @@ private extension BarcodeArAnnotationParser {
             }
             annotationFooter.text = json.optionalString(forKey: "text")
             if let footerBackgroundColorHex = json.optionalString(forKey: "backgroundColor"),
-                let footerBackgroundColor = UIColor(sdcHexString: footerBackgroundColorHex)
-            {
+               let footerBackgroundColor = UIColor(sdcHexString: footerBackgroundColorHex) {
                 annotationFooter.backgroundColor = footerBackgroundColor
             }
             if let footerTextColorHex = json.optionalString(forKey: "textColor"),
-                let footerTextColor = UIColor(sdcHexString: footerTextColorHex)
-            {
+               let footerTextColor = UIColor(sdcHexString: footerTextColorHex) {
                 annotationFooter.textColor = footerTextColor
             }
             annotationFooter.font = json.getFont(forSizeKey: "textSize", andFamilyKey: "fontFamily")
@@ -236,8 +225,7 @@ private extension BarcodeArAnnotationParser {
             let bodyComponent = BarcodeArInfoAnnotationBodyComponent()
             bodyComponent.text = json.optionalString(forKey: "text")
             if let textColorHex = json.optionalString(forKey: "textColor"),
-                let textColor = UIColor(sdcHexString: textColorHex)
-            {
+               let textColor = UIColor(sdcHexString: textColorHex) {
                 bodyComponent.textColor = textColor
             }
             bodyComponent.textAlignment = json.getTextAlignment(forKey: "textAlign")
@@ -249,7 +237,7 @@ private extension BarcodeArAnnotationParser {
             bodyComponent.isRightIconTappable = json.bool(forKey: "isRightIconTappable", default: false)
             if json.containsKey("rightIcon") {
                 let rightIconJson = json.getObjectAsString(forKey: "rightIcon")
-                bodyComponent.rightIcon = try ScanditIcon(fromJSONString: rightIconJson)
+                bodyComponent.rightIcon =  try ScanditIcon(fromJSONString: rightIconJson)
             }
             return bodyComponent
         } catch {
@@ -313,13 +301,12 @@ private extension BarcodeArAnnotationParser {
 
     private func updatePopoverButton(_ json: JSONValue, _ button: BarcodeArPopoverAnnotationButton) {
         if let textColorHex = json.optionalString(forKey: "textColor"),
-            let textColor = UIColor(sdcHexString: textColorHex)
-        {
+           let textColor = UIColor(sdcHexString: textColorHex) {
             button.textColor = textColor
         }
 
         button.font = json.getFont(forSizeKey: "textSize", andFamilyKey: "fontFamily")
-        button.isEnabled = json.bool(forKey: "enabled", default: true)
+        button.isEnabled = json.bool(forKey: "enabled", default: false)
     }
 }
 
@@ -347,13 +334,11 @@ private extension BarcodeArAnnotationParser {
             annotation.hasTip = json.bool(forKey: "hasTip", default: false)
             annotation.text = json.optionalString(forKey: "text")
             if let textColorHex = json.optionalString(forKey: "textColor"),
-                let textColor = UIColor(sdcHexString: textColorHex)
-            {
+               let textColor = UIColor(sdcHexString: textColorHex) {
                 annotation.textColor = textColor
             }
             if let backgroundColorHex = json.optionalString(forKey: "backgroundColor"),
-                let backgroundColor = UIColor(sdcHexString: backgroundColorHex)
-            {
+               let backgroundColor = UIColor(sdcHexString: backgroundColorHex) {
                 annotation.backgroundColor = backgroundColor
             }
 

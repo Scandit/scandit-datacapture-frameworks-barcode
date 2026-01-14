@@ -5,8 +5,8 @@
  */
 
 import Foundation
-import ScanditBarcodeCapture
 import ScanditCaptureCore
+import ScanditBarcodeCapture
 import ScanditFrameworksCore
 import UIKit
 
@@ -24,8 +24,8 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     private(set) var view: BarcodeCountView!
     private var mode: BarcodeCount!
 
-    private var internalViewId: Int = 0
-    public var viewId: Int { internalViewId }
+    private var _viewId: Int = 0
+    public var viewId: Int { _viewId }
     public var parentId: Int? { nil }
 
     private init(
@@ -52,23 +52,16 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         parent: UIView,
         viewCreationParams: BarcodeCountViewCreationData
     ) throws {
-        internalViewId = viewCreationParams.viewId
+        _viewId = viewCreationParams.viewId
         do {
-            mode = try modeDeserializer.mode(
-                fromJSONString: viewCreationParams.modeJson,
-                context: self.dataCaptureContext
-            )
+            mode = try modeDeserializer.mode(fromJSONString: viewCreationParams.modeJson, context: self.dataCaptureContext)
         } catch {
             // handle error
             return
         }
         postModeChanges(viewCreationParams)
         do {
-            view = try viewDeserializer.view(
-                fromJSONString: viewCreationParams.viewJson,
-                barcodeCount: mode,
-                context: self.dataCaptureContext
-            )
+            view = try viewDeserializer.view(fromJSONString: viewCreationParams.viewJson, barcodeCount: mode, context: self.dataCaptureContext)
         } catch {
             // handle error
             return
@@ -79,9 +72,9 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         view.delegate = viewListener
         view.uiDelegate = viewUiListener
         view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-
+        
         parent.addSubview(view)
-
+        
     }
 
     private func postModeChanges(_ changeParams: BarcodeCountViewCreationData) {
@@ -112,13 +105,13 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     public func updateView(viewJson: String) {
         do {
             let updateParams = try BarcodeCountViewCreationData.fromViewJsonOnly(viewJson)
-
+            
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 _ = try? self.viewDeserializer.update(self.view, fromJSONString: updateParams.viewJson)
                 self.postViewChanges(updateParams)
             }
-
+            
         } catch {
             Log.error("Failed to update view.", error: error)
         }
@@ -135,10 +128,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     }
 
     public func setBarcodeCountCaptureList(targetBarcodes: Set<TargetBarcode>) {
-        let barcodeCountCaptureList = BarcodeCountCaptureList(
-            listener: captureListListener,
-            targetBarcodes: Set(targetBarcodes)
-        )
+        let barcodeCountCaptureList = BarcodeCountCaptureList(listener: captureListListener, targetBarcodes: Set(targetBarcodes))
         mode.setCaptureList(barcodeCountCaptureList)
     }
 
@@ -167,37 +157,25 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     }
 
     public func finishBrushForRecognizedBarcodeEvent(brush: Brush?, trackedBarcodeId: Int) {
-        if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(
-            with: trackedBarcodeId,
-            for: .brushForRecognizedBarcode
-        ), let brush = brush {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(with: trackedBarcodeId, for: .brushForRecognizedBarcode), let brush = brush {
             view.setBrush(brush, forRecognizedBarcode: trackedBarcode)
         }
     }
 
     public func finishBrushForRecognizedBarcodeNotInListEvent(brush: Brush?, trackedBarcodeId: Int) {
-        if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(
-            with: trackedBarcodeId,
-            for: .brushForRecognizedBarcodeNotInList
-        ), let brush = brush {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(with: trackedBarcodeId, for: .brushForRecognizedBarcodeNotInList), let brush = brush {
             view.setBrush(brush, forRecognizedBarcodeNotInList: trackedBarcode)
         }
     }
 
     public func finishBrushForAcceptedBarcodeEvent(brush: Brush?, trackedBarcodeId: Int) {
-        if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(
-            with: trackedBarcodeId,
-            for: .brushForAcceptedBarcode
-        ), let brush = brush {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(with: trackedBarcodeId, for: .brushForAcceptedBarcode), let brush = brush {
             view.setBrush(brush, forAcceptedBarcode: trackedBarcode)
         }
     }
 
     public func finishBrushForRejectedBarcodeEvent(brush: Brush?, trackedBarcodeId: Int) {
-        if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(
-            with: trackedBarcodeId,
-            for: .brushForRejectedBarcode
-        ), let brush = brush {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(with: trackedBarcodeId, for: .brushForRejectedBarcode), let brush = brush {
             view.setBrush(brush, forRejectedBarcode: trackedBarcode)
         }
     }
@@ -264,10 +242,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     }
 
     public func getSpatialMap(expectedNumberOfRows: Int, expectedNumberOfColumns: Int) -> BarcodeSpatialGrid? {
-        barcodeCountListener.getSpatialMap(
-            expectedNumberOfRows: expectedNumberOfRows,
-            expectedNumberOfColumns: expectedNumberOfColumns
-        )
+        barcodeCountListener.getSpatialMap(expectedNumberOfRows: expectedNumberOfRows, expectedNumberOfColumns: expectedNumberOfColumns)
     }
 
     public func setModeEnabled(_ enabled: Bool) {
@@ -279,23 +254,24 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     }
 
     public func updateFeedback(feedbackJsonData: Data) throws {
-        guard let json = try JSONSerialization.jsonObject(with: feedbackJsonData, options: []) as? [String: Any] else {
+        if let json = try JSONSerialization.jsonObject(with: feedbackJsonData, options: []) as? [String: Any] {
+            let newFeedback = mode.feedback
+            if let successData = json["success"] as? [String: Any] {
+                if let success = successData.encodeToJSONString() {
+                    newFeedback.success = try Feedback(fromJSONString: success)
+                }
+            }
+            
+            if let failureData = json["failure"] as? [String: Any] {
+                if let failure = failureData.encodeToJSONString() {
+                    newFeedback.failure = try Feedback(fromJSONString: failure)
+                }
+            }
+            
+            mode.feedback = newFeedback
+        } else {
             throw NSError(domain: "Invalid JSON format when updating the feedback", code: 0, userInfo: nil)
         }
-        let newFeedback = mode.feedback
-        if let successData = json["success"] as? [String: Any] {
-            if let success = successData.encodeToJSONString() {
-                newFeedback.success = try Feedback(fromJSONString: success)
-            }
-        }
-
-        if let failureData = json["failure"] as? [String: Any] {
-            if let failure = failureData.encodeToJSONString() {
-                newFeedback.failure = try Feedback(fromJSONString: failure)
-            }
-        }
-
-        mode.feedback = newFeedback
     }
 
     public func submitBarcodeCountStatusProviderCallbackResult(statusJson: String) {
@@ -309,10 +285,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         viewCreationParams: BarcodeCountViewCreationData
     ) throws -> FrameworksBarcodeCountView {
         let barcodeCountListener = FrameworksBarcodeCountListener(emitter: emitter, viewId: viewCreationParams.viewId)
-        let captureListListener = FrameworksBarcodeCountCaptureListListener(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
+        let captureListListener = FrameworksBarcodeCountCaptureListListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let viewListener = FrameworksBarcodeCountViewListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let viewUiListener = FrameworksBarcodeCountViewUIListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let statusProvider = FrameworksBarcodeCountStatusProvider(emitter: emitter, viewId: viewCreationParams.viewId)

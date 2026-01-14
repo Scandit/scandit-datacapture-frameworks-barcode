@@ -5,18 +5,19 @@
  */
 
 import Foundation
-import ScanditBarcodeCapture
-import ScanditCaptureCore
+
 import ScanditFrameworksCore
+import ScanditCaptureCore
+import ScanditBarcodeCapture
 
 public class BarcodeArHighlightParser {
     var emitter: Emitter
-
+    
     init(emitter: Emitter) {
         self.emitter = emitter
     }
 
-    func get(json: JSONValue, barcode: Barcode, viewId: Int) -> (UIView & BarcodeArHighlight)? {
+    func get(json: JSONValue, barcode: Barcode) -> (UIView & BarcodeArHighlight)? {
         guard let type = json.optionalString(forKey: "type") else {
             Log.error("Invalid JSON type.")
             return nil
@@ -28,7 +29,7 @@ public class BarcodeArHighlightParser {
         case "barcodeArRectangleHighlight":
             return getBarcodeArRectangleHighlight(barcode: barcode, json: json)
         case "barcodeArCustomHighlight":
-            return BarcodeArCustomHighlight(barcode: barcode, emitter: emitter, viewId: viewId)
+            return BarcodeArCustomHighlight(barcode: barcode, emitter: emitter)
         default:
             Log.error("Not supported highlight type.", error: NSError(domain: "Type \(type)", code: -1))
             return nil
@@ -61,8 +62,7 @@ public class BarcodeArHighlightParser {
     }
 
     private func getBarcodeArRectangleHighlight(
-        barcode: Barcode,
-        json: JSONValue
+        barcode: Barcode, json: JSONValue
     ) -> BarcodeArRectangleHighlight? {
 
         let highlight = BarcodeArRectangleHighlight(barcode: barcode)
@@ -78,7 +78,7 @@ public class BarcodeArHighlightParser {
                 let iconJson = json.getObjectAsString(forKey: "icon")
                 highlight.icon = try ScanditIcon(fromJSONString: iconJson)
             }
-            highlight.size = sizeValue
+            highlight.size =  sizeValue
             if json.containsKey("brush") {
                 let brushString = json.getObjectAsString(forKey: "brush")
                 if let brush = Brush(jsonString: brushString) {

@@ -9,7 +9,7 @@ import ScanditFrameworksCore
 
 extension Barcode {
     var selectionIdentifier: String {
-        "\(data ?? "")\(SymbologyDescription(symbology: symbology).identifier)"
+        return "\(data ?? "")\(SymbologyDescription(symbology: symbology).identifier)"
     }
 }
 
@@ -37,16 +37,12 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
     private let modeId: Int
 
     private let didUpdateSelectionEvent = EventWithResult<Bool>(event: Event(.didUpdateSelection))
-    private let didUpdateSessionEvent = EventWithResult<Bool>(
-        event: Event(FrameworksBarcodeSelectionEvent.didUpdateSession)
-    )
+    private let didUpdateSessionEvent = EventWithResult<Bool>(event: Event(FrameworksBarcodeSelectionEvent.didUpdateSession))
 
     private var lastSession: FrameworksBarcodeSelectionSession?
 
-    public init(
-        emitter: Emitter,
-        modeId: Int
-    ) {
+    public init(emitter: Emitter,
+                modeId: Int) {
         self.emitter = emitter
         self.modeId = modeId
     }
@@ -62,28 +58,24 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
     public func getBarcodeCount(selectionIdentifier: String) -> Int {
         let selector: (Barcode) -> Bool = { $0.selectionIdentifier == selectionIdentifier }
         guard let session = lastSession,
-            let barcode = session.selectedBarcodes.first(where: selector)
-        else { return 0 }
+              let barcode = session.selectedBarcodes.first(where: selector) else { return 0 }
         return (session.selectionSession?.count(for: barcode)) ?? 0
     }
 
     public func resetSession(frameSequenceId: Int?) {
         guard let session = lastSession,
-            let frameSequenceId = frameSequenceId,
-            session.frameSequenceId == frameSequenceId
-        else { return }
+              let frameSequenceId = frameSequenceId,
+              session.frameSequenceId == frameSequenceId else { return }
         session.selectionSession?.reset()
     }
 
-    public func barcodeSelection(
-        _ barcodeSelection: BarcodeSelection,
-        didUpdateSelection session: BarcodeSelectionSession,
-        frameData: FrameData?
-    ) {
+    public func barcodeSelection(_ barcodeSelection: BarcodeSelection,
+                                 didUpdateSelection session: BarcodeSelectionSession,
+                                 frameData: FrameData?) {
         lastSession = FrameworksBarcodeSelectionSession.fromSelectionSession(session: session)
-
+        
         var frameId: String? = nil
-
+        
         if let data = frameData {
             frameId = LastFrameData.shared.addToCache(frameData: data)
         }
@@ -96,20 +88,18 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
                 "modeId": modeId,
             ]
         )
-
+        
         if let id = frameId {
             LastFrameData.shared.removeFromCache(frameId: id)
         }
     }
 
-    public func barcodeSelection(
-        _ barcodeSelection: BarcodeSelection,
-        didUpdate session: BarcodeSelectionSession,
-        frameData: FrameData?
-    ) {
+    public func barcodeSelection(_ barcodeSelection: BarcodeSelection,
+                                 didUpdate session: BarcodeSelectionSession,
+                                 frameData: FrameData?) {
         lastSession = FrameworksBarcodeSelectionSession.fromSelectionSession(session: session)
         var frameId: String? = nil
-
+        
         if let data = frameData {
             frameId = LastFrameData.shared.addToCache(frameData: data)
         }
@@ -119,15 +109,15 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
             payload: [
                 "session": session.jsonString,
                 "frameId": frameId,
-                "modeId": modeId,
+                "modeId": modeId
             ]
         )
-
+        
         if let id = frameId {
             LastFrameData.shared.removeFromCache(frameId: id)
         }
     }
-
+    
     public func reset() {
         didUpdateSessionEvent.reset()
         didUpdateSelectionEvent.reset()

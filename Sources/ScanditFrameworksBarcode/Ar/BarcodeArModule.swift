@@ -79,15 +79,6 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func onCustomHighlightClicked(viewId: Int, barcodeId: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.onCustomHighlightClicked(barcodeId: barcodeId)
-        result.success()
-    }
-
     public func registerBarcodeArAnnotationProvider(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
@@ -141,7 +132,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
             result.reject(error: error)
         }
     }
-
+    
     public func updateMode(viewId: Int, modeJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
@@ -191,7 +182,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
             return
         }
         let block = { [weak self] in
-            guard self != nil else {
+            guard let _ = self else {
                 return
             }
             viewInstance.finishHighlightForBarcode(highlightJson: highlightJson)
@@ -206,7 +197,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
             return
         }
         let block = { [weak self] in
-            guard self != nil else {
+            guard let _ = self else {
                 return
             }
             viewInstance.finishAnnotationForBarcode(annotationJson: annotationJson)
@@ -221,7 +212,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
             return
         }
         let block = { [weak self] in
-            guard self != nil else {
+            guard let _ = self else {
                 return
             }
             viewInstance.updateBarcodeArPopoverButtonAtIndex(updateJson: updateJson)
@@ -236,7 +227,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
             return
         }
         let block = { [weak self] in
-            guard self != nil else {
+            guard let _ = self else {
                 return
             }
             viewInstance.updateHighlight(highlightJson: highlightJson)
@@ -251,7 +242,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
             return
         }
         let block = { [weak self] in
-            guard self != nil else {
+            guard let _ = self else {
                 return
             }
             viewInstance.updateAnnotation(annotationJson: annotationJson)
@@ -318,7 +309,7 @@ public extension BarcodeArModule {
 
     // swiftlint:disable function_body_length
     func addViewFromJson(parent: UIView, viewJson: String, result: FrameworksResult) {
-
+        
         guard let context = self.captureContext.context else {
             result.reject(error: ScanditFrameworksCoreError.nilDataCaptureContext)
             return
@@ -328,23 +319,23 @@ public extension BarcodeArModule {
             result.reject(error: ScanditFrameworksCoreError.deserializationError(error: nil, json: viewJson))
             return
         }
-
+        
         do {
             let viewCreationParams = try BarcodeArViewCreationData.fromJson(viewJson)
-
+            
             let block = { [weak self] in
                 guard let self = self else {
                     result.reject(error: ScanditFrameworksCoreError.nilSelf)
                     return
                 }
-
+               
                 do {
-
+                   
                     if let existingView = viewCache.getView(viewId: viewCreationParams.viewId) {
                         existingView.dispose()
                         _ = viewCache.remove(viewId: existingView.viewId)
                     }
-
+                    
                     if let previousView = viewCache.getTopMost() {
                         previousView.hide()
                     }
@@ -392,6 +383,6 @@ public extension BarcodeArModule {
     }
 
     func getTopMostView() -> BarcodeArView? {
-        viewCache.getTopMost()?.view
+        return viewCache.getTopMost()?.view
     }
 }

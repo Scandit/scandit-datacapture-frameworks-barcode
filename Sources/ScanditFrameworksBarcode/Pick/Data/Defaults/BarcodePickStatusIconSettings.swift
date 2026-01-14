@@ -4,8 +4,8 @@
  * Copyright (C) 2024- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 struct BarcodePickStatusIconSettingsDefaults: DefaultsEncodable {
     private let settings: BarcodePickStatusIconSettings
@@ -14,7 +14,7 @@ struct BarcodePickStatusIconSettingsDefaults: DefaultsEncodable {
         [
             "ratioToHighlightSize": settings.ratioToHighlightSize,
             "minSize": settings.minSize,
-            "maxSize": settings.maxSize,
+            "maxSize": settings.maxSize
         ]
     }
 

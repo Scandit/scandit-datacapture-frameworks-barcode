@@ -7,10 +7,11 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
+
 struct BarcodeCaptureOverlayDefaults: DefaultsEncodable {
     func toEncodable() -> [String: Any?] {
         let defaultBrush = defaultBrush()
-
+        
         return [
             "DefaultBrush": defaultBrush
         ]

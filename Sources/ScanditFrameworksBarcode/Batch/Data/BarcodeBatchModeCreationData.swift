@@ -4,8 +4,8 @@
  * Copyright (C) 2025- Scandit AG. All rights reserved.
  */
 
-import ScanditCaptureCore
 import ScanditFrameworksCore
+import ScanditCaptureCore
 
 public struct BarcodeBatchModeCreationData {
     public let modeJson: String
@@ -41,8 +41,8 @@ public struct BarcodeBatchModeCreationData {
         let json = JSONValue(string: modeJson)
 
         let modeType = json.string(forKey: typeKey, default: "")
-
-        if modeType != "barcodeTracking" {
+        
+        if (modeType != "barcodeTracking") {
             return BarcodeBatchModeCreationData(
                 modeJson: modeJson,
                 modeId: -1,
@@ -52,7 +52,7 @@ public struct BarcodeBatchModeCreationData {
                 modeType: modeType
             )
         }
-
+        
         let hasListener = json.bool(forKey: hasListenersKey, default: false)
         let isEnabled = json.bool(forKey: modeEnabledKey, default: false)
         let modeId = json.integer(forKey: modeIdKey, default: -1)

@@ -14,7 +14,7 @@ struct SparkScanFeedbackDefaults: DefaultsEncodable {
     func toEncodable() -> [String: Any?] {
         [
             "success": successFeedback.jsonString,
-            "error": errorFeedback.jsonString,
+            "error": errorFeedback.jsonString
         ]
     }
 }

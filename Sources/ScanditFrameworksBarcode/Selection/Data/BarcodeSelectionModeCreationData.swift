@@ -4,8 +4,8 @@
  * Copyright (C) 2025- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 public struct BarcodeSelectionModeCreationData {
     let modeJson: String

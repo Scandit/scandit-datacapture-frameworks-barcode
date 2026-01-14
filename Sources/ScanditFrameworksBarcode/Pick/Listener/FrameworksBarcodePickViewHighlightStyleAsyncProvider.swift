@@ -14,33 +14,21 @@ public enum BarcodePickViewHighlightStyleAsyncProviderEvent: String, CaseIterabl
 open class FrameworksBarcodePickViewHighlightStyleAsyncProvider: NSObject, BarcodePickViewHighlightStyleDelegate {
     private let emitter: Emitter
     private let viewId: Int
-    private let cache: ConcurrentDictionary<Int, (BarcodePickViewHighlightStyleResponse?) -> Void> =
-        ConcurrentDictionary()
+    private let cache: ConcurrentDictionary<Int, (BarcodePickViewHighlightStyleResponse?) -> Void> = ConcurrentDictionary()
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
         self.viewId = viewId
     }
 
-    public func style(
-        for request: BarcodePickHighlightStyleRequest,
-        completionHandler: @escaping (BarcodePickViewHighlightStyleResponse?) -> Void
-    ) {
-        guard
-            emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: BarcodePickViewHighlightStyleAsyncProviderEvent.styleForRequest.rawValue
-            )
-        else { return }
+    public func style(for request: BarcodePickHighlightStyleRequest, completionHandler: @escaping (BarcodePickViewHighlightStyleResponse?) -> Void) {
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickViewHighlightStyleAsyncProviderEvent.styleForRequest.rawValue) else { return }
         let requestId = request.hashValue
-        emitter.emit(
-            name: BarcodePickViewHighlightStyleAsyncProviderEvent.styleForRequest.rawValue,
-            payload: [
-                "requestId": requestId,
-                "request": request.jsonString,
-                "viewId": self.viewId,
-            ]
-        )
+        emitter.emit(name: BarcodePickViewHighlightStyleAsyncProviderEvent.styleForRequest.rawValue, payload: [
+            "requestId": requestId,
+            "request": request.jsonString,
+            "viewId": self.viewId
+        ])
         cache.setValue(completionHandler, for: requestId)
     }
 

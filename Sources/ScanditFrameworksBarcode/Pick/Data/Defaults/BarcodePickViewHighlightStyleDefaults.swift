@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 extension ScanditBarcodeCapture.BarcodePickState: Swift.CaseIterable {
     static public var allCases: [BarcodePickState] {
@@ -26,12 +26,12 @@ struct BarcodePickViewHighlightStyleDefaults: DefaultsEncodable {
             "RectangularWithIcons": rectangularWithIconStyle.jsonString,
             "Dot": dotStyle.jsonString,
             "DotWithIcons": dotWithIconStyle.jsonString,
-            "CustomView": customViewStyle.jsonString,
+            "CustomView": customViewStyle.jsonString
         ]
     }
 
     static let shared: BarcodePickViewHighlightStyleDefaults = {
-        BarcodePickViewHighlightStyleDefaults(
+        return BarcodePickViewHighlightStyleDefaults(
             rectangularStyle: .init(),
             rectangularWithIconStyle: .init(),
             dotStyle: .init(),

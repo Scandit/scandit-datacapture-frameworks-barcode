@@ -5,9 +5,10 @@
  */
 
 import Foundation
-import ScanditBarcodeCapture
 import ScanditCaptureCore
+import ScanditBarcodeCapture
 import ScanditFrameworksCore
+
 
 public class FrameworksSparkScanView: FrameworksBaseView {
     private let modeListener: FrameworksSparkScanListener
@@ -16,11 +17,11 @@ public class FrameworksSparkScanView: FrameworksBaseView {
     private let modeDeserializer: SparkScanDeserializer
     private let viewDeserializer: SparkScanViewDeserializer
 
-    private var internalViewId: Int = 0
+    private var _viewId: Int = 0
     public var viewId: Int {
-        internalViewId
+        return _viewId
     }
-
+    
     public var parentId: Int? { nil }
 
     private var view: SparkScanView!
@@ -41,12 +42,8 @@ public class FrameworksSparkScanView: FrameworksBaseView {
         self.viewDeserializer = viewDeserializer
     }
 
-    private func deserializeView(
-        context: DataCaptureContext,
-        container: UIView,
-        viewCreationParams: SparkScanViewCreationData
-    ) throws {
-        internalViewId = viewCreationParams.viewId
+    private func deserializeView(context: DataCaptureContext, container: UIView, viewCreationParams: SparkScanViewCreationData) throws {
+        _viewId = viewCreationParams.viewId
 
         mode = try modeDeserializer.mode(fromJSONString: viewCreationParams.modeJson)
         shouldShowOnTopAlways = viewCreationParams.shouldShowOnTopAlways
@@ -78,7 +75,7 @@ public class FrameworksSparkScanView: FrameworksBaseView {
 
         return nil
     }
-
+    
     private func postModeCreate(_ creationData: SparkScanViewCreationData) {
         if creationData.hasModeListener {
             mode.removeListener(modeListener)
@@ -117,13 +114,12 @@ public class FrameworksSparkScanView: FrameworksBaseView {
             }
         }
     }
-
+    
     public func addFeedbackDelegate() {
         self.view.feedbackDelegate = feedbackDelegate
     }
-
+    
     public func removeFeedbackDelegate() {
-        feedbackDelegate.cancel()
         self.view.feedbackDelegate = nil
     }
 
@@ -149,7 +145,7 @@ public class FrameworksSparkScanView: FrameworksBaseView {
             self.view.removeFromSuperview()
         }
     }
-
+    
     public func prepareScanning() {
         dispatchMain {
             self.view.prepareScanning()
@@ -167,7 +163,7 @@ public class FrameworksSparkScanView: FrameworksBaseView {
             self.view.pauseScanning()
         }
     }
-
+    
     public func stopScanning() {
         dispatchMain {
             self.view.stopScanning()
@@ -211,10 +207,10 @@ public class FrameworksSparkScanView: FrameworksBaseView {
     }
 
     public func isModeEnabled() -> Bool {
-        mode.isEnabled
+        return mode.isEnabled
     }
-
-    public func bringViewToTop() {
+    
+    public func bringViewToTop() -> Void {
         if !shouldShowOnTopAlways {
             return
         }
@@ -225,7 +221,7 @@ public class FrameworksSparkScanView: FrameworksBaseView {
             parent.bringSubviewToFront(self.view)
         }
     }
-
+    
     public func setupViewConstraints(referenceView: UIView) {
         guard let parent = self.view.superview else { return }
         let sparkScanViewConstraints = parent.constraints.filter {
@@ -239,17 +235,17 @@ public class FrameworksSparkScanView: FrameworksBaseView {
             self.view.bottomAnchor.constraint(equalTo: referenceView.bottomAnchor),
         ])
     }
-
+    
     public func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        self.view.hitTest(point, with: event)
+        return self.view.hitTest(point, with: event)
     }
-
+    
     public func show() {
         dispatchMain {
             self.view.isHidden = false
         }
     }
-
+    
     public func hide() {
         dispatchMain {
             self.view.pauseScanning()

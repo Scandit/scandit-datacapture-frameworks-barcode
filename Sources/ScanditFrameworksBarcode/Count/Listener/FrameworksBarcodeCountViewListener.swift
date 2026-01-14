@@ -21,7 +21,7 @@ fileprivate extension Event {
 
 fileprivate extension Emitter {
     func hasViewSpecificListenersForEvent(_ viewId: Int, for event: BarcodeCountViewListenerEvent) -> Bool {
-        hasViewSpecificListenersForEvent(viewId, for: event.rawValue)
+        return hasViewSpecificListenersForEvent(viewId, for: event.rawValue)
     }
 }
 
@@ -87,10 +87,7 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
         if !emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
             return nil
         }
-        eventDescriptor(for: event).emit(
-            on: emitter,
-            payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId]
-        )
+        eventDescriptor(for: event).emit(on: emitter, payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId])
         let key = trackedBarcode.identifier.key(for: event)
         brushRequests[key] = trackedBarcode
         return nil
@@ -98,17 +95,11 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
 
     private func emit(event: BarcodeCountViewListenerEvent, for trackedBarcode: TrackedBarcode) {
         if emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
-            eventDescriptor(for: event).emit(
-                on: emitter,
-                payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId]
-            )
+            eventDescriptor(for: event).emit(on: emitter, payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId])
         }
     }
 
-    func getTrackedBarcodeForBrush(
-        with trackedBarcodeId: Int,
-        for event: BarcodeCountViewListenerEvent
-    ) -> TrackedBarcode? {
+    func getTrackedBarcodeForBrush(with trackedBarcodeId: Int, for event: BarcodeCountViewListenerEvent) -> TrackedBarcode? {
         let key = trackedBarcodeId.key(for: event)
         let trackedBarcode = brushRequests[key]
         if trackedBarcode != nil {
@@ -117,66 +108,49 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
         return trackedBarcode
     }
 
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        brushForRecognizedBarcode trackedBarcode: TrackedBarcode
-    ) -> Brush? {
+    public func barcodeCountView(_ view: BarcodeCountView,
+                                 brushForRecognizedBarcode trackedBarcode: TrackedBarcode) -> Brush? {
         brush(for: trackedBarcode, event: .brushForRecognizedBarcode)
     }
 
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        brushForRecognizedBarcodeNotInList trackedBarcode: TrackedBarcode
-    ) -> Brush? {
+    public func barcodeCountView(_ view: BarcodeCountView,
+                                 brushForRecognizedBarcodeNotInList trackedBarcode: TrackedBarcode) -> Brush? {
         brush(for: trackedBarcode, event: .brushForRecognizedBarcodeNotInList)
     }
 
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        brushForAcceptedBarcode trackedBarcode: TrackedBarcode
-    ) -> Brush? {
-        brush(for: trackedBarcode, event: .brushForAcceptedBarcode)
+
+    public func barcodeCountView(_ view: BarcodeCountView,
+                                brushForAcceptedBarcode trackedBarcode: TrackedBarcode) -> Brush? {
+    brush(for: trackedBarcode, event: .brushForAcceptedBarcode)
     }
 
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        brushForRejectedBarcode trackedBarcode: TrackedBarcode
-    ) -> Brush? {
-        brush(for: trackedBarcode, event: .brushForRejectedBarcode)
+    public func barcodeCountView(_ view: BarcodeCountView,
+                                brushForRejectedBarcode trackedBarcode: TrackedBarcode) -> Brush? {
+    brush(for: trackedBarcode, event: .brushForRejectedBarcode)
     }
 
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        didTapRecognizedBarcode trackedBarcode: TrackedBarcode
-    ) {
+    public func barcodeCountView(_ view: BarcodeCountView,
+                                 didTapRecognizedBarcode trackedBarcode: TrackedBarcode) {
         emit(event: .didTapRecognizedBarcode, for: trackedBarcode)
     }
 
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        didTapFilteredBarcode trackedBarcode: TrackedBarcode
-    ) {
+    public func barcodeCountView(_ view: BarcodeCountView,
+                                 didTapFilteredBarcode trackedBarcode: TrackedBarcode) {
         emit(event: .didTapFilteredBarcode, for: trackedBarcode)
     }
 
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        didTapRecognizedBarcodeNotInList trackedBarcode: TrackedBarcode
-    ) {
+    public func barcodeCountView(_ view: BarcodeCountView,
+                                 didTapRecognizedBarcodeNotInList trackedBarcode: TrackedBarcode) {
         emit(event: .didTapRecognizedBarcodeNotInList, for: trackedBarcode)
     }
 
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        didTapAcceptedBarcode trackedBarcode: TrackedBarcode
-    ) {
+    public func barcodeCountView(_ view: BarcodeCountView,
+                                 didTapAcceptedBarcode trackedBarcode: TrackedBarcode) {
         emit(event: .didTapAcceptedBarcode, for: trackedBarcode)
     }
 
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        didTapRejectedBarcode trackedBarcode: TrackedBarcode
-    ) {
+    public func barcodeCountView(_ view: BarcodeCountView,
+                                 didTapRejectedBarcode trackedBarcode: TrackedBarcode) {
         emit(event: .didTapRejectedBarcode, for: trackedBarcode)
     }
 

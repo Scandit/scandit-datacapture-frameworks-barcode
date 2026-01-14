@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
-import ScanditFrameworksCore
+ import ScanditBarcodeCapture
+ import ScanditFrameworksCore
 
 public struct SymbologySettingsDefaults: DefaultsEncodable {
     private let barcodeCaptureSettings: BarcodeCaptureSettings
@@ -20,4 +20,4 @@ public struct SymbologySettingsDefaults: DefaultsEncodable {
         }
         return Dictionary(uniqueKeysWithValues: settingsTuples) as [String: Any]
     }
-}
+ }

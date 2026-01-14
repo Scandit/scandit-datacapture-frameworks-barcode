@@ -47,21 +47,19 @@ public class BarcodePickViewCreationData {
         static let highlightStyleHasProviderKey = "hasAsyncProvider"
     }
 
-    init(
-        modeJson: String,
-        viewJson: String,
-        viewSettings: String,
-        productProviderJson: String,
-        hasListeners: Bool,
-        hasScanningListeners: Bool,
-        hasActionListeners: Bool,
-        hasViewListeners: Bool,
-        hasViewUiListener: Bool,
-        viewId: Int,
-        isStarted: Bool,
-        highlightType: HighlightType,
-        hasAsyncProvider: Bool
-    ) {
+    init(modeJson: String,
+         viewJson: String,
+         viewSettings: String,
+         productProviderJson: String,
+         hasListeners: Bool,
+         hasScanningListeners: Bool,
+         hasActionListeners: Bool,
+         hasViewListeners: Bool,
+         hasViewUiListener: Bool,
+         viewId: Int,
+         isStarted: Bool,
+         highlightType: HighlightType,
+         hasAsyncProvider: Bool) {
         self.modeJson = modeJson
         self.viewJson = viewJson
         self.viewSettings = viewSettings
@@ -79,21 +77,13 @@ public class BarcodePickViewCreationData {
 
     static func fromJson(_ viewJson: String) throws -> BarcodePickViewCreationData {
         guard let jsonData = viewJson.data(using: .utf8),
-            let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
-        else {
+              let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
             return getDefaultCreationParams()
         }
 
         let hasAllRequiredFields = json[Keys.modeKey] != nil && json[Keys.viewKey] != nil
         if !hasAllRequiredFields {
-            throw NSError(
-                domain: "BarcodePickViewCreationData",
-                code: -2,
-                userInfo: [
-                    NSLocalizedDescriptionKey:
-                        "Unable to create a BarcodePick. The given json doesn't contain all the required fields. Required fields = [\(Keys.modeKey), \(Keys.viewKey)]"
-                ]
-            )
+            throw NSError(domain: "BarcodePickViewCreationData", code: -2, userInfo: [NSLocalizedDescriptionKey: "Unable to create a BarcodePick. The given json doesn't contain all the required fields. Required fields = [\(Keys.modeKey), \(Keys.viewKey)]"])
         }
 
         let viewJsonObject = json[Keys.viewKey] as? [String: Any] ?? [:]
@@ -130,10 +120,9 @@ public class BarcodePickViewCreationData {
 
     static func fromViewJsonOnly(_ viewJson: String) throws -> BarcodePickViewCreationData {
         guard let data = viewJson.data(using: .utf8),
-            let viewJsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-            let viewSettingsJsonObject = viewJsonObject[Keys.viewSettingsKey] as? [String: Any],
-            let viewSettingsJsonString = convertToJsonString(viewSettingsJsonObject)
-        else {
+              let viewJsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+              let viewSettingsJsonObject = viewJsonObject[Keys.viewSettingsKey] as? [String: Any],
+              let viewSettingsJsonString = convertToJsonString(viewSettingsJsonObject) else {
             return getDefaultCreationParams()
         }
 
@@ -161,9 +150,9 @@ public class BarcodePickViewCreationData {
 
     static func fromModeJsonOnly(_ modeJson: String) throws -> BarcodePickViewCreationData {
         guard let data = modeJson.data(using: .utf8),
-            let modeJsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-            let productProviderJsonObject = modeJsonObject[Keys.providerKey] as? [String: Any],
-            let productProviderJsonString = convertToJsonString(productProviderJsonObject)
+              let modeJsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+              let productProviderJsonObject = modeJsonObject[Keys.providerKey] as? [String: Any],
+              let productProviderJsonString = convertToJsonString(productProviderJsonObject)
         else {
             return getDefaultCreationParams()
         }
@@ -211,7 +200,7 @@ public class BarcodePickViewCreationData {
     }
 
     private static func getDefaultCreationParams() -> BarcodePickViewCreationData {
-        BarcodePickViewCreationData(
+        return BarcodePickViewCreationData(
             modeJson: "{}",
             viewJson: "{}",
             viewSettings: "{}",

@@ -12,22 +12,22 @@ public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
     private let captureContext: DefaultFrameworksCaptureContext
     private let deserializer: BarcodeBatchDeserializer
 
-    private var internalModeId: Int = -1
-    private var internalParentId: Int? = nil
+    private var _modeId: Int = -1
+    private var _parentId: Int? = nil
 
     public var modeId: Int {
-        internalModeId
+        return _modeId
     }
-
+    
     public var parentId: Int? {
-        internalParentId
+        return _parentId
     }
 
     public private(set) var mode: BarcodeBatch!
 
     public var isEnabled: Bool {
         get {
-            mode.isEnabled
+            return mode.isEnabled
         }
         set {
             mode.isEnabled = newValue
@@ -54,8 +54,8 @@ public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
         listener.setEnabled(enabled: creationData.hasListener)
 
         mode.isEnabled = creationData.isEnabled
-        internalModeId = creationData.modeId
-        internalParentId = creationData.parentId
+        _modeId = creationData.modeId
+        _parentId = creationData.parentId
     }
 
     public func dispose() {
@@ -94,11 +94,7 @@ public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
         dataCaptureContext: DataCaptureContext,
         cachedBatchSession: AtomicValue<FrameworksBarcodeBatchSession?>
     ) throws -> FrameworksBarcodeBatchMode {
-        let listener = FrameworksBarcodeBatchListener(
-            emitter: emitter,
-            modeId: creationData.modeId,
-            cachedBatchSession: cachedBatchSession
-        )
+        let listener = FrameworksBarcodeBatchListener(emitter: emitter, modeId: creationData.modeId, cachedBatchSession: cachedBatchSession)
         let mode = FrameworksBarcodeBatchMode(
             listener: listener,
             captureContext: captureContext

@@ -35,8 +35,7 @@ public class SparkScanViewCreationData {
 
     static func fromJson(_ jsonString: String) -> SparkScanViewCreationData {
         guard let jsonData = jsonString.data(using: .utf8),
-            let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
-        else {
+              let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
             // Return default values if JSON parsing fails
             return SparkScanViewCreationData(
                 modeJson: "{}",
@@ -50,23 +49,23 @@ public class SparkScanViewCreationData {
         }
 
         // Get JSON objects directly, defaulting to empty dictionaries
-        let viewJsonObject = json[Constants.viewKey] as? [String: Any] ?? [:]
-        let modeJsonObject = json[Constants.modeKey] as? [String: Any] ?? [:]
+        let viewJsonObject = json[Constants.VIEW_KEY] as? [String: Any] ?? [:]
+        let modeJsonObject = json[Constants.MODE_KEY] as? [String: Any] ?? [:]
 
         // Convert dictionaries back to JSON strings
         let modeJsonString = convertToJsonString(modeJsonObject) ?? "{}"
         let viewJsonString = convertToJsonString(viewJsonObject) ?? "{}"
 
-        let hasViewUIListener = viewJsonObject[Constants.hasUiListenerKey] as? Bool ?? false
+        let hasViewUIListener = viewJsonObject[Constants.HAS_UI_LISTENER_KEY] as? Bool ?? false
 
         return SparkScanViewCreationData(
             modeJson: modeJsonString,
             viewJson: viewJsonString,
-            hasModeListener: modeJsonObject[Constants.hasModeListenerKey] as? Bool ?? false,
-            hasFeedbackDelegate: viewJsonObject[Constants.hasFeedbackDelegateKey] as? Bool ?? false,
+            hasModeListener: modeJsonObject[Constants.HAS_MODE_LISTENER_KEY] as? Bool ?? false,
+            hasFeedbackDelegate: viewJsonObject[Constants.HAS_FEEDBACK_DELEGATE_KEY] as? Bool ?? false,
             hasUIListener: hasViewUIListener,
-            shouldShowOnTopAlways: viewJsonObject[Constants.hasShouldShowViewOnTop] as? Bool ?? false,
-            viewId: viewJsonObject[Constants.viewIdKey] as? Int ?? 0
+            shouldShowOnTopAlways: viewJsonObject[Constants.HAS_SHOULD_SHOW_VIEW_ON_TOP] as? Bool ?? false,
+            viewId: viewJsonObject[Constants.VIEW_ID_KEY] as? Int ?? 0
         )
     }
 
@@ -78,12 +77,12 @@ public class SparkScanViewCreationData {
     }
 
     private struct Constants {
-        static let modeKey = "SparkScan"
-        static let viewKey = "SparkScanView"
-        static let hasFeedbackDelegateKey = "hasFeedbackDelegate"
-        static let hasUiListenerKey = "hasUiListener"
-        static let viewIdKey = "viewId"
-        static let hasModeListenerKey = "hasListeners"
-        static let hasShouldShowViewOnTop = "shouldShowOnTopAlways"
+        static let MODE_KEY = "SparkScan"
+        static let VIEW_KEY = "SparkScanView"
+        static let HAS_FEEDBACK_DELEGATE_KEY = "hasFeedbackDelegate"
+        static let HAS_UI_LISTENER_KEY = "hasUiListener"
+        static let VIEW_ID_KEY = "viewId"
+        static let HAS_MODE_LISTENER_KEY = "hasListeners"
+        static let HAS_SHOULD_SHOW_VIEW_ON_TOP = "shouldShowOnTopAlways"
     }
 }

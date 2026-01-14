@@ -5,39 +5,28 @@
  */
 
 import QuartzCore
-import ScanditBarcodeCapture
-import ScanditCaptureCore
 import ScanditFrameworksCore
+import ScanditCaptureCore
+import ScanditBarcodeCapture
 
 public enum BarcodeArCustomHighlightEvents: String, CaseIterable {
     case createCustomHighlight = "BarcodeArCustomHighlight.create"
     case updateCustomHighlight = "BarcodeArCustomHighlight.update"
     case hideCustomHighlight = "BarcodeArCustomHighlight.hide"
-    case showCustomHighlight = "BarcodeArCustomHighlight.show"
+    case showeCustomHighlight = "BarcodeArCustomHighlight.show"
     case disposeCustomHighlight = "BarcodeArCustomHighlight.dispose"
 }
 
 class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
-    private var barcode: Barcode
-    private var emitter: Emitter
-    private var viewId: Int
+    var barcode: Barcode
+    var emitter: Emitter
     private var hasEmittedOnce = false
 
-    init(barcode: Barcode, emitter: Emitter, viewId: Int) {
+    init(barcode: Barcode, emitter: Emitter) {
         self.barcode = barcode
         self.emitter = emitter
-        self.viewId = viewId
 
         super.init(frame: .zero)
-    }
-
-    func triggerClick() {
-        DispatchQueue.main.async {
-            // Manually trigger the tap handler on superview
-            let sel = NSSelectorFromString("handleHighlightTap:")
-            guard let superview = self.superview, superview.responds(to: sel) else { return }
-            superview.perform(sel, with: self)
-        }
     }
 
     override func didMoveToSuperview() {
@@ -67,20 +56,14 @@ class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
     func hide() {
         self.emitter.emit(
             name: BarcodeArCustomHighlightEvents.hideCustomHighlight.rawValue,
-            payload: [
-                "barcodeId": self.barcode.uniqueId,
-                "viewId": self.viewId,
-            ]
+            payload: ["barcodeId": self.barcode.uniqueId]
         )
     }
 
     func show() {
         self.emitter.emit(
-            name: BarcodeArCustomHighlightEvents.showCustomHighlight.rawValue,
-            payload: [
-                "barcodeId": self.barcode.uniqueId,
-                "viewId": self.viewId,
-            ]
+            name: BarcodeArCustomHighlightEvents.showeCustomHighlight.rawValue,
+            payload: ["barcodeId": self.barcode.uniqueId]
         )
 
     }
@@ -91,7 +74,6 @@ class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
             payload: [
                 "barcode": self.barcode.jsonString,
                 "barcodeId": self.barcode.uniqueId,
-                "viewId": self.viewId,
             ]
         )
     }
@@ -100,8 +82,7 @@ class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
         self.emitter.emit(
             name: BarcodeArCustomHighlightEvents.disposeCustomHighlight.rawValue,
             payload: [
-                "barcodeId": self.barcode.uniqueId,
-                "viewId": self.viewId,
+                "barcodeId": self.barcode.uniqueId
             ]
         )
 
@@ -129,10 +110,8 @@ class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
             hasEmittedOnce = true
             return
         }
-        // Also move the "shadow" view since annotation locations are based on the highlight's frame
-        self.frame.origin = CGPoint(x: centerX, y: centerY)
 
-        BarcodeArCustomHighlight.batchedEmit(emitter: emitter, viewId: self.viewId, payload: payload)
+        BarcodeArCustomHighlight.batchedEmit(emitter: emitter, payload: payload)
     }
 
     // MARK: - Static batching logic
@@ -141,7 +120,7 @@ class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
     private static var pendingUpdates: [[String: Any]] = []
     private static var emitTimer: Timer?
 
-    private static func batchedEmit(emitter: Emitter, viewId: Int, payload: [String: Any]) {
+    private static func batchedEmit(emitter: Emitter, payload: [String: Any]) {
         pendingUpdates.append(payload)
 
         // We have a pending emit, no need to schedule another one
@@ -155,8 +134,7 @@ class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
 
         emitTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
             let batchedPayload: [String: Any] = [
-                "updates": pendingUpdates,
-                "viewId": viewId,
+                "updates": pendingUpdates
             ]
             pendingUpdates.removeAll()
             lastEmitTime = CACurrentMediaTime()

@@ -5,8 +5,8 @@
  */
 
 import Foundation
-import ScanditBarcodeCapture
 import ScanditCaptureCore
+import ScanditBarcodeCapture
 import ScanditFrameworksCore
 import UIKit
 
@@ -16,18 +16,18 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
     private let findTransformer: FrameworksBarcodeFindTransformer
     private let deserializer: BarcodeFindDeserializer
     private let viewDeserializer: BarcodeFindViewDeserializer
-
-    private var internalViewId: Int = 0
+    
+    private var _viewId: Int = 0
     public var viewId: Int {
-        internalViewId
+        return _viewId
     }
-
-    public var parentId: Int? { nil }  // BarcodeFindView has no parent
-
+    
+    public var parentId: Int? { nil } // BarcodeFindView has no parent
+    
     public private(set) var view: BarcodeFindView!
-
+    
     private var mode: BarcodeFind!
-
+    
     private init(
         modeListener: FrameworksBarcodeFindListener,
         viewListener: FrameworksBarcodeFindViewUIListener,
@@ -41,17 +41,17 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
         self.deserializer = deserializer
         self.viewDeserializer = viewDeserializer
     }
-
+    
     private func deserializeView(
         context: DataCaptureContext,
         container: UIView,
         creationData: BarcodeFindViewCreationData
     ) throws {
-        internalViewId = creationData.viewId
+        _viewId = creationData.viewId
         mode = try deserializer.mode(fromJSONString: creationData.modeJson)
         mode.isEnabled = creationData.isModeEnabled
         updateModeProps(creationData: creationData)
-
+        
         view = try viewDeserializer.view(
             fromJSONString: creationData.viewJson,
             with: context,
@@ -63,7 +63,7 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
         view.tag = viewId
         container.tag = viewId
     }
-
+    
     public func updateBarcodeFindView(viewJson: String) {
         let updateParams = BarcodeFindViewCreationData.fromViewJsonOnly(viewJson: viewJson)
         dispatchMain { [weak self] in
@@ -76,96 +76,96 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
         }
         updateViewProps(creationData: updateParams)
     }
-
+    
     public func updateBarcodeFindMode(modeJson: String) {
         let updateParams = BarcodeFindViewCreationData.fromModeJsonOnly(modeJson: modeJson)
         updateModeProps(creationData: updateParams)
     }
-
+    
     public func addBarcodeFindListener() {
         mode.addListener(modeListener)
     }
-
+    
     public func removeBarcodeFindListener() {
         mode.removeListener(modeListener)
     }
-
+    
     public func addBarcodeFindViewListener() {
         view.uiDelegate = viewListener
     }
-
+    
     public func removeBarcodeFindViewListener() {
         view.uiDelegate = nil
     }
-
+    
     public func setItemList(barcodeFindItemsJson: String) {
         let data = BarcodeFindItemsData(jsonString: barcodeFindItemsJson)
         mode.setItemList(data.items)
     }
-
+    
     public func viewStopSearching() {
         dispatchMain { [weak self] in
             self?.view.stopSearching()
         }
     }
-
+    
     public func viewPrepareSearching() {
         dispatchMain { [weak self] in
             self?.view.prepareSearching()
         }
     }
-
+    
     public func viewStartSearching() {
         dispatchMain { [weak self] in
             self?.view.startSearching()
         }
     }
-
+    
     public func viewPauseSearching() {
         dispatchMain { [weak self] in
             self?.view.pauseSearching()
         }
     }
-
+    
     public func modeStart() {
         mode.start()
     }
-
+    
     public func modeStop() {
         mode.stop()
         findTransformer.cancel()
     }
-
+    
     public func modePause() {
         mode.pause()
     }
-
+    
     public func setModeEnabled(enabled: Bool) {
         mode.isEnabled = enabled
     }
-
+    
     public func setBarcodeFindTransformer() {
         findTransformer.enable()
         mode.setBarcodeTransformer(findTransformer)
     }
-
+    
     public func submitBarcodeFindTransformerResult(transformedData: String?) {
         findTransformer.submitResult(result: transformedData)
     }
-
+    
     public func unsetBarcodeFindTransformer() {
         findTransformer.disable()
         // The native SDK doesn't support removing the transformer
     }
-
+    
     public func updateFeedback(feedbackJson: String) throws {
         mode.feedback = try BarcodeFindFeedback(fromJSONString: feedbackJson)
     }
-
+    
     public func isModeEnabled() -> Bool {
-        mode.isEnabled
+        return mode.isEnabled
     }
-
+    
     private func updateViewProps(creationData: BarcodeFindViewCreationData) {
         if creationData.hasViewListener {
             view.uiDelegate = viewListener
@@ -174,7 +174,7 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
             view.startSearching()
         }
     }
-
+    
     private func updateModeProps(creationData: BarcodeFindViewCreationData) {
         if creationData.hasModeListeners {
             mode.addListener(modeListener)
@@ -188,7 +188,7 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
             mode.setItemList(Set<BarcodeFindItem>())
         }
     }
-
+    
     public func dispose() {
         self.mode.stop()
         self.findTransformer.disable()
@@ -200,7 +200,7 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
             self.view.removeFromSuperview()
         }
     }
-
+    
     public func hide() {
         self.mode.pause()
         self.findTransformer.disable()
@@ -210,7 +210,7 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
             self.view.stopSearching()
         }
     }
-
+    
     public func show() {
         dispatchMain { [weak self] in
             guard let self = self else { return }
@@ -222,9 +222,9 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
             self.findTransformer.enable()
         }
     }
-
+    
     // MARK: - Factory method
-
+    
     static func create(
         emitter: Emitter,
         context: DataCaptureContext,
@@ -234,13 +234,13 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
         let modeListener = FrameworksBarcodeFindListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let viewListener = FrameworksBarcodeFindViewUIListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let transformerListener = FrameworksBarcodeFindTransformer(emitter: emitter, viewId: viewCreationParams.viewId)
-
+        
         let instance = FrameworksBarcodeFindView(
             modeListener: modeListener,
             viewListener: viewListener,
             findTransformer: transformerListener
         )
-
+        
         try instance.deserializeView(context: context, container: container, creationData: viewCreationParams)
         return instance
     }

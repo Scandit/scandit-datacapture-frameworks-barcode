@@ -4,6 +4,7 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
+
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
@@ -12,7 +13,7 @@ public enum BarcodePickScanningEvent: String, CaseIterable {
     case didCompleteScanningSession = "BarcodePickScanningListener.didCompleteScanningSession"
 }
 
-open class FrameworksBarcodePickScanningListener: NSObject, BarcodePickScanningListener {
+open class FrameworksBarcodePickScanningListener : NSObject, BarcodePickScanningListener {
     private let emitter: Emitter
     private let viewId: Int
 
@@ -22,30 +23,14 @@ open class FrameworksBarcodePickScanningListener: NSObject, BarcodePickScanningL
     }
 
     public func barcodePick(_ barcodePick: BarcodePick, didComplete scanningSession: BarcodePickScanningSession) {
-        guard
-            emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: BarcodePickScanningEvent.didCompleteScanningSession.rawValue
-            )
-        else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickScanningEvent.didCompleteScanningSession.rawValue) else { return }
 
-        emitter.emit(
-            name: BarcodePickScanningEvent.didCompleteScanningSession.rawValue,
-            payload: ["session": scanningSession.jsonString, "viewId": self.viewId]
-        )
+        emitter.emit(name: BarcodePickScanningEvent.didCompleteScanningSession.rawValue, payload: ["session": scanningSession.jsonString, "viewId": self.viewId])
     }
 
     public func barcodePick(_ barcodePick: BarcodePick, didUpdate scanningSession: BarcodePickScanningSession) {
-        guard
-            emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: BarcodePickScanningEvent.didUpdateScanningSession.rawValue
-            )
-        else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickScanningEvent.didUpdateScanningSession.rawValue) else { return }
 
-        emitter.emit(
-            name: BarcodePickScanningEvent.didUpdateScanningSession.rawValue,
-            payload: ["session": scanningSession.jsonString, "viewId": self.viewId]
-        )
+        emitter.emit(name: BarcodePickScanningEvent.didUpdateScanningSession.rawValue, payload: ["session": scanningSession.jsonString, "viewId": self.viewId])
     }
 }

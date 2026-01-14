@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 struct FrameworksBarcodePickSettingsDefaults: DefaultsEncodable {
     let barcodePickSettings: BarcodePickSettings
@@ -13,7 +13,7 @@ struct FrameworksBarcodePickSettingsDefaults: DefaultsEncodable {
         [
             "hapticsEnabled": barcodePickSettings.isHapticsEnabled,
             "soundEnabled": barcodePickSettings.isSoundEnabled,
-            "cachingEnabled": barcodePickSettings.isCachingEnabled,
+            "cachingEnabled": barcodePickSettings.isCachingEnabled
         ]
     }
 }

@@ -21,15 +21,12 @@ struct BarcodeSelectionDefaults: DefaultsEncodable {
             let mode = BarcodeSelection(context: nil, settings: settings)
             return BarcodeSelectionBasicOverlay(barcodeSelection: mode, view: nil)
         }()
-        return BarcodeSelectionDefaults(
-            feedback: .default,
-            recommendedCameraSettings: CameraSettingsDefaults(
-                cameraSettings: BarcodeSelection.recommendedCameraSettings
-            ),
-            settings: BarcodeSelectionSettingsDefaults(settings: settings),
-            tapSelection: BarcodeSelectionTapSelectionDefaults(tapSelection: BarcodeSelectionTapSelection()),
-            aimerSelection: BarcodeSelectionAimerSelectionDefaults(aimerSelection: BarcodeSelectionAimerSelection()),
-            overlay: BarcodeSelectionBasicOverlayDefaults(overlay: overlay)
+        return BarcodeSelectionDefaults(feedback: .default,
+                                        recommendedCameraSettings: CameraSettingsDefaults(cameraSettings: BarcodeSelection.recommendedCameraSettings),
+                                        settings: BarcodeSelectionSettingsDefaults(settings: settings),
+                                        tapSelection: BarcodeSelectionTapSelectionDefaults(tapSelection: BarcodeSelectionTapSelection()),
+                                        aimerSelection: BarcodeSelectionAimerSelectionDefaults(aimerSelection: BarcodeSelectionAimerSelection()),
+                                        overlay: BarcodeSelectionBasicOverlayDefaults(overlay: overlay)
         )
     }()
 
@@ -40,7 +37,7 @@ struct BarcodeSelectionDefaults: DefaultsEncodable {
             "Feedback": feedback.jsonString,
             "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
             "BarcodeSelectionTapSelection": tapSelection.toEncodable(),
-            "BarcodeSelectionAimerSelection": aimerSelection.toEncodable(),
+            "BarcodeSelectionAimerSelection": aimerSelection.toEncodable()
         ]
     }
 }

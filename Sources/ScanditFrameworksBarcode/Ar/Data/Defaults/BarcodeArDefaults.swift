@@ -24,7 +24,7 @@ struct BarcodeArDefaults: DefaultsEncodable {
         [
             "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
             "barcodeArFeedback": barcodeArFeedback.jsonString,
-            "BarcodeArView": viewDefaults.toEncodable(),
+            "BarcodeArView": viewDefaults.toEncodable()
         ]
     }
 }

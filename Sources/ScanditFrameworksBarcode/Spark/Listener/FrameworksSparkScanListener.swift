@@ -43,16 +43,13 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
         lastSession = nil
     }
 
+
     private weak var lastSession: SparkScanSession?
 
-    public func sparkScan(
-        _ sparkScan: SparkScan,
-        didScanIn session: SparkScanSession,
-        frameData: FrameData?
-    ) {
-        guard isEnabled.value,
-            emitter.hasViewSpecificListenersForEvent(viewId, for: FrameworksSparkScanEvent.didScan.rawValue)
-        else { return }
+    public func sparkScan(_ sparkScan: SparkScan,
+                          didScanIn session: SparkScanSession,
+                          frameData: FrameData?) {
+        guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId, for: FrameworksSparkScanEvent.didScan.rawValue) else { return }
         lastSession = session
         var frameId: String? = nil
 
@@ -65,7 +62,7 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
             payload: [
                 "session": session.jsonString,
                 "frameId": frameId,
-                "viewId": viewId,
+                "viewId": viewId
             ]
         )
 
@@ -78,14 +75,10 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
         didScanEvent.unlock(value: enabled)
     }
 
-    public func sparkScan(
-        _ sparkScan: SparkScan,
-        didUpdate session: SparkScanSession,
-        frameData: FrameData?
-    ) {
-        guard isEnabled.value,
-            emitter.hasViewSpecificListenersForEvent(viewId, for: FrameworksSparkScanEvent.didUpdate.rawValue)
-        else { return }
+    public func sparkScan(_ sparkScan: SparkScan,
+                          didUpdate session: SparkScanSession,
+                          frameData: FrameData?) {
+        guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId, for: FrameworksSparkScanEvent.didUpdate.rawValue) else { return }
         lastSession = session
         var frameId: String? = nil
 
@@ -98,7 +91,7 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
             payload: [
                 "session": session.jsonString,
                 "frameId": frameId,
-                "viewId": viewId,
+                "viewId": viewId
             ]
         )
 

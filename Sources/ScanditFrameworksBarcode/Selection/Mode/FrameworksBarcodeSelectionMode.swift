@@ -12,22 +12,22 @@ public class FrameworksBarcodeSelectionMode: FrameworksBaseMode {
     private let captureContext: DefaultFrameworksCaptureContext
     private let deserializer: BarcodeSelectionDeserializer
 
-    private var internalModeId: Int = -1
-    private var internalParentId: Int? = nil
+    private var _modeId: Int = -1
+    private var _parentId: Int? = nil
 
     public var modeId: Int {
-        internalModeId
+        return _modeId
     }
 
     public var parentId: Int? {
-        internalParentId
+        return _parentId
     }
 
     public private(set) var mode: BarcodeSelection!
 
     public var isEnabled: Bool {
         get {
-            mode.isEnabled
+            return mode.isEnabled
         }
         set {
             mode.isEnabled = newValue
@@ -49,8 +49,8 @@ public class FrameworksBarcodeSelectionMode: FrameworksBaseMode {
         creationData: BarcodeSelectionModeCreationData
     ) throws {
         mode = try deserializer.mode(fromJSONString: creationData.modeJson, with: dataCaptureContext)
-        internalModeId = creationData.modeId
-        internalParentId = creationData.parentId
+        _modeId = creationData.modeId
+        _parentId = creationData.parentId
 
         captureContext.addMode(mode: mode)
 
@@ -117,7 +117,7 @@ public class FrameworksBarcodeSelectionMode: FrameworksBaseMode {
     }
 
     public func getSelectedBarcodeCount(selectionIdentifier: String) -> Int {
-        listener.getBarcodeCount(selectionIdentifier: selectionIdentifier)
+        return listener.getBarcodeCount(selectionIdentifier: selectionIdentifier)
     }
 
     public func resetSession(frameSequenceId: Int?) {

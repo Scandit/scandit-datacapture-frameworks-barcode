@@ -22,11 +22,10 @@ struct AdvancedOverlayViewData {
     }
 
     init(dictionary: [String: Any?]) {
-        self.init(
-            widgetData: dictionary["widget"] as? Data,
-            trackedBarcodeId: dictionary["trackedBarcodeIdentifier"] as? Int ?? 0,
-            sessionFrameSequenceId: dictionary["sessionFrameSequenceID"] as? Int,
-            dataCaptureViewId: dictionary["dataCaptureViewId"] as? Int ?? 0
+        self.init(widgetData: dictionary["widget"] as? Data,
+                  trackedBarcodeId: dictionary["trackedBarcodeIdentifier"] as! Int,
+                  sessionFrameSequenceId: dictionary["sessionFrameSequenceID"] as? Int,
+                  dataCaptureViewId: dictionary["dataCaptureViewId"] as! Int
         )
     }
 }

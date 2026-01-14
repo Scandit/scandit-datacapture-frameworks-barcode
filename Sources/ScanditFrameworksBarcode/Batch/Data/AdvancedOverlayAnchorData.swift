@@ -20,13 +20,9 @@ struct AdvancedOverlayAnchorData {
 
     init(dictionary: [String: Any?]) {
         var anchor: Anchor = .center
-        if let anchorString = dictionary["anchor"] as? String {
-            SDCAnchorFromJSONString(anchorString, &anchor)
-        }
-        self.init(
-            anchor: anchor,
-            trackedBarcodeId: dictionary["trackedBarcodeIdentifier"] as? Int ?? 0,
-            sessionFrameSequenceId: dictionary["sessionFrameSequenceID"] as? Int
-        )
+        SDCAnchorFromJSONString(dictionary["anchor"] as! String, &anchor)
+        self.init(anchor: anchor,
+                  trackedBarcodeId: dictionary["trackedBarcodeIdentifier"] as! Int,
+                  sessionFrameSequenceId: dictionary["sessionFrameSequenceID"] as? Int)
     }
 }

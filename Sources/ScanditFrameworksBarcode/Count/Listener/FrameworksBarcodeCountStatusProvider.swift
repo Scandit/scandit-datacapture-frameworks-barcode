@@ -12,7 +12,7 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
         static let onStatusRequested = "BarcodeCountStatusProvider.onStatusRequested"
     }
 
-    private var events: [String: BarcodeCountStatusProviderRequest] = [:]
+    private var events = [String: BarcodeCountStatusProviderRequest]()
     private let eventsQueue = DispatchQueue(label: "scandit-frameworks-barcode-count", attributes: .concurrent)
 
     private let emitter: Emitter
@@ -34,9 +34,9 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
         onStatusRequestedEvent.emit(
             on: emitter,
             payload: [
-                "barcodes": barcodes.map { $0.jsonString },
-                BarcodeCountStatusProviderRequest.id: request.requestId,
-                "viewId": self.viewId,
+                "barcodes": barcodes.map {  $0.jsonString },
+                BarcodeCountStatusProviderRequest.ID: request.requestId,
+                "viewId": self.viewId
             ]
         )
     }
@@ -58,6 +58,7 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
             Log.error(error)
         }
     }
+
 
     private func addEvent(request: BarcodeCountStatusProviderRequest) {
         eventsQueue.async { [weak self] in

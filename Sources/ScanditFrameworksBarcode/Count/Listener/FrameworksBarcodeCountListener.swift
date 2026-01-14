@@ -11,7 +11,7 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
     public enum Constants {
         public static let barcodeScanned = "BarcodeCountListener.onScan"
     }
-    private static let asyncTimeoutInterval: TimeInterval = 600  // 10 mins
+    private static let asyncTimeoutInterval: TimeInterval = 600 // 10 mins
     private static let defaultTimeoutInterval: TimeInterval = 2
     private let emitter: Emitter
     private let viewId: Int
@@ -21,14 +21,14 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
         self.emitter = emitter
         self.viewId = viewId
     }
-
+    
     private var lastSession: BarcodeCountSession?
 
     func reset() {
         barcodeScannedEvent.reset()
         lastSession = nil
     }
-
+    
     public func enableAsync() {
         barcodeScannedEvent.timeout = Self.asyncTimeoutInterval
     }
@@ -37,13 +37,11 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
         barcodeScannedEvent.timeout = Self.defaultTimeoutInterval
     }
 
-    public func barcodeCount(
-        _ barcodeCount: BarcodeCount,
-        didScanIn session: BarcodeCountSession,
-        frameData: FrameData
-    ) {
+    public func barcodeCount(_ barcodeCount: BarcodeCount,
+                             didScanIn session: BarcodeCountSession,
+                             frameData: FrameData) {
         lastSession = session
-
+        
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
         barcodeScannedEvent.emit(
@@ -51,11 +49,11 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
             payload: [
                 "session": session.jsonString,
                 "frameId": frameId,
-                "viewId": self.viewId,
+                "viewId": self.viewId
             ],
             default: barcodeCount.isEnabled
         )
-
+        
         LastFrameData.shared.removeFromCache(frameId: frameId)
     }
 
@@ -77,10 +75,7 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
 
     func getSpatialMap(expectedNumberOfRows: Int, expectedNumberOfColumns: Int) -> BarcodeSpatialGrid? {
         guard let session = lastSession else { return nil }
-        return session.spatialMap(
-            withExpectedNumberOfRows: expectedNumberOfRows,
-            expectedNumberOfColumns: expectedNumberOfColumns
-        )
+        return session.spatialMap(withExpectedNumberOfRows: expectedNumberOfRows, expectedNumberOfColumns: expectedNumberOfColumns)
     }
 
 }

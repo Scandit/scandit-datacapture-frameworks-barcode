@@ -15,9 +15,7 @@ open class FrameworksBarcodeSelectionAimedBrushProvider: NSObject, BarcodeSelect
     private let emitter: Emitter
     private let queue: DispatchQueue
 
-    private let brushForBarcodeEvent = Event(
-        name: FrameworksBarcodeSelectionAimedBrushProviderEvent.brushForBarcode.rawValue
-    )
+    private let brushForBarcodeEvent = Event(name: FrameworksBarcodeSelectionAimedBrushProviderEvent.brushForBarcode.rawValue)
 
     private var cachedBrushes: [String: Brush] = [:]
 
@@ -36,8 +34,7 @@ open class FrameworksBarcodeSelectionAimedBrushProvider: NSObject, BarcodeSelect
 
     func finishCallback(brushJson: String?, selectionIdentifier: String?) {
         guard let selectionIdentifier = selectionIdentifier,
-            let brushJson = brushJson, let brush = Brush(jsonString: brushJson)
-        else { return }
+              let brushJson = brushJson, let brush = Brush(jsonString: brushJson) else { return }
         queue.async {
             self.cachedBrushes[selectionIdentifier] = brush
         }

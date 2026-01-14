@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 open class BarcodeFindModule: NSObject, FrameworkModule {
     private let emitter: Emitter
@@ -36,9 +36,9 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
             result.reject(error: ScanditFrameworksCoreError.nilDataCaptureContext)
             return
         }
-
+        
         do {
-
+            
             let viewCreationParams = try BarcodeFindViewCreationData.fromJson(viewJson: jsonString)
             if let existingView = viewCache.getView(viewId: viewCreationParams.viewId) {
                 existingView.dispose()
@@ -48,13 +48,13 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
             if let previousView = viewCache.getTopMost() {
                 previousView.hide()
             }
-
+            
             let block = { [weak self] in
                 guard let self = self else {
                     result.reject(error: ScanditFrameworksCoreError.nilSelf)
                     return
                 }
-
+                
                 do {
                     let view = try FrameworksBarcodeFindView.create(
                         emitter: emitter,
@@ -69,16 +69,16 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
                     return
                 }
             }
-
+            
             dispatchMain(block)
         } catch {
             result.reject(error: error)
             return
         }
     }
-
+    
     public func getViewById(_ viewId: Int) -> BarcodeFindView? {
-        viewCache.getView(viewId: viewId)?.view
+        return viewCache.getView(viewId: viewId)?.view
     }
 
     public func updateBarcodeFindView(_ viewId: Int, viewJson: String, result: FrameworksResult) {
@@ -91,7 +91,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
     }
 
     public func onViewRemovedFromSuperview(viewId: Int) {
-        if let viewInstance = viewCache.remove(viewId: viewId) {
+        if let viewInstance = viewCache.remove(viewId: viewId)  {
             viewInstance.dispose()
         }
 
@@ -119,7 +119,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func addBarcodeFindListener(_ viewId: Int, result: FrameworksResult) {
+    public func addBarcodeFindListener(_ viewId:Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -241,7 +241,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
     }
 
     public func isModeEnabled() -> Bool {
-        viewCache.getTopMost()?.isModeEnabled() ?? false
+        return viewCache.getTopMost()?.isModeEnabled() ?? false
     }
 
     public func setBarcodeFindTransformer(_ viewId: Int, result: FrameworksResult) {
@@ -253,7 +253,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         viewInstance.setBarcodeFindTransformer()
         result.success()
     }
-
+    
     public func removeBarcodeFindTransformer(_ viewId: Int, result: FrameworksResult) {
         // The native API isn't allowing the removal of the transformer
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
@@ -294,8 +294,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
         case "updateFindView":
             if let viewId: Int = method.argument(key: "viewId"),
-                let barcodeFindViewJson: String = method.argument(key: "barcodeFindViewJson")
-            {
+               let barcodeFindViewJson: String = method.argument(key: "barcodeFindViewJson") {
                 updateBarcodeFindView(viewId, viewJson: barcodeFindViewJson, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid viewId or barcodeFindViewJson argument", details: nil)
@@ -303,8 +302,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
         case "updateFindMode":
             if let viewId: Int = method.argument(key: "viewId"),
-                let barcodeFindJson: String = method.argument(key: "barcodeFindJson")
-            {
+               let barcodeFindJson: String = method.argument(key: "barcodeFindJson") {
                 updateBarcodeFindMode(viewId, modeJson: barcodeFindJson, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid viewId or barcodeFindJson argument", details: nil)
@@ -340,8 +338,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
         case "barcodeFindSetItemList":
             if let viewId: Int = method.argument(key: "viewId"),
-                let itemsJson: String = method.argument(key: "itemsJson")
-            {
+               let itemsJson: String = method.argument(key: "itemsJson") {
                 setItemList(viewId, barcodeFindItemsJson: itemsJson, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid viewId or itemsJson argument", details: nil)
@@ -391,8 +388,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
         case "setModeEnabledState":
             if let viewId: Int = method.argument(key: "viewId"),
-                let enabled: Bool = method.argument(key: "enabled")
-            {
+               let enabled: Bool = method.argument(key: "enabled") {
                 setModeEnabled(viewId, enabled: enabled)
                 result.success()
             } else {
@@ -408,8 +404,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
         case "submitBarcodeTransformerResult":
             if let viewId: Int = method.argument(key: "viewId"),
-                let transformedBarcode: String? = method.argument(key: "transformedBarcode")
-            {
+               let transformedBarcode: String? = method.argument(key: "transformedBarcode") {
                 submitBarcodeFindTransformerResult(viewId, transformedData: transformedBarcode, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid viewId or transformedBarcode argument", details: nil)
@@ -417,8 +412,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
         case "updateFeedback":
             if let viewId: Int = method.argument(key: "viewId"),
-                let feedbackJson: String = method.argument(key: "feedbackJson")
-            {
+               let feedbackJson: String = method.argument(key: "feedbackJson") {
                 updateFeedback(viewId, feedbackJson: feedbackJson, result: result)
             } else {
                 result.reject(code: "-1", message: "Invalid viewId or feedbackJson argument", details: nil)

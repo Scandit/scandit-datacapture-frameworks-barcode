@@ -4,8 +4,8 @@
  * Copyright (C) 2025- Scandit AG. All rights reserved.
  */
 
-import ScanditCaptureCore
 import ScanditFrameworksCore
+import ScanditCaptureCore
 
 struct BarcodeFindViewCreationData {
     let modeJson: String
@@ -39,9 +39,9 @@ struct BarcodeFindViewCreationData {
                     domain: "BarcodeFindViewCreationData",
                     code: -1,
                     userInfo: [
-                        NSLocalizedDescriptionKey: "Unable to create a BarcodeFindView. "
-                            + "The given json doesn't contain all the required fields. "
-                            + "Required fields = [\(modeKey), \(viewKey)]"
+                        NSLocalizedDescriptionKey: "Unable to create a BarcodeFindView. " +
+                        "The given json doesn't contain all the required fields. " +
+                        "Required fields = [\(modeKey), \(viewKey)]"
                     ]
                 ),
                 json: viewJson

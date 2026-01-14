@@ -38,21 +38,18 @@ open class FrameworksBarcodeCaptureListener: NSObject, BarcodeCaptureListener {
     private let barcodeScannedEvent = EventWithResult<Bool>(event: Event(FrameworksBarcodeCaptureEvent.barcodeScanned))
     private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(FrameworksBarcodeCaptureEvent.sessionUpdated))
 
-    public func barcodeCapture(
-        _ barcodeCapture: BarcodeCapture,
-        didScanIn session: BarcodeCaptureSession,
-        frameData: FrameData
-    ) {
+    public func barcodeCapture(_ barcodeCapture: BarcodeCapture,
+                        didScanIn session: BarcodeCaptureSession,
+                        frameData: FrameData) {
         self.cachedCaptureSession.value = FrameworksBarcodeCaptureSession.fromCaptureSession(session: session)
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
-        let payload =
-            [
-                "session": session.jsonString,
-                "frameId": frameId,
-                "modeId": modeId,
-            ] as [String: Any?]
+        let payload = [
+            "session": session.jsonString,
+            "frameId": frameId,
+            "modeId": modeId
+        ] as [String : Any?]
 
         barcodeScannedEvent.emit(
             on: emitter,
@@ -62,21 +59,18 @@ open class FrameworksBarcodeCaptureListener: NSObject, BarcodeCaptureListener {
         LastFrameData.shared.removeFromCache(frameId: frameId)
     }
 
-    public func barcodeCapture(
-        _ barcodeCapture: BarcodeCapture,
-        didUpdate session: BarcodeCaptureSession,
-        frameData: FrameData
-    ) {
+    public func barcodeCapture(_ barcodeCapture: BarcodeCapture,
+                        didUpdate session: BarcodeCaptureSession,
+                        frameData: FrameData) {
         self.cachedCaptureSession.value = FrameworksBarcodeCaptureSession.fromCaptureSession(session: session)
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
-        let payload =
-            [
-                "session": session.jsonString,
-                "frameId": frameId,
-                "modeId": modeId,
-            ] as [String: Any?]
+        let payload = [
+            "session": session.jsonString,
+            "frameId": frameId,
+            "modeId": modeId
+        ] as [String : Any?]
 
         sessionUpdatedEvent.emit(
             on: emitter,
@@ -97,8 +91,7 @@ open class FrameworksBarcodeCaptureListener: NSObject, BarcodeCaptureListener {
     public func resetSession(with frameSequenceId: Int?) {
         guard
             let session = self.cachedCaptureSession.value,
-            frameSequenceId == nil || session.frameSequenceId == frameSequenceId
-        else { return }
+            frameSequenceId == nil || session.frameSequenceId == frameSequenceId else { return }
         session.captureSession?.reset()
     }
 

@@ -11,7 +11,7 @@ public typealias BarcodeId = String
 private typealias TrackedBarcodeId = Int
 
 public class BarcodeArAugmentationsCache {
-    private static let deletionDelay: TimeInterval = 2.0
+    private static let DELETION_DELAY: TimeInterval = 2.0
 
     private let instanceId = UUID().uuidString
     private var annotationsCache = ConcurrentDictionary<BarcodeId, BarcodeArAnnotation>()
@@ -43,7 +43,7 @@ public class BarcodeArAugmentationsCache {
             existingTimer.invalidate()
         }
 
-        let timer = Timer.scheduledTimer(withTimeInterval: Self.deletionDelay, repeats: false) { [weak self] _ in
+        let timer = Timer.scheduledTimer(withTimeInterval: Self.DELETION_DELAY, repeats: false) { [weak self] _ in
             self?.performDeletion(for: barcodeId)
         }
         markedForDeletion.setValue(timer, for: barcodeId)
@@ -67,7 +67,7 @@ public class BarcodeArAugmentationsCache {
     }
 
     func getHighlightProviderCallback(barcodeId: BarcodeId) -> HighlightCallbackData? {
-        barcodeArHighlightProviderCallback.getValue(for: barcodeId)
+        return barcodeArHighlightProviderCallback.getValue(for: barcodeId)
     }
 
     func addHighlight(barcodeId: BarcodeId, highlight: BarcodeArHighlight) {
@@ -75,7 +75,7 @@ public class BarcodeArAugmentationsCache {
     }
 
     func getHighlight(barcodeId: BarcodeId) -> BarcodeArHighlight? {
-        highlightsCache.getValue(for: barcodeId)
+        return highlightsCache.getValue(for: barcodeId)
     }
 
     func addAnnotationProviderCallback(barcodeId: BarcodeId, callback: AnnotationCallbackData) {
@@ -83,7 +83,7 @@ public class BarcodeArAugmentationsCache {
     }
 
     func getAnnotationProviderCallback(barcodeId: BarcodeId) -> AnnotationCallbackData? {
-        barcodeArAnnotationProviderCallback.getValue(for: barcodeId)
+        return barcodeArAnnotationProviderCallback.getValue(for: barcodeId)
     }
 
     func addAnnotation(barcodeId: BarcodeId, annotation: BarcodeArAnnotation) {
@@ -91,7 +91,7 @@ public class BarcodeArAugmentationsCache {
     }
 
     func getAnnotation(barcodeId: BarcodeId) -> BarcodeArAnnotation? {
-        annotationsCache.getValue(for: barcodeId)
+        return annotationsCache.getValue(for: barcodeId)
     }
 
     func clear() {

@@ -4,8 +4,8 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 struct FrameworksBarcodeFindViewDefaults: DefaultsEncodable {
     func toEncodable() -> [String: Any?] {
@@ -26,7 +26,7 @@ struct FrameworksBarcodeFindViewDefaults: DefaultsEncodable {
             "textForTapShutterToPauseScreenHint": BarcodeFindViewDefaults.defaultTextForTapShutterToPauseScreenHint,
             "textForTapShutterToResumeSearchHint": BarcodeFindViewDefaults.defaultTextForTapShutterToResumeSearchHint,
             "textForItemListUpdatedHint": BarcodeFindViewDefaults.defaultTextForItemListUpdatedHint,
-            "textForItemListUpdatedWhenPausedHint": BarcodeFindViewDefaults.defaultTextForItemListUpdatedWhenPausedHint,
+            "textForItemListUpdatedWhenPausedHint": BarcodeFindViewDefaults.defaultTextForItemListUpdatedWhenPausedHint
         ]
     }
 }

@@ -4,8 +4,8 @@
  * Copyright (C) 2025- Scandit AG. All rights reserved.
  */
 
-import ScanditCaptureCore
 import ScanditFrameworksCore
+import ScanditCaptureCore
 
 public struct BarcodeCaptureOverlayCreationData {
     public let isBasic: Bool
@@ -30,7 +30,7 @@ public struct BarcodeCaptureOverlayCreationData {
         let overlayJson = JSONValue(string: overlayJsonString)
         let overlayType = overlayJson.string(forKey: typeKey, default: "")
         let modeId = overlayJson.integer(forKey: modeIdKey, default: -1)
-
+        
         return BarcodeCaptureOverlayCreationData(
             isBasic: overlayType == basicOverlayType,
             overlayJsonString: overlayJsonString,

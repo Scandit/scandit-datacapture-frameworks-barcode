@@ -13,7 +13,7 @@ struct FrameworksBarcodeFindViewSettingsDefaults: DefaultsEncodable {
     func toEncodable() -> [String: Any?] {
         [
             "progressBarStartColor": barcodeFindViewSettings.progressBarStartColor.sdcHexString,
-            "progressBarFinishColor": barcodeFindViewSettings.progressBarFinishColor.sdcHexString,
+            "progressBarFinishColor": barcodeFindViewSettings.progressBarFinishColor.sdcHexString
         ]
     }
 }

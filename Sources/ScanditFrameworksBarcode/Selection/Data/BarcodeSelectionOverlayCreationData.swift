@@ -4,8 +4,8 @@
  * Copyright (C) 2025- Scandit AG. All rights reserved.
  */
 
-import ScanditBarcodeCapture
 import ScanditFrameworksCore
+import ScanditBarcodeCapture
 
 public struct BarcodeSelectionOverlayCreationData {
     let isValidBasicOverlayType: Bool
@@ -61,9 +61,7 @@ public struct BarcodeSelectionOverlayCreationData {
             )
         }
 
-        let textForSelectOrDoubleTapToFreezeHint = createOverlayJson.optionalString(
-            forKey: "textForSelectOrDoubleTapToFreezeHint"
-        )
+        let textForSelectOrDoubleTapToFreezeHint = createOverlayJson.optionalString(forKey: "textForSelectOrDoubleTapToFreezeHint")
         let textForTapToSelectHint = createOverlayJson.optionalString(forKey: "textForTapToSelectHint")
         let textForDoubleTapToUnfreezeHint = createOverlayJson.optionalString(forKey: "textForDoubleTapToUnfreezeHint")
         let textForTapAnywhereToSelectHint = createOverlayJson.optionalString(forKey: "textForTapAnywhereToSelectHint")

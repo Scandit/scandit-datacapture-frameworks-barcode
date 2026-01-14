@@ -44,31 +44,28 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
 
     private let sessionUpdatedEvent = EventWithResult<Bool>(event: Event(.sessionUpdated))
 
-    public func barcodeBatch(
-        _ barcodeBatch: BarcodeBatch,
-        didUpdate session: BarcodeBatchSession,
-        frameData: FrameData
-    ) {
+    public func barcodeBatch(_ barcodeBatch: BarcodeBatch,
+                                didUpdate session: BarcodeBatchSession,
+                                frameData: FrameData) {
         self.cachedBatchSession.value = FrameworksBarcodeBatchSession.fromBatchSession(session: session)
-
+        
         if !isEnabled.value {
             return
         }
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
-
-        let payload =
-            [
-                "session": session.jsonString,
-                "frameId": frameId,
-                "modeId": modeId,
-            ] as [String: Any?]
+        
+        let payload =  [
+            "session": session.jsonString,
+            "frameId": frameId,
+            "modeId": modeId
+        ] as [String : Any?]
 
         sessionUpdatedEvent.emit(
             on: emitter,
             payload: payload
         )
-
+        
         LastFrameData.shared.removeFromCache(frameId: frameId)
     }
 
@@ -79,8 +76,7 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
     public func resetSession(with frameSequenceId: Int?) {
         guard
             let session = self.cachedBatchSession.value,
-            frameSequenceId == nil || session.frameSequenceId == frameSequenceId
-        else { return }
+            frameSequenceId == nil || session.frameSequenceId == frameSequenceId else { return }
         session.batchSession?.reset()
     }
 
@@ -88,7 +84,7 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
         self.cachedBatchSession.value = nil
         sessionUpdatedEvent.reset()
     }
-
+    
     public func setEnabled(enabled: Bool) {
         isEnabled.value = enabled
     }

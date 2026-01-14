@@ -18,41 +18,29 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
     private let anchorForTrackedBarcodeEvent = Event(.anchorForTrackedBarcode)
     private let widgetForTrackedBarcodeEvent = Event(.widgetForTrackedBarcode)
 
-    public func barcodeBatchAdvancedOverlay(
-        _ overlay: BarcodeBatchAdvancedOverlay,
-        viewFor trackedBarcode: TrackedBarcode
-    ) -> UIView? {
+    public func barcodeBatchAdvancedOverlay(_ overlay: BarcodeBatchAdvancedOverlay,
+                                               viewFor trackedBarcode: TrackedBarcode) -> UIView? {
         if emitter.hasListener(for: widgetForTrackedBarcodeEvent) {
-            widgetForTrackedBarcodeEvent.emit(
-                on: emitter,
-                payload: ["trackedBarcode": trackedBarcode.jsonString]
-            )
+            widgetForTrackedBarcodeEvent.emit(on: emitter,
+                                              payload: ["trackedBarcode": trackedBarcode.jsonString])
         }
         return nil
     }
 
-    public func barcodeBatchAdvancedOverlay(
-        _ overlay: BarcodeBatchAdvancedOverlay,
-        anchorFor trackedBarcode: TrackedBarcode
-    ) -> Anchor {
+    public func barcodeBatchAdvancedOverlay(_ overlay: BarcodeBatchAdvancedOverlay,
+                                               anchorFor trackedBarcode: TrackedBarcode) -> Anchor {
         if emitter.hasListener(for: anchorForTrackedBarcodeEvent) {
-            anchorForTrackedBarcodeEvent.emit(
-                on: emitter,
-                payload: ["trackedBarcode": trackedBarcode.jsonString]
-            )
+            anchorForTrackedBarcodeEvent.emit(on: emitter,
+                                              payload: ["trackedBarcode": trackedBarcode.jsonString])
         }
         return .center
     }
 
-    public func barcodeBatchAdvancedOverlay(
-        _ overlay: BarcodeBatchAdvancedOverlay,
-        offsetFor trackedBarcode: TrackedBarcode
-    ) -> PointWithUnit {
+    public func barcodeBatchAdvancedOverlay(_ overlay: BarcodeBatchAdvancedOverlay,
+                                               offsetFor trackedBarcode: TrackedBarcode) -> PointWithUnit {
         if emitter.hasListener(for: offsetForTrackedBarcodeEvent) {
-            offsetForTrackedBarcodeEvent.emit(
-                on: emitter,
-                payload: ["trackedBarcode": trackedBarcode.jsonString]
-            )
+            offsetForTrackedBarcodeEvent.emit(on: emitter,
+                                              payload: ["trackedBarcode": trackedBarcode.jsonString])
         }
         return .zero
     }

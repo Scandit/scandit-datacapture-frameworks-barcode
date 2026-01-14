@@ -23,13 +23,12 @@ open class FrameworksBarcodePickListener: NSObject, BarcodePickListener {
     }
 
     public func barcodePick(_ barcodePick: BarcodePick, didUpdate session: BarcodePickSession) {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickListenerEvent.didUpdateSession.rawValue)
-        else { return }
+        guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodePickListenerEvent.didUpdateSession.rawValue) else { return }
         emitter.emit(
             name: BarcodePickListenerEvent.didUpdateSession.rawValue,
             payload: [
                 "session": session.jsonString,
-                "viewId": self.viewId,
+                "viewId": self.viewId
             ]
         )
     }

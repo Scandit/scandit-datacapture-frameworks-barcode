@@ -4,8 +4,8 @@
  * Copyright (C) 2025- Scandit AG. All rights reserved.
  */
 
-import ScanditCaptureCore
 import ScanditFrameworksCore
+import ScanditCaptureCore
 
 public struct BarcodeCaptureModeCreationData {
     public let modeJson: String
@@ -41,7 +41,7 @@ public struct BarcodeCaptureModeCreationData {
         let json = JSONValue(string: modeJson)
 
         let modeType = json.string(forKey: typeKey, default: "")
-        if modeType != "barcodeCapture" {
+        if (modeType != "barcodeCapture") {
             return BarcodeCaptureModeCreationData(
                 modeJson: modeJson,
                 modeId: -1,

@@ -15,16 +15,14 @@ struct BarcodeBatchDefaults: DefaultsEncodable {
         let mode = BarcodeBatch(context: nil, settings: BarcodeBatchSettings())
         let overlay = BarcodeBatchBasicOverlay(barcodeBatch: mode, view: nil)
         let overlayDefaults = BarcodeBatchBasicOverlayDefaults(defaultStyle: overlay.style)
-        return BarcodeBatchDefaults(
-            recommendedCameraSettings: CameraSettingsDefaults(cameraSettings: BarcodeBatch.recommendedCameraSettings),
-            basicOverlayDefaults: overlayDefaults
-        )
+        return BarcodeBatchDefaults(recommendedCameraSettings: CameraSettingsDefaults(cameraSettings: BarcodeBatch.recommendedCameraSettings),
+                                       basicOverlayDefaults: overlayDefaults)
     }()
 
     func toEncodable() -> [String: Any?] {
         [
             "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
-            "BarcodeBatchBasicOverlay": basicOverlayDefaults.toEncodable(),
+            "BarcodeBatchBasicOverlay": basicOverlayDefaults.toEncodable()
         ]
     }
 }

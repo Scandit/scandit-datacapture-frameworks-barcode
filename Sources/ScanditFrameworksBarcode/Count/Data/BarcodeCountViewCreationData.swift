@@ -27,16 +27,14 @@ public class BarcodeCountViewCreationData {
         static let hasStatusProviderKey = "hasStatusProvider"
     }
 
-    init(
-        modeJson: String,
-        viewJson: String,
-        hasModeListener: Bool,
-        hasViewListener: Bool,
-        hasUIListener: Bool,
-        viewId: Int,
-        isModeEnabled: Bool,
-        hasStatusProvider: Bool
-    ) {
+    init(modeJson: String,
+         viewJson: String,
+         hasModeListener: Bool,
+         hasViewListener: Bool,
+         hasUIListener: Bool,
+         viewId: Int,
+         isModeEnabled: Bool,
+         hasStatusProvider: Bool) {
         self.modeJson = modeJson
         self.viewJson = viewJson
         self.hasModeListener = hasModeListener
@@ -49,21 +47,14 @@ public class BarcodeCountViewCreationData {
 
     static func fromJson(_ viewJson: String) throws -> BarcodeCountViewCreationData {
         guard let jsonData = viewJson.data(using: .utf8),
-            let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
-        else {
+              let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
             return getDefaultCreationParams()
         }
 
+        
         let hasAllRequiredFields = json[Keys.modeKey] != nil && json[Keys.viewKey] != nil
         if !hasAllRequiredFields {
-            throw NSError(
-                domain: "BarcodeCountViewCreationData",
-                code: -2,
-                userInfo: [
-                    NSLocalizedDescriptionKey:
-                        "Unable to create a BarcodeCountView. The given json doesn't contain all the required fields. Required fields = [\(Keys.modeKey), \(Keys.viewKey)]"
-                ]
-            )
+            throw NSError(domain: "BarcodeCountViewCreationData", code: -2, userInfo: [NSLocalizedDescriptionKey: "Unable to create a BarcodeCountView. The given json doesn't contain all the required fields. Required fields = [\(Keys.modeKey), \(Keys.viewKey)]"])
         }
 
         let viewJsonObject = json[Keys.viewKey] as? [String: Any] ?? [:]
@@ -86,8 +77,7 @@ public class BarcodeCountViewCreationData {
 
     static func fromViewJsonOnly(_ viewJson: String) throws -> BarcodeCountViewCreationData {
         guard let data = viewJson.data(using: .utf8),
-            let viewJsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-        else {
+              let viewJsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
             return getDefaultCreationParams()
         }
         return BarcodeCountViewCreationData(
@@ -104,8 +94,7 @@ public class BarcodeCountViewCreationData {
 
     static func fromModeJsonOnly(_ modeJson: String) throws -> BarcodeCountViewCreationData {
         guard let data = modeJson.data(using: .utf8),
-            let modeJsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-        else {
+              let modeJsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
             return getDefaultCreationParams()
         }
         return BarcodeCountViewCreationData(
@@ -119,23 +108,23 @@ public class BarcodeCountViewCreationData {
             hasStatusProvider: false
         )
     }
-
+    
     private static func convertToJsonString(_ dict: [String: Any]) -> String? {
         guard let jsonData = try? JSONSerialization.data(withJSONObject: dict) else {
             return nil
         }
         return String(data: jsonData, encoding: .utf8)
     }
-
+    
     private static func getDefaultCreationParams() -> BarcodeCountViewCreationData {
         // Return default values if JSON parsing fails
-        BarcodeCountViewCreationData(
+        return BarcodeCountViewCreationData(
             modeJson: "{}",
             viewJson: "{}",
             hasModeListener: false,
             hasViewListener: false,
             hasUIListener: false,
-            viewId: 0,
+           viewId:       0,
             isModeEnabled: false,
             hasStatusProvider: false
         )

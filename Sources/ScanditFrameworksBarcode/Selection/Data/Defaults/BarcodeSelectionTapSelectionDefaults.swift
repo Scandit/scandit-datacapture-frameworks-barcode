@@ -13,7 +13,7 @@ struct BarcodeSelectionTapSelectionDefaults: DefaultsEncodable {
     func toEncodable() -> [String: Any?] {
         [
             "defaultFreezeBehaviour": tapSelection.freezeBehavior.jsonString,
-            "defaultTapBehaviour": tapSelection.tapBehavior.jsonString,
+            "defaultTapBehaviour": tapSelection.tapBehavior.jsonString
         ]
     }
 }

@@ -25,7 +25,7 @@ struct BarcodeCountToolbarSettingsDefaults: DefaultsEncodable {
             "colorSchemeOnButtonText": BarcodeCountToolbarDefaults.colorSchemeOnButtonText,
             "colorSchemeOffButtonText": BarcodeCountToolbarDefaults.colorSchemeOffButtonText,
             "colorSchemeButtonAccessibilityHint": BarcodeCountToolbarDefaults.colorSchemeButtonAccessibilityHint,
-            "colorSchemeButtonAccessibilityLabel": BarcodeCountToolbarDefaults.colorSchemeButtonAccessibilityLabel,
+            "colorSchemeButtonAccessibilityLabel": BarcodeCountToolbarDefaults.colorSchemeButtonAccessibilityLabel
         ]
     }
 }
