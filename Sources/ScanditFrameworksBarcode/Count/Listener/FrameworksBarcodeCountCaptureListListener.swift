@@ -7,16 +7,14 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-public enum FrameworksBarcodeCountCaptureListListenerEvent: String, CaseIterable {
-    case sessionUpdated = "BarcodeCountCaptureListListener.didUpdateSession"
-}
-
 open class FrameworksBarcodeCountCaptureListListener: NSObject, BarcodeCountCaptureListListener {
+    private enum Constants {
+        static let sessionUpdated = "BarcodeCountCaptureListListener.didUpdateSession"
+    }
+
     private let emitter: Emitter
     private let viewId: Int
-    private let sessionUpdatedEvent = Event(
-        name: FrameworksBarcodeCountCaptureListListenerEvent.sessionUpdated.rawValue
-    )
+    private let sessionUpdatedEvent = Event(name: Constants.sessionUpdated)
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter

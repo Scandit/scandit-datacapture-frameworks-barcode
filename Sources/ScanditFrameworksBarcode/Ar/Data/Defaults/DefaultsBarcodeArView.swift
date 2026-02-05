@@ -40,8 +40,6 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
             "defaultStatusIconAnnotationBackgroundColor":
                 ViewDefaults.defaultStatusIconAnnotationBackgroundColor.sdcHexString,
             "defaultInfoAnnotationWidth": ViewDefaults.defaultInfoAnnotationWidth.jsonString,
-            "defaultResponsiveAnnotationThreshold": ViewDefaults.defaultResponsiveAnnotationThreshold,
-            "defaultResponsiveAnnotationTrigger": ViewDefaults.defaultResponsiveAnnotationTrigger.jsonString,
             "defaultInfoAnnotationBackgroundColor": ViewDefaults.defaultInfoAnnotationBackgroundColor.sdcHexString,
             "defaultInfoAnnotationHasTip": ViewDefaults.defaultInfoAnnotationHasTip,
             "defaultInfoAnnotationAnchor": ViewDefaults.defaultInfoAnnotationAnchor.jsonString,

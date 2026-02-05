@@ -31,7 +31,6 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
     private var context: DataCaptureContext
 
     private var mode: BarcodePick!
-    private var asyncMapperProductProvider: BarcodePickAsyncMapperProductProvider!
 
     private init(
         barcodePickActionListener: FrameworksBarcodePickActionListener,
@@ -64,7 +63,7 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
     ) throws {
         internalViewId = viewCreationParams.viewId
 
-        asyncMapperProductProvider = try deserializer.asyncMapperProductProvider(
+        let provider = try deserializer.asyncMapperProductProvider(
             fromJSONString: viewCreationParams.productProviderJson,
             delegate: barcodePickAsyncMapperProductProviderCallback
         )
@@ -72,7 +71,7 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
         mode = try deserializer.mode(
             fromJSONString: viewCreationParams.modeJson,
             context: context,
-            productProvider: asyncMapperProductProvider
+            productProvider: provider
         )
 
         // Common deserializer parameters
@@ -182,7 +181,7 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
             removeBarcodePickViewUiListener()
         }
         if creationData.isStarted {
-            start()
+            startMode()
         }
     }
 
@@ -251,66 +250,23 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
         view.uiDelegate = nil
     }
 
-    public func start() {
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                return
-            }
-            self.view.start()
-        }
+    public func startMode() {
+        view.start()
     }
 
-    public func stop() {
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                return
-            }
-            self.view.stop()
-        }
-    }
-
-    public func freeze() {
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                return
-            }
-            self.view.freeze()
-        }
+    public func stopMode() {
+        view.stop()
     }
 
     public func hide() {
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                return
-            }
+        dispatchMain {
             self.view.pause()
             self.view.isHidden = true
         }
     }
 
-    public func reset() {
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                return
-            }
-            self.view.reset()
-        }
-    }
-
-    public func pause() {
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                return
-            }
-            self.view.pause()
-        }
-    }
-
     public func show() {
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                return
-            }
+        dispatchMain {
             self.view.isHidden = false
             self.view.superview?.bringSubviewToFront(self.view)
             self.view.start()
@@ -392,12 +348,8 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
         removeBarcodePickViewListener()
         removeBarcodePickActionListener()
         removeBarcodePickViewUiListener()
-        stop()
-        dispatchMain { [weak self] in
-            guard let self = self else {
-                return
-            }
-            self.view.removeFromSuperview()
+        DispatchQueue.main.async { [weak self] in
+            self?.view.removeFromSuperview()
         }
     }
 
@@ -434,44 +386,4 @@ public class FrameworksBarcodePickView: FrameworksBaseView {
         )
     }
 
-    public func confirmActionForItemWithData(data: String) {
-        mode.confirmActionForItem(withData: data)
-    }
-
-    public func cancelActionForItemWithData(data: String) {
-        mode.cancelActionForItem(withData: data)
-    }
-
-    public func selectItemWithData(data: String, completionHandler: ((BarcodePickAction) -> Void)?) {
-        mode.selectItem(withData: data, completionHandler: completionHandler)
-    }
-
-    public func updateProductList(productsJson: String) {
-        do {
-            guard let jsonData = productsJson.data(using: .utf8),
-                let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
-            else {
-                Log.error("Failed to parse products JSON")
-                return
-            }
-
-            var products = Set<BarcodePickProduct>()
-            for (identifier, value) in jsonObject {
-                guard let quantity = value as? Int else {
-                    Log.error("Invalid product format in JSON")
-                    continue
-                }
-
-                let product = BarcodePickProduct(
-                    identifier: identifier,
-                    quantityToPick: quantity
-                )
-                products.insert(product)
-            }
-
-            asyncMapperProductProvider.updateProductList(products)
-        } catch {
-            Log.error("Failed to update product list", error: error)
-        }
-    }
 }

@@ -7,18 +7,15 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-public enum FrameworksBarcodeCountListenerEvent: String, CaseIterable {
-    case barcodeScanned = "BarcodeCountListener.onScan"
-}
-
 open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
+    public enum Constants {
+        public static let barcodeScanned = "BarcodeCountListener.onScan"
+    }
     private static let asyncTimeoutInterval: TimeInterval = 600  // 10 mins
     private static let defaultTimeoutInterval: TimeInterval = 2
     private let emitter: Emitter
     private let viewId: Int
-    private let barcodeScannedEvent = EventWithResult<Bool>(
-        event: Event(name: FrameworksBarcodeCountListenerEvent.barcodeScanned.rawValue)
-    )
+    private let barcodeScannedEvent = EventWithResult<Bool>(event: Event(name: Constants.barcodeScanned))
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter

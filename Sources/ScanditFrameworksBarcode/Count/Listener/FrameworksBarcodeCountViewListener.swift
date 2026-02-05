@@ -25,12 +25,11 @@ fileprivate extension Emitter {
     }
 }
 
-public enum BarcodeCountViewListenerEvent: String, CaseIterable {
+public enum BarcodeCountViewListenerEvent: String {
     case brushForRecognizedBarcode = "BarcodeCountViewListener.brushForRecognizedBarcode"
     case brushForRecognizedBarcodeNotInList = "BarcodeCountViewListener.brushForRecognizedBarcodeNotInList"
     case brushForAcceptedBarcode = "BarcodeCountViewListener.brushForAcceptedBarcode"
     case brushForRejectedBarcode = "BarcodeCountViewListener.brushForRejectedBarcode"
-    case didCompleteCaptureList = "BarcodeCountViewListener.didCompleteCaptureList"
 
     case didTapRecognizedBarcode = "BarcodeCountViewListener.didTapRecognizedBarcode"
     case didTapFilteredBarcode = "BarcodeCountViewListener.didTapFilteredBarcode"
@@ -53,7 +52,6 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
     private let didTapRecognizedBarcodeNotInListEvent = Event(.didTapRecognizedBarcodeNotInList)
     private let didTapAcceptedBarcodeEvent = Event(.didTapAcceptedBarcode)
     private let didTapRejectedBarcodeEvent = Event(.didTapRejectedBarcode)
-    private let didCompleteCaptureList = Event(.didCompleteCaptureList)
 
     private var brushRequests: [String: TrackedBarcode] = [:]
 
@@ -82,8 +80,6 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
             return didTapAcceptedBarcodeEvent
         case .didTapRejectedBarcode:
             return didTapRejectedBarcodeEvent
-        case .didCompleteCaptureList:
-            return didCompleteCaptureList
         }
     }
 

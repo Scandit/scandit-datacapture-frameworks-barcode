@@ -32,71 +32,41 @@ open class SparkScanModule: NSObject, FrameworkModule {
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
     }
 
-    public func getDefaults() -> [String: Any?] {
-        SparkScanDefaults.shared.toEncodable()
-    }
+    public let defaults: DefaultsEncodable = SparkScanDefaults.shared
 
-    public func registerSparkScanListenerForEvents(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
-            return
-        }
+    public func addSparkScanListener(viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.enableSparkScanListener()
-        result.successAndKeepCallback(result: nil)
     }
 
-    public func unregisterSparkScanListenerForEvents(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func removeSparkScanListener(viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.disableSparkScanListener()
-        result.success()
     }
 
-    public func finishSparkScanDidUpdateSession(viewId: Int, isEnabled: Bool, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.finishDidUpdateCallback(enabled: isEnabled)
-        result.success()
+    public func finishDidUpdateSession(viewId: Int, enabled: Bool) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
+        viewInstance.finishDidUpdateCallback(enabled: enabled)
     }
 
-    public func finishSparkScanDidScan(viewId: Int, isEnabled: Bool, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.finishDidScanCallback(enabled: isEnabled)
-        result.success()
+    public func finishDidScan(viewId: Int, enabled: Bool) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
+        viewInstance.finishDidScanCallback(enabled: enabled)
     }
 
-    public func resetSparkScanSession(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func resetSession(viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.resetLastSession()
-        result.success()
     }
 
-    public func registerSparkScanViewListenerEvents(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
-            return
-        }
+    public func addSparkScanViewUiListener(viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.addSparkScanViewUiListener()
-        result.successAndKeepCallback(result: nil)
     }
 
-    public func unregisterSparkScanViewListenerEvents(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func removeSparkScanViewUiListener(viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.removeSparkScanViewUiListener()
-        result.success()
     }
 
     public func addViewToContainer(
@@ -143,7 +113,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
         }
     }
 
-    public func updateSparkScanView(viewId: Int, viewJson: String, result: FrameworksResult) {
+    public func updateView(viewId: Int, viewJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -152,7 +122,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func updateSparkScanMode(viewId: Int, modeJson: String, result: FrameworksResult) {
+    public func updateMode(viewId: Int, modeJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -166,34 +136,22 @@ open class SparkScanModule: NSObject, FrameworkModule {
         }
     }
 
-    public func pauseSparkScanViewScanning(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func pauseScanning(viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.pauseScanning()
-        result.success()
     }
 
-    public func stopSparkScanViewScanning(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func stopScanning(viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.stopScanning()
-        result.success()
     }
 
-    public func onHostPauseSparkScanView(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func onHostPause() {
+        guard let viewInstance = viewCache.getTopMost() else { return }
         viewInstance.stopScanning()
-        result.success()
     }
 
-    public func startSparkScanViewScanning(viewId: Int, result: FrameworksResult) {
+    public func startScanning(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             Log.error(SparkScanError.nilView)
             result.reject(error: SparkScanError.nilView)
@@ -203,7 +161,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func prepareSparkScanViewScanning(viewId: Int, result: FrameworksResult) {
+    public func prepareScanning(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             Log.error(SparkScanError.nilView)
             result.reject(error: SparkScanError.nilView)
@@ -213,7 +171,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func showSparkScanViewToast(viewId: Int, text: String, result: FrameworksResult) {
+    public func showToast(viewId: Int, text: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             Log.error(SparkScanError.nilView)
             result.reject(error: SparkScanError.nilView)
@@ -223,64 +181,42 @@ open class SparkScanModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func setSparkScanModeEnabledState(viewId: Int, isEnabled: Bool, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.setModeEnabled(isEnabled)
-        result.success()
+    public func setModeEnabled(viewId: Int, enabled: Bool) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
+        viewInstance.setModeEnabled(enabled)
     }
 
     public func isModeEnabled() -> Bool {
         viewCache.getTopMost()?.isModeEnabled() ?? false
     }
 
-    public func submitSparkScanFeedbackForBarcode(viewId: Int, feedbackJson: String?, result: FrameworksResult) {
+    public func submitFeedbackForBarcode(viewId: Int, feedbackJson: String?, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             Log.error(SparkScanError.nilView)
             result.reject(error: SparkScanError.nilView)
             return
         }
-        viewInstance.submitFeedbackForBarcode(feedbackJson: feedbackJson)
+        viewInstance.submitFeedback(feedbackJson: feedbackJson)
         result.success()
     }
 
-    public func submitSparkScanFeedbackForScannedItem(viewId: Int, feedbackJson: String?, result: FrameworksResult) {
+    public func addFeedbackDelegate(_ viewId: Int) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            Log.error(SparkScanError.nilView)
-            result.reject(error: SparkScanError.nilView)
-            return
-        }
-        viewInstance.submitFeedbackForScannedItem(feedbackJson: feedbackJson)
-        result.success()
-    }
-
-    public func registerSparkScanFeedbackDelegateForEvents(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
             return
         }
         viewInstance.addFeedbackDelegate()
-        result.successAndKeepCallback(result: nil)
     }
 
-    public func unregisterSparkScanFeedbackDelegateForEvents(viewId: Int, result: FrameworksResult) {
+    public func removeFeedbackDelegate(_ viewId: Int) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
             return
         }
         viewInstance.removeFeedbackDelegate()
-        result.success()
     }
 
-    public func bringSparkScanViewToFront(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func bringSparkScanViewToFront(viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
         viewInstance.bringViewToTop()
-        result.success()
     }
 
     public func setupViewConstraints(viewId: Int, referenceView: UIView) {
@@ -293,17 +229,13 @@ open class SparkScanModule: NSObject, FrameworkModule {
         return viewInstance.hitTest(point, with: event)
     }
 
-    public func disposeSparkScanView(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.remove(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func disposeView(viewId: Int) {
+        guard let viewInstance = viewCache.remove(viewId: viewId) else { return }
         viewInstance.dispose()
 
         if let previousView = viewCache.getTopMost() {
             previousView.show()
         }
-        result.success()
     }
 
     public func getLastFrameDataBytes(frameId: String, result: FrameworksResult) {
@@ -312,30 +244,16 @@ open class SparkScanModule: NSObject, FrameworkModule {
         }
     }
 
-    public func showSparkScanView(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func showView(_ viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
 
         viewInstance.show()
-        result.success()
     }
 
-    public func hideSparkScanView(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
+    public func hideView(_ viewId: Int) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else { return }
 
         viewInstance.hide()
-        result.success()
-    }
-
-    public func createCommand(
-        _ method: any ScanditFrameworksCore.FrameworksMethodCall
-    ) -> (any ScanditFrameworksCore.BaseCommand)? {
-        SparkScanModuleCommandFactory.create(module: self, method)
     }
 }
 

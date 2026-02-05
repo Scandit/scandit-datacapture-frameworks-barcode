@@ -30,13 +30,44 @@ open class BarcodeGeneratorModule: NSObject, FrameworkModule, DeserializationLif
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
     }
 
-    public func createBarcodeGenerator(barcodeGeneratorJson: String, result: FrameworksResult) {
+    public func execute(method: FrameworksMethodCall, result: FrameworksResult) -> Bool {
+        switch method.method {
+        case "createBarcodeGenerator":
+            createGenerator(method, result: result)
+            return true
+        case "generateFromStringToBytes":
+            generateToBytes(method, result: result)
+            return true
+        case "generateFromString":
+            generate(method, result: result)
+            return true
+        case "generateFromBase64EncodedDataToBytes":
+            generateFromBytesToBytes(method, result: result)
+            return true
+        case "generateFromBase64EncodedData":
+            generateFromBase64EncodedData(method, result: result)
+            return true
+        case "disposeBarcodeGenerator":
+            disposeGenerator(method, result: result)
+            return true
+        default:
+            return false
+        }
+    }
+
+    public func createGenerator(_ method: FrameworksMethodCall, result: FrameworksResult) {
         guard let dcContext = captureContext.context else {
             result.reject(error: BarcodeGeneratorError.dataCaptureNotInitialized)
             return
         }
 
-        let data = BarcodeGeneratorDataParser(jsonString: barcodeGeneratorJson)
+        let args: [String: Any] = method.arguments()
+        guard let generatorJson = args["barcodeGeneratorJson"] as? String else {
+            result.reject(error: ScanditFrameworksCoreError.nilArgument)
+            return
+        }
+
+        let data = BarcodeGeneratorDataParser(jsonString: generatorJson)
 
         guard let builder = buildGenerator(for: data, with: dcContext) else {
             result.reject(error: BarcodeGeneratorError.builderInitializationFailed(type: data.type))
@@ -46,10 +77,6 @@ open class BarcodeGeneratorModule: NSObject, FrameworkModule, DeserializationLif
         configureBuilder(builder: builder, with: data)
 
         buildBarcodeGenerator(using: builder, with: data, result: result)
-    }
-
-    public func getDefaults() -> [String: Any?] {
-        [:]
     }
 
     private func buildGenerator(
@@ -132,7 +159,16 @@ open class BarcodeGeneratorModule: NSObject, FrameworkModule, DeserializationLif
         }
     }
 
-    public func generateFromString(generatorId: String, text: String, imageWidth: Int, result: FrameworksResult) {
+    public func generate(_ method: FrameworksMethodCall, result: FrameworksResult) {
+        let args: [String: Any] = method.arguments()
+        guard let generatorId = args["generatorId"] as? String,
+            let text = args["text"] as? String,
+            let imageWidth = args["imageWidth"] as? Int
+        else {
+            result.reject(error: ScanditFrameworksCoreError.nilArgument)
+            return
+        }
+
         guard let generator = generators[generatorId] else {
             result.reject(error: BarcodeGeneratorError.componentNotFound)
             return
@@ -146,8 +182,16 @@ open class BarcodeGeneratorModule: NSObject, FrameworkModule, DeserializationLif
         }
     }
 
-    public func generateFromStringToBytes(generatorId: String, text: String, imageWidth: Int, result: FrameworksResult)
-    {
+    public func generateToBytes(_ method: FrameworksMethodCall, result: FrameworksResult) {
+        let args: [String: Any] = method.arguments()
+        guard let generatorId = args["generatorId"] as? String,
+            let text = args["text"] as? String,
+            let imageWidth = args["imageWidth"] as? Int
+        else {
+            result.reject(error: ScanditFrameworksCoreError.nilArgument)
+            return
+        }
+
         guard let generator = generators[generatorId] else {
             result.reject(error: BarcodeGeneratorError.componentNotFound)
             return
@@ -171,12 +215,17 @@ open class BarcodeGeneratorModule: NSObject, FrameworkModule, DeserializationLif
         }
     }
 
-    public func generateFromBase64EncodedData(
-        generatorId: String,
-        data: String,
-        imageWidth: Int,
-        result: FrameworksResult
-    ) {
+    public func generateFromBase64EncodedData(_ method: FrameworksMethodCall, result: FrameworksResult) {
+        let args: [String: Any] = method.arguments()
+
+        guard let generatorId = args["generatorId"] as? String,
+            let data = args["data"] as? Data,
+            let imageWidth = args["imageWidth"] as? Int
+        else {
+            result.reject(error: ScanditFrameworksCoreError.nilArgument)
+            return
+        }
+
         guard let generator = generators[generatorId] else {
             result.reject(error: BarcodeGeneratorError.componentNotFound)
             return
@@ -195,12 +244,17 @@ open class BarcodeGeneratorModule: NSObject, FrameworkModule, DeserializationLif
         }
     }
 
-    public func generateFromBase64EncodedDataToBytes(
-        generatorId: String,
-        data: Data,
-        imageWidth: Int,
-        result: FrameworksResult
-    ) {
+    public func generateFromBytesToBytes(_ method: FrameworksMethodCall, result: FrameworksResult) {
+        let args: [String: Any] = method.arguments()
+
+        guard let generatorId = args["generatorId"] as? String,
+            let data = args["data"] as? Data,
+            let imageWidth = args["imageWidth"] as? Int
+        else {
+            result.reject(error: ScanditFrameworksCoreError.nilArgument)
+            return
+        }
+
         guard let generator = generators[generatorId] else {
             result.reject(error: BarcodeGeneratorError.componentNotFound)
             return
@@ -224,7 +278,12 @@ open class BarcodeGeneratorModule: NSObject, FrameworkModule, DeserializationLif
         }
     }
 
-    public func disposeBarcodeGenerator(generatorId: String, result: FrameworksResult) {
+    public func disposeGenerator(_ method: FrameworksMethodCall, result: FrameworksResult) {
+        guard let generatorId: String = method.argument(key: "generatorId") else {
+            result.reject(error: ScanditFrameworksCoreError.nilArgument)
+            return
+        }
+
         generators.removeValue(forKey: generatorId)
         result.success()
     }
@@ -236,11 +295,5 @@ open class BarcodeGeneratorModule: NSObject, FrameworkModule, DeserializationLif
     private func convertImageToBase64String(img: UIImage) -> String? {
         guard let imageData = img.pngData() else { return nil }
         return imageData.base64EncodedString()
-    }
-
-    public func createCommand(
-        _ method: any ScanditFrameworksCore.FrameworksMethodCall
-    ) -> (any ScanditFrameworksCore.BaseCommand)? {
-        BarcodeGeneratorModuleCommandFactory.create(module: self, method)
     }
 }

@@ -41,17 +41,15 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         viewCache.disposeAll()
     }
 
-    public func getDefaults() -> [String: Any?] {
-        BarcodeArDefaults.shared.toEncodable()
-    }
+    public let defaults: DefaultsEncodable = BarcodeArDefaults.shared
 
     public func registerBarcodeArViewUiListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
+            result.success()
             return
         }
         viewInstance.addBarcodeArViewUiListener()
-        result.successAndKeepCallback(result: nil)
+        result.success()
     }
 
     public func unregisterBarcodeArViewUiListener(viewId: Int, result: FrameworksResult) {
@@ -65,11 +63,11 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
 
     public func registerBarcodeArHighlightProvider(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
+            result.success()
             return
         }
         viewInstance.addBarcodeArHighlightProvider()
-        result.successAndKeepCallback(result: nil)
+        result.success()
     }
 
     public func unregisterBarcodeArHighlightProvider(viewId: Int, result: FrameworksResult) {
@@ -92,11 +90,11 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
 
     public func registerBarcodeArAnnotationProvider(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
+            result.success()
             return
         }
         viewInstance.addBarcodeArAnnotationProvider()
-        result.successAndKeepCallback(result: nil)
+        result.success()
     }
 
     public func unregisterBarcodeArAnnotationProvider(viewId: Int, result: FrameworksResult) {
@@ -108,7 +106,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func updateBarcodeArFeedback(viewId: Int, feedbackJson: String, result: FrameworksResult) {
+    public func updateFeedback(viewId: Int, feedbackJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -121,7 +119,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         }
     }
 
-    public func resetBarcodeArSession(viewId: Int, result: FrameworksResult) {
+    public func resetLatestBarcodeArSession(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -130,21 +128,21 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func applyBarcodeArSettings(viewId: Int, settings: String, result: FrameworksResult) {
+    public func applyBarcodeArModeSettings(viewId: Int, modeSettingsJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
 
         do {
-            try viewInstance.applySettings(settingsJson: settings)
+            try viewInstance.applySettings(settingsJson: modeSettingsJson)
             result.success()
         } catch {
             result.reject(error: error)
         }
     }
 
-    public func updateBarcodeArMode(viewId: Int, modeJson: String, result: FrameworksResult) {
+    public func updateMode(viewId: Int, modeJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -154,16 +152,16 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func registerBarcodeArListener(viewId: Int, result: FrameworksResult) {
+    public func addModeListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
+            result.success()
             return
         }
         viewInstance.addBarcodeArListener()
-        result.successAndKeepCallback(result: nil)
+        result.success()
     }
 
-    public func unregisterBarcodeArListener(viewId: Int, result: FrameworksResult) {
+    public func removeModeListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -172,7 +170,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func finishBarcodeArOnDidUpdateSession(viewId: Int, result: FrameworksResult) {
+    public func finishDidUpdateSession(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -187,7 +185,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         }
     }
 
-    public func finishBarcodeArHighlightForBarcode(viewId: Int, highlightJson: String, result: FrameworksResult) {
+    public func finishHighlightForBarcode(viewId: Int, highlightJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -202,7 +200,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func finishBarcodeArAnnotationForBarcode(viewId: Int, annotationJson: String, result: FrameworksResult) {
+    public func finishAnnotationForBarcode(viewId: Int, annotationJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -232,7 +230,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func updateBarcodeArHighlight(viewId: Int, highlightJson: String, result: FrameworksResult) {
+    public func updateHighlight(viewId: Int, highlightJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -247,7 +245,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func updateBarcodeArAnnotation(viewId: Int, annotationJson: String, result: FrameworksResult) {
+    public func updateAnnotation(viewId: Int, annotationJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -262,7 +260,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func updateBarcodeArView(viewId: Int, viewJson: String, result: FrameworksResult) {
+    public func updateView(viewId: Int, viewJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -271,7 +269,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func barcodeArViewStart(viewId: Int, result: FrameworksResult) {
+    public func viewStart(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -280,7 +278,7 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         result.success()
     }
 
-    public func barcodeArViewStop(viewId: Int, result: FrameworksResult) {
+    public func viewStop(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -313,12 +311,6 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
             previousView.show()
         }
         result.success()
-    }
-
-    public func createCommand(
-        _ method: any ScanditFrameworksCore.FrameworksMethodCall
-    ) -> (any ScanditFrameworksCore.BaseCommand)? {
-        BarcodeArModuleCommandFactory.create(module: self, method)
     }
 }
 
@@ -381,7 +373,7 @@ public extension BarcodeArModule {
         addViewFromJson(parent: container, viewJson: jsonString, result: result)
     }
 
-    func barcodeArViewPause(viewId: Int, result: FrameworksResult) {
+    func viewPause(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -390,7 +382,7 @@ public extension BarcodeArModule {
         result.success()
     }
 
-    func barcodeArViewReset(viewId: Int, result: FrameworksResult) {
+    func viewReset(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return

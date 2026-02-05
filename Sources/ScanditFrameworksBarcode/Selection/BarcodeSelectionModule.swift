@@ -42,42 +42,32 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
     public override func didStop() {
         Deserializers.Factory.remove(barcodeSelectionDeserializer)
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
-        removeAimedBarcodeBrushProvider(result: NoopFrameworksResult())
-        removeTrackedBarcodeBrushProvider(result: NoopFrameworksResult())
+        removeAimedBarcodeBrushProvider()
+        removeTrackedBarcodeBrushProvider()
         self.dataCaptureContextAllModeRemoved()
-    }
-
-    open override func getDefaults() -> [String: Any?] {
-        BarcodeSelectionDefaults.shared.toEncodable()
     }
 
     // MARK: - Module API
 
-    public func registerBarcodeSelectionListenerForEvents(modeId: Int, result: FrameworksResult) {
+    public let defaults: DefaultsEncodable = BarcodeSelectionDefaults.shared
+
+    public func addListener(modeId: Int) {
         getModeFromCache(modeId)?.addListener()
-        result.successAndKeepCallback(result: nil)
     }
 
-    public func unregisterBarcodeSelectionListenerForEvents(modeId: Int, result: FrameworksResult) {
+    public func removeListener(modeId: Int) {
         getModeFromCache(modeId)?.removeListener()
-        result.success()
     }
 
-    public func unfreezeCameraInBarcodeSelection(modeId: Int, result: FrameworksResult) {
+    public func unfreezeCamera(modeId: Int) {
         getModeFromCache(modeId)?.unfreezeCamera()
-        result.success()
     }
 
-    public func resetBarcodeSelection(modeId: Int, result: FrameworksResult) {
+    public func resetSelection(modeId: Int) {
         getModeFromCache(modeId)?.resetSelection()
-        result.success()
     }
 
-    public func getCountForBarcodeInBarcodeSelectionSession(
-        modeId: Int,
-        selectionIdentifier: String,
-        result: FrameworksResult
-    ) {
+    public func submitBarcodeCountForIdentifier(modeId: Int, selectionIdentifier: String, result: FrameworksResult) {
         guard let mode = getModeFromCache(modeId) else {
             result.reject(error: BarcodeSelectionError.modeDoesNotExist)
             return
@@ -86,60 +76,46 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         result.success(result: count)
     }
 
-    public func resetBarcodeSelectionSession(modeId: Int, result: FrameworksResult) {
-        getModeFromCache(modeId)?.resetSession(frameSequenceId: nil)
-        result.success()
+    public func resetLatestSession(modeId: Int, frameSequenceId: Int?) {
+        getModeFromCache(modeId)?.resetSession(frameSequenceId: frameSequenceId)
     }
 
-    public func finishBarcodeSelectionDidSelect(modeId: Int, enabled: Bool, result: FrameworksResult) {
+    public func finishDidSelect(modeId: Int, enabled: Bool) {
         getModeFromCache(modeId)?.finishDidSelect(enabled: enabled)
-        result.success()
     }
 
-    public func finishBarcodeSelectionDidUpdateSession(modeId: Int, enabled: Bool, result: FrameworksResult) {
+    public func finishDidUpdate(modeId: Int, enabled: Bool) {
         getModeFromCache(modeId)?.finishDidUpdateSession(enabled: enabled)
-        result.success()
     }
 
-    public func increaseCountForBarcodes(modeId: Int, barcodeJson: String, result: FrameworksResult) {
+    public func increaseCountForBarcodes(modeId: Int, barcodesJson: String, result: FrameworksResult) {
         guard let selection = getModeFromCache(modeId) else {
             result.reject(error: BarcodeSelectionError.modeDoesNotExist)
             return
         }
-        selection.increaseCountForBarcodesFromJsonString(barcodesJson: barcodeJson)
+        selection.increaseCountForBarcodesFromJsonString(barcodesJson: barcodesJson)
         result.success(result: nil)
     }
 
-    public func setAimedBarcodeBrushProvider(result: FrameworksResult) {
+    public func setAimedBrushProvider(result: FrameworksResult) {
         aimedBrushProviderFlag = true
-        result.successAndKeepCallback(result: nil)
+        result.success(result: nil)
     }
 
-    public func removeAimedBarcodeBrushProvider(result: FrameworksResult) {
+    public func removeAimedBarcodeBrushProvider() {
         aimedBrushProviderFlag = false
         aimedBrushProvider.clearCache()
         if let overlay: BarcodeSelectionBasicOverlay = captureViewHandler.findFirstOverlayOfType() {
             overlay.setAimedBarcodeBrushProvider(nil)
         }
-        result.success()
     }
 
-    public func finishBrushForAimedBarcodeCallback(
-        selectionIdentifier: String?,
-        brushJson: String?,
-        result: FrameworksResult
-    ) {
+    public func finishBrushForAimedBarcode(brushJson: String?, selectionIdentifier: String?) {
         aimedBrushProvider.finishCallback(brushJson: brushJson, selectionIdentifier: selectionIdentifier)
-        result.success()
     }
 
-    public func finishBrushForTrackedBarcodeCallback(
-        selectionIdentifier: String?,
-        brushJson: String?,
-        result: FrameworksResult
-    ) {
+    public func finishBrushForTrackedBarcode(brushJson: String?, selectionIdentifier: String?) {
         trackedBrushProvider.finishCallback(brushJson: brushJson, selectionIdentifier: selectionIdentifier)
-        result.success()
     }
 
     public func setTextForAimToSelectAutoHint(text: String, result: FrameworksResult) {
@@ -151,23 +127,21 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         result.success(result: nil)
     }
 
-    public func setTrackedBarcodeBrushProvider(result: FrameworksResult) {
+    public func setTrackedBrushProvider(result: FrameworksResult) {
         trackedBrushProviderFlag = true
-        result.successAndKeepCallback(result: nil)
+        result.success(result: nil)
     }
 
-    public func removeTrackedBarcodeBrushProvider(result: FrameworksResult) {
+    public func removeTrackedBarcodeBrushProvider() {
         trackedBrushProviderFlag = false
         trackedBrushProvider.clearCache()
         if let overlay: BarcodeSelectionBasicOverlay = captureViewHandler.findFirstOverlayOfType() {
             overlay.setTrackedBarcodeBrushProvider(nil)
         }
-        result.success()
     }
 
-    public func selectAimedBarcode(modeId: Int, result: FrameworksResult) {
+    public func selectAimedBarcode(modeId: Int) {
         getModeFromCache(modeId)?.selectAimedBarcode()
-        result.success()
     }
 
     public func unselectBarcodes(modeId: Int, barcodesJson: String, result: FrameworksResult) {
@@ -179,18 +153,17 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         result.success(result: nil)
     }
 
-    public func setSelectBarcodeEnabled(modeId: Int, barcodeJson: String, enabled: Bool, result: FrameworksResult) {
+    public func setSelectBarcodeEnabled(modeId: Int, barcodesJson: String, enabled: Bool, result: FrameworksResult) {
         guard let mode = getModeFromCache(modeId) else {
             result.reject(error: BarcodeSelectionError.modeDoesNotExist)
             return
         }
-        mode.setSelectBarcodeEnabledFromJsonString(barcodesJson: barcodeJson, enabled: enabled)
+        mode.setSelectBarcodeEnabledFromJsonString(barcodesJson: barcodesJson, enabled: enabled)
         result.success(result: nil)
     }
 
-    public func setBarcodeSelectionModeEnabledState(modeId: Int, enabled: Bool, result: FrameworksResult) {
+    public func setModeEnabled(modeId: Int, enabled: Bool) {
         getModeFromCache(modeId)?.isEnabled = enabled
-        result.success()
     }
 
     public func isTopmostModeEnabled() -> Bool {
@@ -201,7 +174,7 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         getTopmostMode()?.isEnabled = enabled
     }
 
-    public func updateBarcodeSelectionMode(modeId: Int, modeJson: String, result: FrameworksResult) {
+    public func updateModeFromJson(modeId: Int, modeJson: String, result: FrameworksResult) {
         guard let mode = getModeFromCache(modeId) else {
             result.success(result: nil)
             return
@@ -214,7 +187,7 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         }
     }
 
-    public func applyBarcodeSelectionModeSettings(modeId: Int, modeSettingsJson: String, result: FrameworksResult) {
+    public func applyModeSettings(modeId: Int, modeSettingsJson: String, result: FrameworksResult) {
         guard let mode = getModeFromCache(modeId) else {
             result.success(result: nil)
             return
@@ -227,7 +200,7 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         }
     }
 
-    public func updateBarcodeSelectionFeedback(modeId: Int, feedbackJson: String, result: FrameworksResult) {
+    public func updateFeedback(modeId: Int, feedbackJson: String, result: FrameworksResult) {
         guard let mode = getModeFromCache(modeId) else {
             result.success(result: nil)
             return
@@ -241,7 +214,7 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         }
     }
 
-    public func updateBarcodeSelectionBasicOverlay(overlayJson: String, result: FrameworksResult) {
+    public func updateBasicOverlay(overlayJson: String, result: FrameworksResult) {
         let block = { [weak self] in
             guard let self = self else {
                 result.reject(error: ScanditFrameworksCoreError.nilSelf)
@@ -268,10 +241,144 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         }
     }
 
-    public override func createCommand(
-        _ method: any ScanditFrameworksCore.FrameworksMethodCall
-    ) -> (any ScanditFrameworksCore.BaseCommand)? {
-        BarcodeSelectionModuleCommandFactory.create(module: self, method)
+    // MARK: - Execute Method
+    public func execute(method: FrameworksMethodCall, result: FrameworksResult) -> Bool {
+        switch method.method {
+        case "getBarcodeSelectionDefaults":
+            let jsonString = defaults.stringValue
+            result.success(result: jsonString)
+
+        case "getBarcodeSelectionSessionCount":
+            if let selectionIdentifier: String = method.argument(key: "selectionIdentifier"),
+                let modeId: Int = method.argument(key: "modeId")
+            {
+                submitBarcodeCountForIdentifier(
+                    modeId: modeId,
+                    selectionIdentifier: selectionIdentifier,
+                    result: result
+                )
+            } else {
+                result.reject(code: "-1", message: "Invalid selectionIdentifier argument", details: nil)
+            }
+
+        case "resetBarcodeSelectionSession":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            resetLatestSession(modeId: modeId, frameSequenceId: method.argument(key: "frameSequenceId"))
+            result.success(result: nil)
+
+        case "addBarcodeSelectionListener":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            addListener(modeId: modeId)
+            result.success(result: nil)
+
+        case "removeBarcodeSelectionListener":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            removeListener(modeId: modeId)
+            result.success(result: nil)
+
+        case "resetMode":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            resetSelection(modeId: modeId)
+            result.success(result: nil)
+
+        case "unfreezeCamera":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            unfreezeCamera(modeId: modeId)
+            result.success(result: nil)
+
+        case "finishDidUpdateSelection":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            let enabled: Bool = method.argument(key: "enabled") ?? false
+            finishDidSelect(modeId: modeId, enabled: enabled)
+            result.success(result: nil)
+
+        case "finishDidUpdateSession":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            let enabled: Bool = method.argument(key: "enabled") ?? false
+            finishDidUpdate(modeId: modeId, enabled: enabled)
+            result.success(result: nil)
+
+        case "getLastFrameData":
+            if let frameId: String = method.argument(key: "frameId") {
+                getLastFrameDataBytes(frameId: frameId, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid frameId argument", details: nil)
+            }
+
+        case "setModeEnabledState":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            let enabled: Bool = method.argument(key: "enabled") ?? false
+            setModeEnabled(modeId: modeId, enabled: enabled)
+            result.success(result: nil)
+
+        case "updateBarcodeSelectionMode":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            if let modeJson: String = method.argument(key: "modeJson") {
+                updateModeFromJson(modeId: modeId, modeJson: modeJson, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid mode JSON argument", details: nil)
+            }
+
+        case "applyBarcodeSelectionModeSettings":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            if let modeSettingsJson: String = method.argument(key: "modeSettingsJson") {
+                applyModeSettings(modeId: modeId, modeSettingsJson: modeSettingsJson, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid mode settings JSON argument", details: nil)
+            }
+
+        case "updateBarcodeSelectionBasicOverlay":
+            if let overlayJson: String = method.argument(key: "overlayJson") {
+                updateBasicOverlay(overlayJson: overlayJson, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid overlay JSON argument", details: nil)
+            }
+
+        case "updateFeedback":
+            guard let modeId: Int = method.argument(key: "modeId") else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+                return true
+            }
+            if let feedbackJson: String = method.argument(key: "feedbackJson") {
+                updateFeedback(modeId: modeId, feedbackJson: feedbackJson, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid feedback JSON argument", details: nil)
+            }
+
+        default:
+            return false
+        }
+        return true
     }
 }
 

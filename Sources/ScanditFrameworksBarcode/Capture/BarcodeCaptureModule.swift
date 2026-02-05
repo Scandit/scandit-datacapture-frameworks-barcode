@@ -46,64 +46,56 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
     }
 
-    open override func getDefaults() -> [String: Any?] {
-        BarcodeCaptureDefaults.shared.toEncodable()
-    }
-
     // MARK: - Module API exposed to the platform native modules
 
-    public func registerBarcodeCaptureListenerForEvents(modeId: Int, result: FrameworksResult) {
+    public let defaults: DefaultsEncodable = BarcodeCaptureDefaults.shared
+
+    public func addListener(modeId: Int) {
         guard let mode = getModeFromCache(modeId) else {
             addPostModeCreationAction(
                 modeId,
                 action: {
-                    self.registerBarcodeCaptureListenerForEvents(modeId: modeId, result: result)
+                    self.addListener(modeId: modeId)
                 }
             )
             return
         }
         mode.addListener()
-        result.successAndKeepCallback(result: nil)
     }
 
-    public func unregisterBarcodeCaptureListenerForEvents(modeId: Int, result: FrameworksResult) {
+    public func removeListener(modeId: Int) {
         if let mode = getModeFromCache(modeId) {
             mode.removeListener()
         }
-        result.success()
     }
 
-    public func finishBarcodeCaptureDidScan(modeId: Int, enabled: Bool, result: FrameworksResult) {
+    public func finishDidScan(modeId: Int, enabled: Bool) {
         if let mode = getModeFromCache(modeId) {
             mode.finishDidScan(enabled: enabled)
         }
-        result.success()
     }
 
-    public func finishBarcodeCaptureDidUpdateSession(modeId: Int, enabled: Bool, result: FrameworksResult) {
+    public func finishDidUpdateSession(modeId: Int, enabled: Bool) {
         if let mode = getModeFromCache(modeId) {
             mode.finishDidUpdateSession(enabled: enabled)
         }
-        result.success()
     }
 
-    public func resetBarcodeCaptureSession(result: FrameworksResult) {
+    public func resetSession() {
         if let session = self.cachedCaptureSession.value {
             session.captureSession?.reset()
         }
-        result.success()
     }
 
-    public func setBarcodeCaptureModeEnabledState(modeId: Int, enabled: Bool, result: FrameworksResult) {
+    public func setModeEnabled(modeId: Int, enabled: Bool) {
         getModeFromCache(modeId)?.isEnabled = enabled
-        result.success()
     }
 
     public func isModeEnabled() -> Bool {
         getTopmostMode()?.isEnabled == true
     }
 
-    public func updateBarcodeCaptureMode(modeJson: String, result: FrameworksResult) {
+    public func updateModeFromJson(modeJson: String, result: FrameworksResult) {
         let modeId = JSONValue(string: modeJson).integer(forKey: "modeId", default: -1)
 
         if modeId == -1 {
@@ -124,7 +116,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
         }
     }
 
-    public func applyBarcodeCaptureModeSettings(modeId: Int, modeSettingsJson: String, result: FrameworksResult) {
+    public func applyModeSettings(modeId: Int, modeSettingsJson: String, result: FrameworksResult) {
         guard let mode = getModeFromCache(modeId) else {
             result.success()
             return
@@ -137,7 +129,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
         }
     }
 
-    public func updateBarcodeCaptureOverlay(viewId: Int, overlayJson: String, result: FrameworksResult) {
+    public func updateOverlay(_ viewId: Int, overlayJson: String, result: FrameworksResult) {
         let block = { [weak self] in
             guard let self = self else {
                 result.reject(error: ScanditFrameworksCoreError.nilSelf)
@@ -161,7 +153,7 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
         dispatchMain(block)
     }
 
-    public func updateBarcodeCaptureFeedback(modeId: Int, feedbackJson: String, result: FrameworksResult) {
+    public func updateFeedback(modeId: Int, feedbackJson: String, result: FrameworksResult) {
         guard let mode = getModeFromCache(modeId) else {
             result.success()
             return
@@ -180,10 +172,109 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
         }
     }
 
-    public override func createCommand(
-        _ method: any ScanditFrameworksCore.FrameworksMethodCall
-    ) -> (any ScanditFrameworksCore.BaseCommand)? {
-        BarcodeCaptureModuleCommandFactory.create(module: self, method)
+    // MARK: - Execute Method
+    public func execute(method: FrameworksMethodCall, result: FrameworksResult) -> Bool {
+        switch method.method {
+        case FunctionNames.getBarcodeCaptureDefaults:
+            let defaultsDict = defaults.toEncodable()
+            if let jsonString = defaultsDict.encodeToJSONString() {
+                result.success(result: jsonString)
+            } else {
+                result.reject(code: "-1", message: "Failed to encode defaults to JSON", details: nil)
+            }
+
+        case FunctionNames.finishDidScan:
+            if let enabled: Bool = method.argument(key: "enabled"), let modeId: Int = method.argument(key: "modeId") {
+                finishDidScan(modeId: modeId, enabled: enabled)
+                result.success()
+            } else {
+                result.reject(code: "-1", message: "Invalid enabled or modeId argument", details: nil)
+            }
+
+        case FunctionNames.finishDidUpdateSession:
+            if let enabled: Bool = method.argument(key: "enabled"), let modeId: Int = method.argument(key: "modeId") {
+                finishDidUpdateSession(modeId: modeId, enabled: enabled)
+                result.success()
+            } else {
+                result.reject(code: "-1", message: "Invalid enabled or modeId argument", details: nil)
+            }
+
+        case FunctionNames.addBarcodeCaptureListener:
+            if let modeId: Int = method.argument(key: "modeId") {
+                addListener(modeId: modeId)
+                result.success()
+            } else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+            }
+
+        case FunctionNames.removeBarcodeCaptureListener:
+            if let modeId: Int = method.argument(key: "modeId") {
+                removeListener(modeId: modeId)
+                result.success()
+            } else {
+                result.reject(code: "-1", message: "Invalid modeId argument", details: nil)
+            }
+
+        case FunctionNames.resetBarcodeCaptureSession:
+            resetSession()
+            result.success()
+
+        case FunctionNames.getLastFrameData:
+            if let frameId: String = method.argument(key: "frameId") {
+                getLastFrameDataBytes(frameId: frameId, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid frameId argument", details: nil)
+            }
+
+        case FunctionNames.setModeEnabledState:
+            if let modeId: Int = method.argument(key: "modeId"),
+                let enabled: Bool = method.argument(key: "enabled")
+            {
+                setModeEnabled(modeId: modeId, enabled: enabled)
+                result.success()
+            } else {
+                result.reject(code: "-1", message: "Invalid modeId or enabled argument", details: nil)
+            }
+
+        case FunctionNames.updateBarcodeCaptureMode:
+            if let modeJson: String = method.argument(key: "modeJson") {
+                updateModeFromJson(modeJson: modeJson, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid mode JSON argument", details: nil)
+            }
+
+        case FunctionNames.applyBarcodeCaptureModeSettings:
+            if let modeId: Int = method.argument(key: "modeId"),
+                let modeSettingsJson: String = method.argument(key: "modeSettingsJson")
+            {
+                applyModeSettings(modeId: modeId, modeSettingsJson: modeSettingsJson, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid modeId or modeSettingsJson argument", details: nil)
+            }
+
+        case FunctionNames.updateBarcodeCaptureOverlay:
+            if let viewId: Int = method.argument(key: "viewId"),
+                let overlayJson: String = method.argument(key: "overlayJson")
+            {
+                updateOverlay(viewId, overlayJson: overlayJson, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid viewId or overlayJson argument", details: nil)
+            }
+
+        case FunctionNames.updateFeedback:
+            if let modeId: Int = method.argument(key: "modeId"),
+                let feedbackJson: String = method.argument(key: "feedbackJson")
+            {
+                updateFeedback(modeId: modeId, feedbackJson: feedbackJson, result: result)
+            } else {
+                result.reject(code: "-1", message: "Invalid modeId or feedbackJson argument", details: nil)
+            }
+
+        default:
+            return false
+        }
+
+        return true
     }
 }
 

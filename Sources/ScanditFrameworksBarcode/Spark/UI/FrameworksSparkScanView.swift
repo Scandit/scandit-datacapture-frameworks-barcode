@@ -49,8 +49,6 @@ public class FrameworksSparkScanView: FrameworksBaseView {
         internalViewId = viewCreationParams.viewId
 
         mode = try modeDeserializer.mode(fromJSONString: viewCreationParams.modeJson)
-        mode.addListener(modeListener)
-
         shouldShowOnTopAlways = viewCreationParams.shouldShowOnTopAlways
 
         view = try viewDeserializer.view(
@@ -83,8 +81,11 @@ public class FrameworksSparkScanView: FrameworksBaseView {
 
     private func postModeCreate(_ creationData: SparkScanViewCreationData) {
         if creationData.hasModeListener {
+            mode.removeListener(modeListener)
+            mode.addListener(modeListener)
             modeListener.enable()
         } else {
+            mode.removeListener(modeListener)
             modeListener.disable()
         }
     }
@@ -122,17 +123,12 @@ public class FrameworksSparkScanView: FrameworksBaseView {
     }
 
     public func removeFeedbackDelegate() {
-        feedbackDelegate.cancelForBarcode()
-        feedbackDelegate.cancelForScannedItem()
+        feedbackDelegate.cancel()
         self.view.feedbackDelegate = nil
     }
 
-    public func submitFeedbackForBarcode(feedbackJson: String?) {
-        feedbackDelegate.submitFeedbackForBarcode(feedbackJson: feedbackJson)
-    }
-
-    public func submitFeedbackForScannedItem(feedbackJson: String?) {
-        feedbackDelegate.submitFeedbackForScannedItem(feedbackJson: feedbackJson)
+    public func submitFeedback(feedbackJson: String?) {
+        feedbackDelegate.submitFeedback(feedbackJson: feedbackJson)
     }
 
     public func enableSparkScanListener() {
