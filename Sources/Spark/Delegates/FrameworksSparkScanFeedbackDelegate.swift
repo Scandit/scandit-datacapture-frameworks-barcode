@@ -18,27 +18,24 @@ fileprivate extension Event {
 }
 
 fileprivate extension Emitter {
-    func hasViewSpecificListenersForEvent(_ viewId: Int, for event: FrameworksSparkScanFeedbackDelegateEvent) -> Bool {
-        hasViewSpecificListenersForEvent(viewId, for: event.rawValue)
+    func hasListener(for event: FrameworksSparkScanFeedbackDelegateEvent) -> Bool {
+        hasListener(for: event.rawValue)
     }
 }
 
 
 open class FrameworksSparkScanFeedbackDelegate : NSObject, SparkScanFeedbackDelegate {
     private let emitter: Emitter
-    private let viewId: Int
     
     private let feedbackForBarcodeEvent = EventWithResult<String?>(event: Event(.feedbackForBarcode))
 
-    public init(emitter: Emitter, viewId: Int) {
+    public init(emitter: Emitter) {
         self.emitter = emitter
-        self.viewId = viewId
     }
     
     public func feedback(for barcode: Barcode) -> SparkScanBarcodeFeedback? {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: .feedbackForBarcode) else { return nil }
         guard let feedbackJson = feedbackForBarcodeEvent.emit(
-            on: emitter, payload: ["barcode": barcode.jsonString, "viewId": viewId]) ?? nil else {
+            on: emitter, payload: ["barcode": barcode.jsonString]) ?? nil else {
             return nil
         }
         

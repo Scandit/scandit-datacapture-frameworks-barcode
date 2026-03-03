@@ -36,13 +36,15 @@ class AdvancedOverlayViewPool {
     }
 
     func removeView(for barcode: TrackedBarcode) {
-        dispatchMain {
+        dispatchMain { [weak self] in
+            guard let self = self else { return }
             self.views.removeValue(forKey: barcode.identifier)
         }
     }
 
     func clear() {
-        dispatchMain {
+        dispatchMain { [weak self] in
+            guard let self = self else { return }
             self.views.removeAll()
         }
     }
@@ -65,7 +67,7 @@ class AdvancedOverlayViewPool {
         return imageView
     }
 
-    public func parse(data: Data) -> UIImage? {
+    private func parse(data: Data) -> UIImage? {
         guard let image = UIImage(data: data) else {
             return nil
         }

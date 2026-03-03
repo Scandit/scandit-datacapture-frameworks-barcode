@@ -13,7 +13,6 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
     private let barcodeTransformer: FrameworksBarcodeFindTransformer
     private let modeDeserializer: BarcodeFindDeserializer
     private let viewDeserializer: BarcodeFindViewDeserializer
-    private let captureContext = DefaultFrameworksCaptureContext.shared
 
     public init(listener: FrameworksBarcodeFindListener,
                 viewListener: FrameworksBarcodeFindViewUIListener,
@@ -36,6 +35,8 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
             barcodeFind?.addListener(listener)
         }
     }
+
+    private var context: DataCaptureContext?
 
     private var modeEnabled = true
     
@@ -60,6 +61,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         barcodeFind?.stop()
         barcodeFind = nil
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
+        context = nil
     }
 
     public let defaults: DefaultsEncodable = BarcodeFindDefaults.shared
@@ -70,7 +72,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
                 result.reject(error: ScanditFrameworksCoreError.nilSelf)
                 return
             }
-            guard let context = self.captureContext.context else {
+            guard let context = self.context else {
                 result.reject(error: ScanditFrameworksCoreError.nilDataCaptureContext)
                 return
             }
@@ -112,7 +114,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
                 }
                 
                 // update feedback in case the update call did run before the creation of the mode
-                if let feedback = self.barcodeFindFeedback {
+                if let feedback = barcodeFindFeedback {
                     dispatchMain { [weak self] in
                         mode.feedback = feedback
                         self?.barcodeFindFeedback = nil
@@ -147,24 +149,6 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
             }
         }
         dispatchMain(block)
-    }
-
-    public func onViewRemovedFromSuperview(removedView: BarcodeFindView) {
-        if (removedView == barcodeFindView) {
-            removeBarcodeFindView(result: NoopFrameworksResult())
-            return
-        }
-        removedView.stopSearching()
-        removedView.uiDelegate = nil
-    }
-
-    public func removeBarcodeFindView(result: FrameworksResult) {
-        barcodeFindView?.stopSearching()
-        barcodeFindView?.removeFromSuperview()
-        barcodeFindView?.uiDelegate = nil
-        barcodeFind?.stop()
-        barcodeFind = nil
-        result.success(result: nil)
     }
 
     public func updateBarcodeFindMode(modeJson: String, result: FrameworksResult) {
@@ -279,8 +263,13 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
     }
 }
 
-extension BarcodeFindModule: DeserializationLifeCycleObserver {    
+extension BarcodeFindModule: DeserializationLifeCycleObserver {
+    public func dataCaptureContext(deserialized context: DataCaptureContext?) {
+        self.context = context
+    }
+    
     public func didDisposeDataCaptureContext() {
+        self.context = nil
         self.barcodeFindView = nil
         self.barcodeFind = nil
     }
