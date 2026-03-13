@@ -7,15 +7,22 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
+public enum FrameworksBarcodeCountListenerEvent: String, CaseIterable {
+    case barcodeScanned = "BarcodeCountListener.onScan"
+    case sessionUpdated = "BarcodeCountListener.didUpdateSession"
+}
+
 open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
-    public enum Constants {
-        public static let barcodeScanned = "BarcodeCountListener.onScan"
-    }
     private static let asyncTimeoutInterval: TimeInterval = 600  // 10 mins
     private static let defaultTimeoutInterval: TimeInterval = 2
     private let emitter: Emitter
     private let viewId: Int
-    private let barcodeScannedEvent = EventWithResult<Bool>(event: Event(name: Constants.barcodeScanned))
+    private let barcodeScannedEvent = EventWithResult<Bool>(
+        event: Event(name: FrameworksBarcodeCountListenerEvent.barcodeScanned.rawValue)
+    )
+    private let sessionUpdatedEvent = EventWithResult<Bool>(
+        event: Event(name: FrameworksBarcodeCountListenerEvent.sessionUpdated.rawValue)
+    )
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
@@ -26,6 +33,7 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
 
     func reset() {
         barcodeScannedEvent.reset()
+        sessionUpdatedEvent.reset()
         lastSession = nil
     }
 
@@ -59,8 +67,34 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
         LastFrameData.shared.removeFromCache(frameId: frameId)
     }
 
+    public func barcodeCount(
+        _ barcodeCount: BarcodeCount,
+        didUpdate session: BarcodeCountSession,
+        frameData: FrameData
+    ) {
+        lastSession = session
+
+        let frameId = LastFrameData.shared.addToCache(frameData: frameData)
+
+        sessionUpdatedEvent.emit(
+            on: emitter,
+            payload: [
+                "session": session.jsonString,
+                "frameId": frameId,
+                "viewId": self.viewId,
+            ],
+            default: barcodeCount.isEnabled
+        )
+
+        LastFrameData.shared.removeFromCache(frameId: frameId)
+    }
+
     func finishDidScan(enabled: Bool) {
         barcodeScannedEvent.unlock(value: enabled)
+    }
+
+    func finishDidUpdateSession(enabled: Bool) {
+        sessionUpdatedEvent.unlock(value: enabled)
     }
 
     func resetSession(frameSequenceId: Int?) {
@@ -82,5 +116,4 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
             expectedNumberOfColumns: expectedNumberOfColumns
         )
     }
-
 }

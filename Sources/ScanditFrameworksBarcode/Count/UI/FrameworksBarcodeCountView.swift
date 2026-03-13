@@ -20,6 +20,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     private let statusProvider: FrameworksBarcodeCountStatusProvider
     private let modeDeserializer: BarcodeCountDeserializer
     private let viewDeserializer: BarcodeCountViewDeserializer
+    private let barcodeDataTransformer: FrameworksBarcodeDataTransformer
 
     private(set) var view: BarcodeCountView!
     private var mode: BarcodeCount!
@@ -35,6 +36,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         viewListener: FrameworksBarcodeCountViewListener,
         viewUiListener: FrameworksBarcodeCountViewUIListener,
         statusProvider: FrameworksBarcodeCountStatusProvider,
+        barcodeDataTransformer: FrameworksBarcodeDataTransformer,
         modeDeserializer: BarcodeCountDeserializer = BarcodeCountDeserializer(),
         viewDeserializer: BarcodeCountViewDeserializer = BarcodeCountViewDeserializer()
     ) {
@@ -46,6 +48,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         self.statusProvider = statusProvider
         self.modeDeserializer = modeDeserializer
         self.viewDeserializer = viewDeserializer
+        self.barcodeDataTransformer = barcodeDataTransformer
     }
 
     private func deserializeView(
@@ -134,11 +137,21 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         }
     }
 
-    public func setBarcodeCountCaptureList(targetBarcodes: Set<TargetBarcode>) {
+    public func setBarcodeCountCaptureList(targetBarcodes: Set<TargetBarcode>, hasTransformer: Bool) {
+        if targetBarcodes.isEmpty {
+            mode.setCaptureList(nil)
+            return
+        }
+
         let barcodeCountCaptureList = BarcodeCountCaptureList(
             listener: captureListListener,
             targetBarcodes: Set(targetBarcodes)
         )
+        if hasTransformer {
+            barcodeCountCaptureList.setBarcodeDataTransformer(
+                barcodeDataTransformer
+            )
+        }
         mode.setCaptureList(barcodeCountCaptureList)
     }
 
@@ -208,6 +221,10 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
 
     public func finishOnScan(enabled: Bool) {
         barcodeCountListener.finishDidScan(enabled: enabled)
+    }
+
+    public func finishOnSessionUpdated(enabled: Bool) {
+        barcodeCountListener.finishDidUpdateSession(enabled: enabled)
     }
 
     public func addBarcodeCountListener() {
@@ -302,6 +319,10 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         statusProvider.submitCallbackResult(resultJson: statusJson)
     }
 
+    public func submitBarcodeDataTransformerResult(transformedData: String?) {
+        barcodeDataTransformer.submitResult(result: transformedData)
+    }
+
     public static func create(
         emitter: Emitter,
         parent: UIView,
@@ -322,7 +343,11 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
             captureListListener: captureListListener,
             viewListener: viewListener,
             viewUiListener: viewUiListener,
-            statusProvider: statusProvider
+            statusProvider: statusProvider,
+            barcodeDataTransformer: FrameworksBarcodeDataTransformer(
+                emitter: emitter,
+                viewId: viewCreationParams.viewId
+            )
         )
         try instance.deserializeView(parent: parent, viewCreationParams: viewCreationParams)
         return instance

@@ -25,11 +25,13 @@ fileprivate extension Emitter {
     }
 }
 
-public enum BarcodeCountViewListenerEvent: String {
+public enum BarcodeCountViewListenerEvent: String, CaseIterable {
     case brushForRecognizedBarcode = "BarcodeCountViewListener.brushForRecognizedBarcode"
     case brushForRecognizedBarcodeNotInList = "BarcodeCountViewListener.brushForRecognizedBarcodeNotInList"
     case brushForAcceptedBarcode = "BarcodeCountViewListener.brushForAcceptedBarcode"
     case brushForRejectedBarcode = "BarcodeCountViewListener.brushForRejectedBarcode"
+    case didCompleteCaptureList = "BarcodeCountViewListener.didCompleteCaptureList"
+    case didTapCluster = "BarcodeCountViewListener.didTapCluster"
 
     case didTapRecognizedBarcode = "BarcodeCountViewListener.didTapRecognizedBarcode"
     case didTapFilteredBarcode = "BarcodeCountViewListener.didTapFilteredBarcode"
@@ -52,6 +54,8 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
     private let didTapRecognizedBarcodeNotInListEvent = Event(.didTapRecognizedBarcodeNotInList)
     private let didTapAcceptedBarcodeEvent = Event(.didTapAcceptedBarcode)
     private let didTapRejectedBarcodeEvent = Event(.didTapRejectedBarcode)
+    private let didCompleteCaptureList = Event(.didCompleteCaptureList)
+    private let didTapCluster = Event(.didTapCluster)
 
     private var brushRequests: [String: TrackedBarcode] = [:]
 
@@ -80,6 +84,10 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
             return didTapAcceptedBarcodeEvent
         case .didTapRejectedBarcode:
             return didTapRejectedBarcodeEvent
+        case .didCompleteCaptureList:
+            return didCompleteCaptureList
+        case .didTapCluster:
+            return didTapCluster
         }
     }
 
@@ -178,6 +186,24 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
         didTapRejectedBarcode trackedBarcode: TrackedBarcode
     ) {
         emit(event: .didTapRejectedBarcode, for: trackedBarcode)
+    }
+
+    public func barcodeCountView(_ view: BarcodeCountView, didTap cluster: Cluster) {
+        if emitter.hasViewSpecificListenersForEvent(viewId, for: .didTapCluster) {
+            eventDescriptor(for: .didTapCluster).emit(
+                on: emitter,
+                payload: ["barcodes": cluster.barcodes.map { $0.jsonString }, "viewId": self.viewId]
+            )
+        }
+    }
+
+    public func didCompleteCaptureList(for view: BarcodeCountView) {
+        if emitter.hasViewSpecificListenersForEvent(viewId, for: .didCompleteCaptureList) {
+            eventDescriptor(for: .didCompleteCaptureList).emit(
+                on: emitter,
+                payload: ["viewId": self.viewId]
+            )
+        }
     }
 
     public func clearCache() {

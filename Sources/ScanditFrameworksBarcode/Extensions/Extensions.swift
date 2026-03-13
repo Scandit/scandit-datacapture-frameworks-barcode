@@ -78,3 +78,16 @@ extension Barcode {
         self.uniqueHash
     }
 }
+
+extension BarcodePickAction {
+    var jsonString: String {
+        switch self {
+        case .none:
+            return "none"
+        case .pick:
+            return "pick"
+        case .unpick:
+            return "unpick"
+        }
+    }
+}

@@ -16,7 +16,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
     private let barcodeArViewUiDelegate: FrameworksBarcodeArViewUiListener
     private let highlightProvider: FrameworksBarcodeArHighlightProvider
     private let annotationProvider: FrameworksBarcodeArAnnotationProvider
-    private let infoAnnotationDelegate: FrameworksInfoAnnotationDelegate
     private let popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate
     private let deserializer: BarcodeArDeserializer
     private let viewDeserializer: BarcodeArViewDeserializer
@@ -37,7 +36,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         barcodeArViewUiDelegate: FrameworksBarcodeArViewUiListener,
         highlightProvider: FrameworksBarcodeArHighlightProvider,
         annotationProvider: FrameworksBarcodeArAnnotationProvider,
-        infoAnnotationDelegate: FrameworksInfoAnnotationDelegate,
         popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate,
         context: DataCaptureContext,
         augmentationsCache: BarcodeArAugmentationsCache,
@@ -48,7 +46,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         self.barcodeArViewUiDelegate = barcodeArViewUiDelegate
         self.highlightProvider = highlightProvider
         self.annotationProvider = annotationProvider
-        self.infoAnnotationDelegate = infoAnnotationDelegate
         self.popoverAnnotationDelegate = popoverAnnotationDelegate
         self.context = context
         self.augmentationsCache = augmentationsCache
@@ -243,18 +240,13 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
             parser: BarcodeArHighlightParser(emitter: emitter),
             cache: augmentationsCache
         )
-        let infoAnnotationDelegate = FrameworksInfoAnnotationDelegate(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
         let popoverAnnotationDelegate = FrameworksPopoverAnnotationDelegate(
             emitter: emitter,
             viewId: viewCreationParams.viewId
         )
 
-        let annotationParser = BarcodeArAnnotationParser()
+        let annotationParser = BarcodeArAnnotationParser(viewId: viewCreationParams.viewId, emitter: emitter)
         annotationParser.setDelegates(
-            infoAnnotationDelegate: infoAnnotationDelegate,
             popoverAnnotationDelegate: popoverAnnotationDelegate,
             cache: augmentationsCache
         )
@@ -271,7 +263,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
             barcodeArViewUiDelegate: barcodeArViewUiDelegate,
             highlightProvider: highlightProvider,
             annotationProvider: annotationProvider,
-            infoAnnotationDelegate: infoAnnotationDelegate,
             popoverAnnotationDelegate: popoverAnnotationDelegate,
             context: context,
             augmentationsCache: augmentationsCache
