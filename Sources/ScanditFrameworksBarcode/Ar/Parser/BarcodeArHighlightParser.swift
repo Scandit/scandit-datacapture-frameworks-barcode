@@ -96,6 +96,8 @@ public class BarcodeArHighlightParser {
             if json.containsKey("icon") {
                 let iconJson = json.getObjectAsString(forKey: "icon")
                 highlight.icon = try ScanditIcon(fromJSONString: iconJson)
+            } else {
+                highlight.icon = nil
             }
 
             if json.containsKey("brush") {
@@ -103,6 +105,8 @@ public class BarcodeArHighlightParser {
                 if let brush = Brush(jsonString: brushString) {
                     highlight.brush = brush
                 }
+            } else {
+                highlight.icon = nil
             }
         } catch {
             Log.error("Unable to parse the BarcodeArRectangleHighlight from the provided json.", error: error)

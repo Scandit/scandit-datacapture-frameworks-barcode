@@ -19,7 +19,8 @@ struct BarcodeCountDefaults: DefaultsEncodable {
             barcodeCountSettings: BarcodeCountSettingsDefaults(barcodeCountSettings: BarcodeCountSettings()),
             barcodeCountFeedback: .default,
             barcodeCountView: DefaultsBarcodeCountView(
-                barcodeCountToolbarSettingsDefaults: BarcodeCountToolbarSettingsDefaults()
+                barcodeCountToolbarSettingsDefaults: BarcodeCountToolbarSettingsDefaults(),
+                barcodeCountMappingFlowSettingsDefaults: BarcodeCountMappingFlowSettingsDefaults()
             )
         )
     }()

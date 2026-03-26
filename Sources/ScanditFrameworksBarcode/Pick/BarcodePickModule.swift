@@ -35,7 +35,9 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
         viewCache.disposeAll()
     }
 
-    public let defaults: DefaultsEncodable = BarcodePickDefaults.shared
+    public func getDefaults() -> [String: Any?] {
+        BarcodePickDefaults.shared.toEncodable()
+    }
 
     public func addViewToContainer(container: UIView, jsonString: String, result: FrameworksResult) {
         let block = { [weak self] in
@@ -92,36 +94,40 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
         }
         dispatchMain(block)
     }
+
+    public func createCommand(
+        _ method: any ScanditFrameworksCore.FrameworksMethodCall
+    ) -> (any ScanditFrameworksCore.BaseCommand)? {
+        BarcodePickModuleCommandFactory.create(module: self, method)
+    }
 }
 
 public extension BarcodePickModule {
 
-    func viewStart(viewId: Int, result: FrameworksResult) {
+    func pickViewStart(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        viewInstance.startMode()
+        viewInstance.start()
         result.success()
     }
 
-    func viewStop(viewId: Int, result: FrameworksResult) {
+    func pickViewStop(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        viewInstance.stopMode()
+        viewInstance.stop()
         result.success()
     }
 
-    func viewFreeze(viewId: Int, result: FrameworksResult) {
+    func pickViewFreeze(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        DispatchQueue.main.async {
-            viewInstance.view.freeze()
-        }
+        viewInstance.freeze()
         result.success()
     }
 
@@ -133,18 +139,18 @@ public extension BarcodePickModule {
         result.success()
     }
 
-    func updateView(viewId: Int, viewJson: String, result: FrameworksResult) {
+    func updatePickView(viewId: Int, json: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        viewInstance.updateView(viewJson: viewJson)
+        viewInstance.updateView(viewJson: json)
         result.success()
     }
 
-    func finishProductIdentifierForItems(
+    func finishOnProductIdentifierForItems(
         viewId: Int,
-        barcodePickProductProviderCallbackItemsJson: String,
+        itemsJson: String,
         result: FrameworksResult
     ) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
@@ -152,30 +158,30 @@ public extension BarcodePickModule {
             return
         }
         viewInstance.finishProductIdentifierForItems(
-            barcodePickProductProviderCallbackItemsJson: barcodePickProductProviderCallbackItemsJson
+            barcodePickProductProviderCallbackItemsJson: itemsJson
         )
         result.success()
     }
 
-    func finishPickAction(viewId: Int, data: String, actionResult: Bool, result: FrameworksResult) {
+    func finishPickAction(viewId: Int, itemData: String, actionResult: Bool, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        viewInstance.finishPickAction(data: data, result: actionResult)
+        viewInstance.finishPickAction(data: itemData, result: actionResult)
         result.success()
     }
 
-    func addActionListener(viewId: Int, result: FrameworksResult) {
+    func addPickActionListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
+            result.successAndKeepCallback(result: nil)
             return
         }
         viewInstance.addBarcodePickActionListener()
-        result.success()
+        result.successAndKeepCallback(result: nil)
     }
 
-    func removeActionListener(viewId: Int, result: FrameworksResult) {
+    func removePickActionListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -184,16 +190,16 @@ public extension BarcodePickModule {
         result.success()
     }
 
-    func addScanningListener(viewId: Int, result: FrameworksResult) {
+    func addBarcodePickScanningListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
+            result.successAndKeepCallback(result: nil)
             return
         }
         viewInstance.addBarcodePickScanningListener()
-        result.success()
+        result.successAndKeepCallback(result: nil)
     }
 
-    func removeScanningListener(viewId: Int, result: FrameworksResult) {
+    func removeBarcodePickScanningListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -202,16 +208,16 @@ public extension BarcodePickModule {
         result.success()
     }
 
-    func addViewListener(viewId: Int, result: FrameworksResult) {
+    func addPickViewListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
+            result.successAndKeepCallback(result: nil)
             return
         }
         viewInstance.addBarcodePickViewListener()
-        result.success()
+        result.successAndKeepCallback(result: nil)
     }
 
-    func removeViewListener(viewId: Int, result: FrameworksResult) {
+    func removePickViewListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -220,16 +226,16 @@ public extension BarcodePickModule {
         result.success()
     }
 
-    func addViewUiListener(viewId: Int, result: FrameworksResult) {
+    func registerBarcodePickViewUiListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
+            result.successAndKeepCallback(result: nil)
             return
         }
         viewInstance.addBarcodePickViewUiListener()
-        result.success()
+        result.successAndKeepCallback(result: nil)
     }
 
-    func removeViewUiListener(viewId: Int, result: FrameworksResult) {
+    func unregisterBarcodePickViewUiListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -240,11 +246,11 @@ public extension BarcodePickModule {
 
     func addBarcodePickListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
+            result.successAndKeepCallback(result: nil)
             return
         }
         viewInstance.addBarcodePickListener()
-        result.success()
+        result.successAndKeepCallback(result: nil)
     }
 
     func removeBarcodePickListener(viewId: Int, result: FrameworksResult) {
@@ -256,42 +262,56 @@ public extension BarcodePickModule {
         result.success()
     }
 
-    func viewReset(viewId: Int, result: FrameworksResult) {
+    func pickViewReset(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        DispatchQueue.main.async {
-            viewInstance.view.reset()
-        }
+        viewInstance.reset()
         result.success()
     }
 
-    func viewPause(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        DispatchQueue.main.async {
-            viewInstance.view.pause()
-        }
+    func pickViewRelease(viewId: Int, result: FrameworksResult) {
+        viewCache.remove(viewId: viewId)?.dispose()
+
+        let previousView = viewCache.getTopMost()
+        previousView?.show()
+        previousView?.start()
         result.success()
     }
 
-    func viewResume(viewId: Int, result: FrameworksResult) {
+    func pickViewPause(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        DispatchQueue.main.async {
-            viewInstance.view.start()
+        viewInstance.pause()
+        result.success()
+    }
+
+    func pickViewResume(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
         }
+        viewInstance.start()
+        result.success()
+    }
+
+    func registerOnProductIdentifierForItemsListener(viewId: Int, result: FrameworksResult) {
+        // Noop - handled automatically by FrameworksBarcodePickView
+        result.successAndKeepCallback(result: nil)
+    }
+
+    func unregisterOnProductIdentifierForItemsListener(viewId: Int, result: FrameworksResult) {
+        // Noop - handled automatically by FrameworksBarcodePickView
         result.success()
     }
 
     func finishBarcodePickViewHighlightStyleCustomViewProviderViewForRequest(
         viewId: Int,
-        response: [String: Any?],
+        requestId: Int,
+        response: [String: Any]?,
         result: FrameworksResult
     ) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
@@ -299,22 +319,15 @@ public extension BarcodePickModule {
             return
         }
 
-        guard let requestId = response["requestId"] as? Int else {
-            result.success()
-            return
-        }
-
         var statusIconStyle: BarcodePickStatusIconStyle?
 
-        let responseDict = response["response"] as? [String: Any]
-
-        if let statusIconStyleJson = responseDict?["statusIconStyle"] as? String {
+        if let statusIconStyleJson = response?["statusIconStyle"] as? String {
             statusIconStyle = BarcodePickStatusIconStyle(jsonString: statusIconStyleJson)
         }
 
         dispatchMain {
             var customView: UIImageView?
-            if let viewBytes = responseDict?["view"] as? Data {
+            if let viewBytes = response?["view"] as? Data {
                 customView = UIImageView()
                 if let image = UIImage(data: viewBytes) {
                     customView?.image = image
@@ -332,20 +345,14 @@ public extension BarcodePickModule {
 
     func finishBarcodePickViewHighlightStyleAsyncProviderStyleForRequest(
         viewId: Int,
-        response: [String: Any?],
+        requestId: Int,
+        responseJson: String?,
         result: FrameworksResult
     ) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-
-        guard let requestId = response["requestId"] as? Int else {
-            result.success()
-            return
-        }
-
-        let responseJson = response["response"] as? String
 
         dispatchMain {
             viewInstance.finishBarcodePickViewHighlightStyleAsyncProviderStyleForRequest(
@@ -358,5 +365,53 @@ public extension BarcodePickModule {
 
     func getTopMostView() -> BarcodePickView? {
         viewCache.getTopMost()?.view
+    }
+
+    func confirmActionForItemWithData(viewId: Int, data: String, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.confirmActionForItemWithData(data: data)
+        result.success()
+    }
+
+    func selectItemWithData(viewId: Int, data: String, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.reject(code: "-1", message: "View not found.", details: nil)
+            return
+        }
+        viewInstance.selectItemWithData(
+            data: data,
+            completionHandler: { action in
+                result.success(result: action.jsonString)
+            }
+        )
+    }
+
+    func cancelActionForItemWithData(viewId: Int, data: String, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.cancelActionForItemWithData(data: data)
+        result.success()
+    }
+
+    func updateProductList(viewId: Int, productsJson: String, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.reject(code: "-1", message: "View not found.", details: nil)
+            return
+        }
+        viewInstance.updateProductList(productsJson: productsJson)
+        result.success()
+    }
+
+    func registerHighlightStyleAsyncProviderListener(viewId: Int, result: FrameworksResult) {
+        result.successAndKeepCallback(result: nil)
+    }
+
+    func unregisterHighlightStyleAsyncProviderListener(viewId: Int, result: FrameworksResult) {
+        result.success()
     }
 }
