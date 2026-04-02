@@ -10,16 +10,13 @@ import ScanditBarcodeCapture
 struct BarcodeFindDefaults: DefaultsEncodable {
     private let feedback: BarcodeFindFeedback
     private let viewDefaults: FrameworksBarcodeFindViewDefaults
-    private let viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults
     private let recommendedCameraSettings: CameraSettingsDefaults
 
     init(feedback: BarcodeFindFeedback,
          viewDefaults: FrameworksBarcodeFindViewDefaults,
-         viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults,
          recommendedCameraSettings: CameraSettingsDefaults) {
         self.feedback = feedback
         self.viewDefaults = viewDefaults
-        self.viewSettingsDefaults = viewSettingsDefaults
         self.recommendedCameraSettings = recommendedCameraSettings
     }
 
@@ -27,7 +24,6 @@ struct BarcodeFindDefaults: DefaultsEncodable {
         BarcodeFindDefaults(
             feedback: .default,
             viewDefaults: FrameworksBarcodeFindViewDefaults(),
-            viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults(barcodeFindViewSettings: BarcodeFindViewSettings()),
             recommendedCameraSettings: CameraSettingsDefaults(
                 cameraSettings: BarcodeFind.recommendedCameraSettings
             )
@@ -38,8 +34,7 @@ struct BarcodeFindDefaults: DefaultsEncodable {
         [
             "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
             "BarcodeFindFeedback": feedback.jsonString,
-            "BarcodeFindView": viewDefaults.toEncodable(),
-            "BarcodeFindViewSettings": viewSettingsDefaults.toEncodable(),
+            "BarcodeFindView": viewDefaults.toEncodable()
         ]
     }
 }
