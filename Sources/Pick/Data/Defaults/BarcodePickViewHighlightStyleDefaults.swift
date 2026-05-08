@@ -7,7 +7,7 @@
 import ScanditFrameworksCore
 import ScanditBarcodeCapture
 
-extension ScanditBarcodeCapture.BarcodePickState: Swift.CaseIterable {
+extension BarcodePickState: CaseIterable {
     static public var allCases: [BarcodePickState] {
         [.ignore, .picked, .toPick, .unknown]
     }
@@ -18,15 +18,13 @@ struct BarcodePickViewHighlightStyleDefaults: DefaultsEncodable {
     private let rectangularWithIconStyle: BarcodePickViewHighlightStyleRectangularWithIcons
     private let dotStyle: BarcodePickViewHighlightStyleDot
     private let dotWithIconStyle: BarcodePickViewHighlightStyleDotWithIcons
-    private let customViewStyle: BarcodePickViewHighlightStyleCustomView
 
     func toEncodable() -> [String: Any?] {
         [
             "Rectangular": rectangularStyle.jsonString,
             "RectangularWithIcons": rectangularWithIconStyle.jsonString,
             "Dot": dotStyle.jsonString,
-            "DotWithIcons": dotWithIconStyle.jsonString,
-            "CustomView": customViewStyle.jsonString
+            "DotWithIcons": dotWithIconStyle.jsonString
         ]
     }
 
@@ -35,8 +33,7 @@ struct BarcodePickViewHighlightStyleDefaults: DefaultsEncodable {
             rectangularStyle: .init(),
             rectangularWithIconStyle: .init(),
             dotStyle: .init(),
-            dotWithIconStyle: .init(),
-            customViewStyle: .init()
+            dotWithIconStyle: .init()
         )
     }()
 }
