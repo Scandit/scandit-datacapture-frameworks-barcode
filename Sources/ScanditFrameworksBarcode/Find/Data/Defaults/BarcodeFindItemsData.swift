@@ -29,7 +29,7 @@ struct BarcodeFindItemsData {
         let barcodeData = searchOptions.string(forKey: "barcodeData")
         var findItemContent: BarcodeFindItemContent? = nil
 
-        if json.containsObject(withKey: "content") {
+        if json.containsKey("content") {
             let content = json.object(forKey: "content")
             let info = content.optionalString(forKey: "info")
             let additionalInfo = content.optionalString(forKey: "additionalInfo")

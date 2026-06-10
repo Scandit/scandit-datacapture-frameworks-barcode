@@ -5,12 +5,10 @@
  */
 
 import ScanditBarcodeCapture
-import ScanditBarcodeCaptureDeserializer
 import ScanditFrameworksCore
 
 public enum FrameworksSparkScanFeedbackDelegateEvent: String, CaseIterable {
     case feedbackForBarcode = "SparkScanFeedbackDelegate.feedbackForBarcode"
-    case feedbackForScannedItem = "SparkScanFeedbackDelegate.feedbackForScannedItem"
 }
 
 fileprivate extension Event {
@@ -30,7 +28,6 @@ open class FrameworksSparkScanFeedbackDelegate: NSObject, SparkScanFeedbackDeleg
     private let viewId: Int
 
     private let feedbackForBarcodeEvent = EventWithResult<String?>(event: Event(.feedbackForBarcode))
-    private let feedbackForScannedItemEvent = EventWithResult<String?>(event: Event(.feedbackForScannedItem))
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
@@ -56,38 +53,11 @@ open class FrameworksSparkScanFeedbackDelegate: NSObject, SparkScanFeedbackDeleg
         }
     }
 
-    public func feedback(for item: ScannedItem) -> SparkScanBarcodeFeedback? {
-        guard emitter.hasViewSpecificListenersForEvent(viewId, for: .feedbackForScannedItem) else { return nil }
-        guard
-            let feedbackJson = feedbackForScannedItemEvent.emit(
-                on: emitter,
-                payload: ["scannedItem": item.jsonString, "viewId": viewId]
-            ) ?? nil
-        else {
-            return nil
-        }
-
-        do {
-            return try SparkScanBarcodeFeedback(jsonString: feedbackJson)
-        } catch {
-            print(error)
-            return nil
-        }
-    }
-
-    public func submitFeedbackForBarcode(feedbackJson: String?) {
+    public func submitFeedback(feedbackJson: String?) {
         feedbackForBarcodeEvent.unlock(value: feedbackJson)
     }
 
-    public func cancelForBarcode() {
+    public func cancel() {
         feedbackForBarcodeEvent.reset()
-    }
-
-    public func submitFeedbackForScannedItem(feedbackJson: String?) {
-        feedbackForScannedItemEvent.unlock(value: feedbackJson)
-    }
-
-    public func cancelForScannedItem() {
-        feedbackForScannedItemEvent.reset()
     }
 }

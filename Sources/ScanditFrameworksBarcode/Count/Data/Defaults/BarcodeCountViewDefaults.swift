@@ -16,7 +16,6 @@ private typealias ViewDefaults = BarcodeCountViewDefaults
 
 struct DefaultsBarcodeCountView: DefaultsEncodable {
     let barcodeCountToolbarSettingsDefaults: BarcodeCountToolbarSettingsDefaults
-    let barcodeCountMappingFlowSettingsDefaults: BarcodeCountMappingFlowSettingsDefaults
 
     func toEncodable() -> [String: Any?] {
         [
@@ -32,7 +31,6 @@ struct DefaultsBarcodeCountView: DefaultsEncodable {
             "shouldShowToolbar": ViewDefaults.defaultShouldShowToolbar,
             "shouldShowScanAreaGuides": ViewDefaults.defaultShouldShowScanAreaGuides,
             "toolbarSettings": barcodeCountToolbarSettingsDefaults.toEncodable(),
-            "mappingFlowSettings": barcodeCountMappingFlowSettingsDefaults.toEncodable(),
             "recognizedBrush": EncodableBrush(brush: BarcodeCountView.defaultRecognizedBrush).toEncodable(),
             "notInListBrush": EncodableBrush(brush: BarcodeCountView.defaultNotInListBrush).toEncodable(),
             "acceptedBrush": EncodableBrush(brush: BarcodeCountView.defaultAcceptedBrush).toEncodable(),
@@ -49,25 +47,18 @@ struct DefaultsBarcodeCountView: DefaultsEncodable {
             "clearHighlightsButtonAccessibilityLabel": ViewDefaults.defaultClearHighlightsButtonAccessibilityLabel,
             "singleScanButtonAccessibilityHint": ViewDefaults.defaultSingleScanButtonAccessibilityHint,
             "singleScanButtonAccessibilityLabel": ViewDefaults.defaultSingleScanButtonAccessibilityLabel,
-            "statusModeButtonAccessibilityHint": ViewDefaults.defaultStatusModeButtonAccessibilityHint,
-            "statusModeButtonAccessibilityLabel": ViewDefaults.defaultStatusModeButtonAccessibilityLabel,
             "clearHighlightsButtonText": ViewDefaults.defaultClearHighlightsButtonText,
             "exitButtonText": ViewDefaults.defaultExitButtonText,
             "textForTapShutterToScanHint": ViewDefaults.defaultTextForTapShutterToScanHint,
             "textForScanningHint": ViewDefaults.defaultTextForScanningHint,
             "textForMoveCloserAndRescanHint": ViewDefaults.defaultTextForMoveCloserAndRescanHint,
             "textForMoveFurtherAndRescanHint": ViewDefaults.defaultTextForMoveFurtherAndRescanHint,
-            "textForClusteringGestureHint": ViewDefaults.defaultTextForClusteringGestureHint,
             "shouldShowListProgressBar": ViewDefaults.defaultShouldShowListProgressBar,
             "shouldShowTorchControl": ViewDefaults.defaultShouldShowTorchControl,
             "torchControlPosition": ViewDefaults.defaultTorchControlPosition.jsonString,
             "tapToUncountEnabled": ViewDefaults.defaultTapToUncountEnabled,
             "textForTapToUncountHint": ViewDefaults.defaultTextForTapToUncountHint,
-            "textForScreenCleanedUpHint": ViewDefaults.defaultTextForScreenCleanedUpHint,
             "shouldShowStatusModeButton": ViewDefaults.defaultShouldShowStatusModeButton,
-            "shouldShowStatusIconsOnScan": ViewDefaults.defaultShouldShowStatusIconsOnScan,
-            "hardwareTriggerSupported": true,
-            "hardwareTriggerEnabled": ViewDefaults.defaultHardwareTriggerEnabled,
         ]
     }
 }

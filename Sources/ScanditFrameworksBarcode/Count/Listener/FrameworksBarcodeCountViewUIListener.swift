@@ -7,21 +7,19 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-public enum FrameworksBarcodeCountViewUIListenerEvent: String, CaseIterable {
-    case exitButtonTapped = "BarcodeCountViewUiListener.onExitButtonTapped"
-    case listButtonTapped = "BarcodeCountViewUiListener.onListButtonTapped"
-    case singleScanButtonTapped = "BarcodeCountViewUiListener.onSingleScanButtonTapped"
-}
-
 open class FrameworksBarcodeCountViewUIListener: NSObject, BarcodeCountViewUIDelegate {
+    public enum Constants {
+        public static let exitButtonTapped = "BarcodeCountViewUiListener.onExitButtonTapped"
+        public static let listButtonTapped = "BarcodeCountViewUiListener.onListButtonTapped"
+        public static let singleScanButtonTapped = "BarcodeCountViewUiListener.onSingleScanButtonTapped"
+    }
+
     private let emitter: Emitter
     private let viewId: Int
 
-    private let exitButtonTappedEvent = Event(name: FrameworksBarcodeCountViewUIListenerEvent.exitButtonTapped.rawValue)
-    private let listButtonTappedEvent = Event(name: FrameworksBarcodeCountViewUIListenerEvent.listButtonTapped.rawValue)
-    private let singleScanButtonTappedEvent = Event(
-        name: FrameworksBarcodeCountViewUIListenerEvent.singleScanButtonTapped.rawValue
-    )
+    private let exitButtonTappedEvent = Event(name: Constants.exitButtonTapped)
+    private let listButtonTappedEvent = Event(name: Constants.listButtonTapped)
+    private let singleScanButtonTappedEvent = Event(name: Constants.singleScanButtonTapped)
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
