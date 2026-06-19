@@ -5,6 +5,7 @@
  */
 
 import ScanditBarcodeCapture
+import ScanditCaptureCoreDeserializer
 import ScanditFrameworksCore
 
 struct AdvancedOverlayAnchorData {

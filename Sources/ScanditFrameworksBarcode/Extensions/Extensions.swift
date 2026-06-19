@@ -19,6 +19,19 @@ public extension ScanIntention {
     }
 }
 
+public extension SelectionMode {
+    var jsonString: String {
+        switch self {
+        case .off:
+            return "off"
+        case .on:
+            return "on"
+        case .auto:
+            return "auto"
+        }
+    }
+}
+
 extension JSONValue {
     func getObjectAsString(forKey: String) -> String {
         if self.containsObject(withKey: forKey) {
@@ -76,5 +89,18 @@ extension JSONValue {
 extension Barcode {
     var uniqueId: String {
         self.uniqueHash
+    }
+}
+
+extension BarcodePickAction {
+    var jsonString: String {
+        switch self {
+        case .none:
+            return "none"
+        case .pick:
+            return "pick"
+        case .unpick:
+            return "unpick"
+        }
     }
 }

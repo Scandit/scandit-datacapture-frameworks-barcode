@@ -7,17 +7,18 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusProvider {
-    private enum Constants {
-        static let onStatusRequested = "BarcodeCountStatusProvider.onStatusRequested"
-    }
+public enum FrameworksBarcodeCountStatusProviderEvent: String, CaseIterable {
+    case onStatusRequested = "BarcodeCountStatusProvider.onStatusRequested"
+}
 
-    private var events: [String: BarcodeCountStatusProviderRequest] = [:]
-    private let eventsQueue = DispatchQueue(label: "scandit-frameworks-barcode-count", attributes: .concurrent)
+open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusProvider {
+    private let events = ConcurrentDictionary<String, BarcodeCountStatusProviderRequest>()
 
     private let emitter: Emitter
     private let viewId: Int
-    private let onStatusRequestedEvent = Event(name: Constants.onStatusRequested)
+    private let onStatusRequestedEvent = Event(
+        name: FrameworksBarcodeCountStatusProviderEvent.onStatusRequested.rawValue
+    )
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
@@ -25,7 +26,9 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
     }
 
     public func statusRequested(for barcodes: [TrackedBarcode], callback: BarcodeCountStatusProviderCallback) {
-        guard emitter.hasListener(for: Constants.onStatusRequested) else { return }
+        guard emitter.hasListener(for: FrameworksBarcodeCountStatusProviderEvent.onStatusRequested.rawValue) else {
+            return
+        }
 
         let request = BarcodeCountStatusProviderRequest(barcodes: barcodes, callback: callback)
 
@@ -60,22 +63,14 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
     }
 
     private func addEvent(request: BarcodeCountStatusProviderRequest) {
-        eventsQueue.async { [weak self] in
-            self?.events[request.requestId] = request
-        }
+        events.setValue(request, for: request.requestId)
     }
 
     private func getEvent(for key: String) -> BarcodeCountStatusProviderRequest? {
-        var result: BarcodeCountStatusProviderRequest?
-        eventsQueue.sync { [weak self] in
-            result = self?.events[key]
-        }
-        return result
+        events.getValue(for: key)
     }
 
     private func removeEvent(for key: String) {
-        eventsQueue.async { [weak self] in
-            self?.events.removeValue(forKey: key)
-        }
+        _ = events.removeValue(for: key)
     }
 }

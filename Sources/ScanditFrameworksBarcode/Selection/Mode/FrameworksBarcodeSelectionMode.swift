@@ -5,6 +5,7 @@
  */
 
 import ScanditBarcodeCapture
+import ScanditBarcodeCaptureDeserializer
 import ScanditFrameworksCore
 
 public class FrameworksBarcodeSelectionMode: FrameworksBaseMode {
@@ -65,6 +66,10 @@ public class FrameworksBarcodeSelectionMode: FrameworksBaseMode {
         mode.reset()
     }
 
+    public func selectUnselectedBarcodes() {
+        mode.selectUnselectedBarcodes()
+    }
+
     public func dispose() {
         mode.removeListener(listener)
         listener.reset()
@@ -104,6 +109,10 @@ public class FrameworksBarcodeSelectionMode: FrameworksBaseMode {
         mode.unfreezeCamera()
     }
 
+    public func freezeCamera() {
+        mode.freezeCamera()
+    }
+
     public func selectAimedBarcode() {
         mode.selectAimedBarcode()
     }
@@ -122,6 +131,14 @@ public class FrameworksBarcodeSelectionMode: FrameworksBaseMode {
 
     public func resetSession(frameSequenceId: Int?) {
         listener.resetSession(frameSequenceId: frameSequenceId)
+    }
+
+    public func selectUnselectedBarcodesInSession() {
+        listener.selectUnselectedBarcodesInSession()
+    }
+
+    public var licenseInfoJsonString: String? {
+        mode.barcodeSelectionLicenseInfo?.jsonString
     }
 
     public func finishDidSelect(enabled: Bool) {

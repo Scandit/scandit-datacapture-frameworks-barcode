@@ -40,6 +40,8 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
             "defaultStatusIconAnnotationBackgroundColor":
                 ViewDefaults.defaultStatusIconAnnotationBackgroundColor.sdcHexString,
             "defaultInfoAnnotationWidth": ViewDefaults.defaultInfoAnnotationWidth.jsonString,
+            "defaultResponsiveAnnotationThreshold": ViewDefaults.defaultResponsiveAnnotationThreshold,
+            "defaultResponsiveAnnotationTrigger": ViewDefaults.defaultResponsiveAnnotationTrigger.jsonString,
             "defaultInfoAnnotationBackgroundColor": ViewDefaults.defaultInfoAnnotationBackgroundColor.sdcHexString,
             "defaultInfoAnnotationHasTip": ViewDefaults.defaultInfoAnnotationHasTip,
             "defaultInfoAnnotationAnchor": ViewDefaults.defaultInfoAnnotationAnchor.jsonString,
@@ -76,6 +78,8 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
             "defaultInfoAnnotationBodyElementRightIcon":
                 ViewDefaults.defaultInfoAnnotationBodyComponentRightIcon?.jsonString,
             "defaultBarcodeArPopoverAnnotationButtonEnabled": ViewDefaults.defaultPopoverAnnotationButtonEnabled,
+            "defaultBarcodeArPopoverAnnotationAnchor": ViewDefaults.defaultPopoverAnnotationAnchor.jsonString,
+            "defaultHighlightIsPulsing": ViewDefaults.defaultHighlightIsPulsing,
         ]
     }
     // swiftlint:enable function_body_length

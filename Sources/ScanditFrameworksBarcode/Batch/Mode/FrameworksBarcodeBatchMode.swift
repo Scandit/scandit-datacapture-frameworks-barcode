@@ -5,6 +5,7 @@
  */
 
 import ScanditBarcodeCapture
+import ScanditBarcodeCaptureDeserializer
 import ScanditFrameworksCore
 
 public class FrameworksBarcodeBatchMode: FrameworksBaseMode {

@@ -11,7 +11,9 @@ open class FrameworksBarcodeFindTransformer: NSObject, BarcodeFindTransformer {
 
     private let emitter: Emitter
 
-    private let onTransformBarcodeData = EventWithResult<String?>(event: Event(.transformBarcodeData))
+    private let onTransformBarcodeData = EventWithResult<String?>(
+        event: Event(FrameworksBarcodeFindEvent.transformBarcodeData)
+    )
 
     private let enabled = AtomicValue<Bool>(false)
 

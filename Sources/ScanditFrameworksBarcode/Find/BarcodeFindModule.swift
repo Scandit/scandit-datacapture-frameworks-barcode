@@ -29,7 +29,9 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
     }
 
-    public let defaults: DefaultsEncodable = BarcodeFindDefaults.shared
+    public func getDefaults() -> [String: Any?] {
+        BarcodeFindDefaults.shared.toEncodable()
+    }
 
     public func addViewToContainer(container: UIView, jsonString: String, result: FrameworksResult) {
         guard let context = self.captureContext.context else {
@@ -81,12 +83,12 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         viewCache.getView(viewId: viewId)?.view
     }
 
-    public func updateBarcodeFindView(_ viewId: Int, viewJson: String, result: FrameworksResult) {
+    public func updateFindView(viewId: Int, barcodeFindViewJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        viewInstance.updateBarcodeFindView(viewJson: viewJson)
+        viewInstance.updateBarcodeFindView(viewJson: barcodeFindViewJson)
         result.success()
     }
 
@@ -101,34 +103,34 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
     }
 
     public func removeBarcodeFindView(_ viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.remove(viewId: viewId) else {
-            return
-        }
+        viewCache.remove(viewId: viewId)?.dispose()
 
-        viewInstance.dispose()
+        if let previousView = viewCache.getTopMost() {
+            previousView.show()
+        }
         result.success()
     }
 
-    public func updateBarcodeFindMode(_ viewId: Int, modeJson: String, result: FrameworksResult) {
+    public func updateFindMode(viewId: Int, barcodeFindJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
 
-        viewInstance.updateBarcodeFindMode(modeJson: modeJson)
+        viewInstance.updateBarcodeFindMode(modeJson: barcodeFindJson)
         result.success()
     }
 
-    public func addBarcodeFindListener(_ viewId: Int, result: FrameworksResult) {
+    public func registerBarcodeFindListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
+            result.successAndKeepCallback(result: nil)
             return
         }
         viewInstance.addBarcodeFindListener()
-        result.success()
+        result.successAndKeepCallback(result: nil)
     }
 
-    public func removeBarcodeFindListener(_ viewId: Int, result: FrameworksResult) {
+    public func unregisterBarcodeFindListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -137,16 +139,16 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func addBarcodeFindViewListener(_ viewId: Int, result: FrameworksResult) {
+    public func registerBarcodeFindViewListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
+            result.successAndKeepCallback(result: nil)
             return
         }
         viewInstance.addBarcodeFindViewListener()
-        result.success()
+        result.successAndKeepCallback(result: nil)
     }
 
-    public func removeBarcodeFindViewListener(_ viewId: Int, result: FrameworksResult) {
+    public func unregisterBarcodeFindViewListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -155,12 +157,12 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func setItemList(_ viewId: Int, barcodeFindItemsJson: String, result: FrameworksResult) {
+    public func barcodeFindSetItemList(viewId: Int, itemsJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        viewInstance.setItemList(barcodeFindItemsJson: barcodeFindItemsJson)
+        viewInstance.setItemList(barcodeFindItemsJson: itemsJson)
         result.success()
     }
 
@@ -173,7 +175,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func pauseSearching(_ viewId: Int, result: FrameworksResult) {
+    public func barcodeFindViewPauseSearching(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -183,7 +185,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func stopSearching(_ viewId: Int, result: FrameworksResult) {
+    public func barcodeFindViewStopSearching(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -193,7 +195,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func startSearching(_ viewId: Int, result: FrameworksResult) {
+    public func barcodeFindViewStartSearching(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -202,7 +204,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func startMode(_ viewId: Int, result: FrameworksResult) {
+    public func barcodeFindModeStart(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -212,7 +214,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func stopMode(_ viewId: Int, result: FrameworksResult) {
+    public func barcodeFindModeStop(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -222,7 +224,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func pauseMode(_ viewId: Int, result: FrameworksResult) {
+    public func barcodeFindModePause(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -232,29 +234,31 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func setModeEnabled(_ viewId: Int, enabled: Bool) {
+    public func setBarcodeFindModeEnabledState(viewId: Int, enabled: Bool, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
             return
         }
 
         viewInstance.setModeEnabled(enabled: enabled)
+        result.success()
     }
 
     public func isModeEnabled() -> Bool {
         viewCache.getTopMost()?.isModeEnabled() ?? false
     }
 
-    public func setBarcodeFindTransformer(_ viewId: Int, result: FrameworksResult) {
+    public func setBarcodeTransformer(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
+            result.successAndKeepCallback(result: nil)
             return
         }
 
         viewInstance.setBarcodeFindTransformer()
-        result.success()
+        result.successAndKeepCallback(result: nil)
     }
 
-    public func removeBarcodeFindTransformer(_ viewId: Int, result: FrameworksResult) {
+    public func unsetBarcodeTransformer(viewId: Int, result: FrameworksResult) {
         // The native API isn't allowing the removal of the transformer
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
@@ -264,17 +268,17 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func submitBarcodeFindTransformerResult(_ viewId: Int, transformedData: String?, result: FrameworksResult) {
+    public func submitBarcodeFindTransformerResult(viewId: Int, transformedBarcode: String?, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
 
-        viewInstance.submitBarcodeFindTransformerResult(transformedData: transformedData)
+        viewInstance.submitBarcodeFindTransformerResult(transformedData: transformedBarcode)
         result.success()
     }
 
-    public func updateFeedback(_ viewId: Int, feedbackJson: String, result: FrameworksResult) {
+    public func updateBarcodeFindFeedback(viewId: Int, feedbackJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -287,148 +291,28 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
         }
     }
 
-    public func execute(method: FrameworksMethodCall, result: FrameworksResult) -> Bool {
-        switch method.method {
-        case "getBarcodeFindDefaults":
-            result.success(result: defaults.stringValue)
-
-        case "updateFindView":
-            if let viewId: Int = method.argument(key: "viewId"),
-                let barcodeFindViewJson: String = method.argument(key: "barcodeFindViewJson")
-            {
-                updateBarcodeFindView(viewId, viewJson: barcodeFindViewJson, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId or barcodeFindViewJson argument", details: nil)
-            }
-
-        case "updateFindMode":
-            if let viewId: Int = method.argument(key: "viewId"),
-                let barcodeFindJson: String = method.argument(key: "barcodeFindJson")
-            {
-                updateBarcodeFindMode(viewId, modeJson: barcodeFindJson, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId or barcodeFindJson argument", details: nil)
-            }
-
-        case "registerBarcodeFindListener":
-            if let viewId: Int = method.argument(key: "viewId") {
-                addBarcodeFindListener(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "unregisterBarcodeFindListener":
-            if let viewId: Int = method.argument(key: "viewId") {
-                removeBarcodeFindListener(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "registerBarcodeFindViewListener":
-            if let viewId: Int = method.argument(key: "viewId") {
-                addBarcodeFindViewListener(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "unregisterBarcodeFindViewListener":
-            if let viewId: Int = method.argument(key: "viewId") {
-                removeBarcodeFindViewListener(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "barcodeFindSetItemList":
-            if let viewId: Int = method.argument(key: "viewId"),
-                let itemsJson: String = method.argument(key: "itemsJson")
-            {
-                setItemList(viewId, barcodeFindItemsJson: itemsJson, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId or itemsJson argument", details: nil)
-            }
-
-        case "barcodeFindViewStopSearching":
-            if let viewId: Int = method.argument(key: "viewId") {
-                stopSearching(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "barcodeFindViewStartSearching":
-            if let viewId: Int = method.argument(key: "viewId") {
-                startSearching(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "barcodeFindViewPauseSearching":
-            if let viewId: Int = method.argument(key: "viewId") {
-                pauseSearching(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "barcodeFindModeStart":
-            if let viewId: Int = method.argument(key: "viewId") {
-                startMode(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "barcodeFindModePause":
-            if let viewId: Int = method.argument(key: "viewId") {
-                pauseMode(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "barcodeFindModeStop":
-            if let viewId: Int = method.argument(key: "viewId") {
-                stopMode(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "setModeEnabledState":
-            if let viewId: Int = method.argument(key: "viewId"),
-                let enabled: Bool = method.argument(key: "enabled")
-            {
-                setModeEnabled(viewId, enabled: enabled)
-                result.success()
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId or enabled argument", details: nil)
-            }
-
-        case "setBarcodeTransformer":
-            if let viewId: Int = method.argument(key: "viewId") {
-                setBarcodeFindTransformer(viewId, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId argument", details: nil)
-            }
-
-        case "submitBarcodeTransformerResult":
-            if let viewId: Int = method.argument(key: "viewId"),
-                let transformedBarcode: String? = method.argument(key: "transformedBarcode")
-            {
-                submitBarcodeFindTransformerResult(viewId, transformedData: transformedBarcode, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId or transformedBarcode argument", details: nil)
-            }
-
-        case "updateFeedback":
-            if let viewId: Int = method.argument(key: "viewId"),
-                let feedbackJson: String = method.argument(key: "feedbackJson")
-            {
-                updateFeedback(viewId, feedbackJson: feedbackJson, result: result)
-            } else {
-                result.reject(code: "-1", message: "Invalid viewId or feedbackJson argument", details: nil)
-            }
-
-        default:
-            return false
+    public func showFindView(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
         }
+        viewInstance.show()
+        result.success()
+    }
 
-        return true
+    public func hideFindView(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.hide()
+        result.success()
+    }
+
+    public func createCommand(
+        _ method: any ScanditFrameworksCore.FrameworksMethodCall
+    ) -> (any ScanditFrameworksCore.BaseCommand)? {
+        BarcodeFindModuleCommandFactory.create(module: self, method)
     }
 }
 
