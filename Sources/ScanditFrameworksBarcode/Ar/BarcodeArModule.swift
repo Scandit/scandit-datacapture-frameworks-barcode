@@ -46,33 +46,6 @@ open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleO
         BarcodeArDefaults.shared.toEncodable()
     }
 
-    public func registerBarcodeArFilter(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
-            return
-        }
-        viewInstance.addBarcodeArFilter()
-        result.successAndKeepCallback(result: nil)
-    }
-
-    public func unregisterBarcodeArFilter(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.removeBarcodeArFilter()
-        result.success()
-    }
-
-    public func finishBarcodeArFilterBarcodes(viewId: Int, filteredBarcodesJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.finishFilterBarcodes(filteredBarcodesJson: filteredBarcodesJson)
-        result.success()
-    }
-
     public func registerBarcodeArViewUiListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.successAndKeepCallback(result: nil)

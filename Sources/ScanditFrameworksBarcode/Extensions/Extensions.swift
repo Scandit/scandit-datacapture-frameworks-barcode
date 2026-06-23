@@ -19,19 +19,6 @@ public extension ScanIntention {
     }
 }
 
-public extension SelectionMode {
-    var jsonString: String {
-        switch self {
-        case .off:
-            return "off"
-        case .on:
-            return "on"
-        case .auto:
-            return "auto"
-        }
-    }
-}
-
 extension JSONValue {
     func getObjectAsString(forKey: String) -> String {
         if self.containsObject(withKey: forKey) {

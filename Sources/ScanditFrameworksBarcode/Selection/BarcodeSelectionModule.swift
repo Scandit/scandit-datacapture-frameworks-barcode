@@ -69,16 +69,6 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         result.success()
     }
 
-    public func freezeCameraInBarcodeSelection(modeId: Int, result: FrameworksResult) {
-        getModeFromCache(modeId)?.freezeCamera()
-        result.success()
-    }
-
-    public func selectUnselectedBarcodes(modeId: Int, result: FrameworksResult) {
-        getModeFromCache(modeId)?.selectUnselectedBarcodes()
-        result.success()
-    }
-
     public func resetBarcodeSelection(modeId: Int, result: FrameworksResult) {
         getModeFromCache(modeId)?.resetSelection()
         result.success()
@@ -100,15 +90,6 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
     public func resetBarcodeSelectionSession(modeId: Int, result: FrameworksResult) {
         getModeFromCache(modeId)?.resetSession(frameSequenceId: nil)
         result.success()
-    }
-
-    public func selectUnselectedBarcodesInBarcodeSelectionSession(modeId: Int, result: FrameworksResult) {
-        getModeFromCache(modeId)?.selectUnselectedBarcodesInSession()
-        result.success()
-    }
-
-    public func getBarcodeSelectionLicenseInfo(modeId: Int, result: FrameworksResult) {
-        result.success(result: getModeFromCache(modeId)?.licenseInfoJsonString)
     }
 
     public func finishBarcodeSelectionDidSelect(modeId: Int, enabled: Bool, result: FrameworksResult) {
@@ -168,15 +149,6 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
             return
         }
         overlay.setTextForAimToSelectAutoHint(text)
-        result.success(result: nil)
-    }
-
-    public func clearSelectedBarcodeBrushes(result: FrameworksResult) {
-        guard let overlay: BarcodeSelectionBasicOverlay = captureViewHandler.findFirstOverlayOfType() else {
-            result.reject(error: BarcodeSelectionError.nilOverlay)
-            return
-        }
-        overlay.clearSelectedBarcodeBrushes()
         result.success(result: nil)
     }
 

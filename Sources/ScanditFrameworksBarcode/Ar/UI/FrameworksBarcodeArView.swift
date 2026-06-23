@@ -17,7 +17,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
     private let barcodeArViewUiDelegate: FrameworksBarcodeArViewUiListener
     private let highlightProvider: FrameworksBarcodeArHighlightProvider
     private let annotationProvider: FrameworksBarcodeArAnnotationProvider
-    private let barcodeFilter: FrameworksBarcodeArFilter
     private let popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate
     private let deserializer: BarcodeArDeserializer
     private let viewDeserializer: BarcodeArViewDeserializer
@@ -38,7 +37,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         barcodeArViewUiDelegate: FrameworksBarcodeArViewUiListener,
         highlightProvider: FrameworksBarcodeArHighlightProvider,
         annotationProvider: FrameworksBarcodeArAnnotationProvider,
-        barcodeFilter: FrameworksBarcodeArFilter,
         popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate,
         context: DataCaptureContext,
         augmentationsCache: BarcodeArAugmentationsCache,
@@ -49,7 +47,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         self.barcodeArViewUiDelegate = barcodeArViewUiDelegate
         self.highlightProvider = highlightProvider
         self.annotationProvider = annotationProvider
-        self.barcodeFilter = barcodeFilter
         self.popoverAnnotationDelegate = popoverAnnotationDelegate
         self.context = context
         self.augmentationsCache = augmentationsCache
@@ -84,11 +81,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
             mode.addListener(barcodeArListener)
         } else {
             mode.removeListener(barcodeArListener)
-        }
-        if creationData.hasBarcodeFilter {
-            addBarcodeArFilter()
-        } else {
-            removeBarcodeArFilter()
         }
     }
 
@@ -163,18 +155,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
 
     public func removeBarcodeArAnnotationProvider() {
         view.annotationProvider = nil
-    }
-
-    public func addBarcodeArFilter() {
-        mode.setBarcodeFilter(barcodeFilter)
-    }
-
-    public func removeBarcodeArFilter() {
-        mode.setBarcodeFilter(nil)
-    }
-
-    public func finishFilterBarcodes(filteredBarcodesJson: String) {
-        barcodeFilter.finishFilterBarcodes(filteredBarcodesJson: filteredBarcodesJson)
     }
 
     public func addBarcodeArListener() {
@@ -279,17 +259,11 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
             cache: augmentationsCache
         )
 
-        let barcodeFilter = FrameworksBarcodeArFilter(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
-
         let instance = FrameworksBarcodeArView(
             barcodeArListener: barcodeArListener,
             barcodeArViewUiDelegate: barcodeArViewUiDelegate,
             highlightProvider: highlightProvider,
             annotationProvider: annotationProvider,
-            barcodeFilter: barcodeFilter,
             popoverAnnotationDelegate: popoverAnnotationDelegate,
             context: context,
             augmentationsCache: augmentationsCache

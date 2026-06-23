@@ -85,7 +85,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 
         parent.addSubview(view)
-        view.prepareScanning(with: self.dataCaptureContext)
+
     }
 
     private func postModeChanges(_ changeParams: BarcodeCountViewCreationData) {

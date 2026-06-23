@@ -6,13 +6,11 @@
 
 import Foundation
 import ScanditBarcodeCapture
-import ScanditCaptureCore
 
 internal class BarcodeCountStatusProviderResult {
     private enum FieldNames {
         static let status = "status"
         static let barcodeId = "barcodeId"
-        static let icon = "icon"
         static let statusList = "statusList"
         static let errorMessage = "errorMessage"
         static let enabledMessage = "statusModeEnabledMessage"
@@ -72,21 +70,13 @@ internal class BarcodeCountStatusProviderResult {
 
         var items: [BarcodeCountStatusItem] = []
         for item in jsonItems {
-            guard let trackedBarcodeId = item[FieldNames.barcodeId] as? Int,
-                let barcode = barcodesFromEvent.first(where: { $0.identifier == trackedBarcodeId })
-            else { continue }
-
-            let icon: ScanditIcon?
-            if let iconDict = item[FieldNames.icon],
-                let iconJson = try? JSONSerialization.data(withJSONObject: iconDict),
-                let iconJsonString = String(data: iconJson, encoding: .utf8),
-                let parsedIcon = try? ScanditIcon(fromJSONString: iconJsonString)
+            if let trackedBarcodeId = item[FieldNames.barcodeId] as? Int,
+                let barcode = barcodesFromEvent.first(where: { $0.identifier == trackedBarcodeId }),
+                let statusString = item[FieldNames.status] as? String
             {
-                icon = parsedIcon
-            } else {
-                icon = (item[FieldNames.status] as? String)?.toBarcodeCountIcon()
+                let status = statusString.toBarcodeCountStatus()
+                items.append(BarcodeCountStatusItem(barcode: barcode, status: status))
             }
-            items.append(BarcodeCountStatusItem(barcode: barcode, icon: icon))
         }
         return items
     }
@@ -103,24 +93,24 @@ internal class BarcodeCountStatusProviderResult {
 }
 
 private extension String {
-    func toBarcodeCountIcon() -> ScanditIcon? {
+    func toBarcodeCountStatus() -> BarcodeCountStatus {
         switch self {
-        case "expired":
-            return ScanditIconBuilder().withIcon(.expiredItem).build()
-        case "fragile":
-            return ScanditIconBuilder().withIcon(.fragileItem).build()
-        case "wrong":
-            return ScanditIconBuilder().withIcon(.wrongItem).build()
-        case "lowStock":
-            return ScanditIconBuilder().withIcon(.lowStock).build()
-        case "qualityCheck":
-            return ScanditIconBuilder().withIcon(.inspectItem).build()
         case "notAvailable":
-            return ScanditIconBuilder().withIcon(.xMark).build()
+            return .notAvailable
+        case "expired":
+            return .expired
+        case "fragile":
+            return .fragile
+        case "qualityCheck":
+            return .qualityCheck
+        case "lowStock":
+            return .lowStock
+        case "wrong":
+            return .wrong
         case "expiringSoon":
-            return ScanditIconBuilder().withIcon(.exclamationMark).build()
+            return .expiringSoon
         default:
-            return nil
+            return .none
         }
     }
 }

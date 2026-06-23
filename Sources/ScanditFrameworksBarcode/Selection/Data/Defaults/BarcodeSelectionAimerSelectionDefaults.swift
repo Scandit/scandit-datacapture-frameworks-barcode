@@ -12,18 +12,7 @@ struct BarcodeSelectionAimerSelectionDefaults: DefaultsEncodable {
 
     func toEncodable() -> [String: Any?] {
         [
-            "defaultSelectionStrategy": aimerSelection.selectionStrategy.jsonString,
-            "defaultAimerBehavior": aimerSelection.aimerBehavior.jsonString,
+            "defaultSelectionStrategy": aimerSelection.selectionStrategy.jsonString
         ]
-    }
-}
-
-private extension BarcodeSelectionAimerBehavior {
-    var jsonString: String {
-        switch self {
-        case .toggleSelection: return "toggleSelection"
-        case .repeatSelection: return "repeatSelection"
-        @unknown default: return "repeatSelection"
-        }
     }
 }

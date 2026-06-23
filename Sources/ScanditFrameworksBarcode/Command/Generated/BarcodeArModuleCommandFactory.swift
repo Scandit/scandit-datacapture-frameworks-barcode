@@ -33,12 +33,6 @@ public class BarcodeArModuleCommandFactory {
             return RegisterBarcodeArHighlightProviderCommand(module: module, method)
         case "unregisterBarcodeArHighlightProvider":
             return UnregisterBarcodeArHighlightProviderCommand(module: module, method)
-        case "registerBarcodeArFilter":
-            return RegisterBarcodeArFilterCommand(module: module, method)
-        case "unregisterBarcodeArFilter":
-            return UnregisterBarcodeArFilterCommand(module: module, method)
-        case "finishBarcodeArFilterBarcodes":
-            return FinishBarcodeArFilterBarcodesCommand(module: module, method)
         case "onCustomHighlightClicked":
             return OnCustomHighlightClickedCommand(module: module, method)
         case "barcodeArViewStart":

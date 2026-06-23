@@ -86,7 +86,6 @@ public class BarcodeArHighlightParser {
                     highlight.brush = brush
                 }
             }
-            highlight.isPulsing = json.bool(forKey: "isPulsing", default: highlight.isPulsing)
         } catch {
             Log.error("Unable to parse the BarcodeArCircleHighlight from the provided json.", error: error)
         }

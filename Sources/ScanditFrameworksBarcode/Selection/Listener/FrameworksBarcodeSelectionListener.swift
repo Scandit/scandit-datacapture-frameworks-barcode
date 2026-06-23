@@ -75,10 +75,6 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
         session.selectionSession?.reset()
     }
 
-    public func selectUnselectedBarcodesInSession() {
-        lastSession?.selectionSession?.selectUnselectedBarcodes()
-    }
-
     public func barcodeSelection(
         _ barcodeSelection: BarcodeSelection,
         didUpdateSelection session: BarcodeSelectionSession,

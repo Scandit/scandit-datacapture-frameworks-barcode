@@ -18,7 +18,7 @@ struct BarcodeCountMappingFlowSettingsDefaults: DefaultsEncodable {
             "nextButtonText": BarcodeCountViewDefaults.defaultMappingNextButtonText,
             "stepBackGuidanceText": BarcodeCountViewDefaults.defaultMappingStepBackGuidanceText,
             "redoScanButtonText": BarcodeCountViewDefaults.defaultMappingRedoScanButtonText,
-            "restartButtonText": "restart",  // option not available in ios
+            "restartButtonText": "restart",  // option not avaialbe in ios
             "finishButtonText": BarcodeCountViewDefaults.defaultMappingFinishButtonText,
         ]
     }

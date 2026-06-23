@@ -31,8 +31,6 @@ SDC_EXPORTED_SYMBOL
 @property (class, nonatomic, readonly) BOOL defaultTapToUncountEnabled;
 @property (class, nonatomic, readonly) BOOL defaultShouldShowStatusIconsOnScan;
 @property (class, nonatomic, readonly) SDCAnchor defaultTorchControlPosition;
-@property (class, nonatomic, readonly) SDCLogoStyle defaultLogoStyle;
-@property (class, nonatomic, readonly) SDCAnchor defaultLogoAnchor;
 @property (class, nonatomic, readonly) NSString *defaultExitButtonText;
 @property (class, nonatomic, readonly) NSString *defaultClearHighlightsButtonText;
 @property (class, nonatomic, readonly) NSString *defaultTextForUnrecognizedBarcodesDetectedHint;

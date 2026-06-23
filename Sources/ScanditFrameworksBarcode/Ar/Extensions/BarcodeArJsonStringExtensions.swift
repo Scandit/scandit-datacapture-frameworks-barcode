@@ -22,15 +22,3 @@ extension BarcodeArInfoAnnotationWidthPreset {
 extension BarcodeArInfoAnnotationAnchor {
     var jsonString: String { NSStringFromBarcodeArInfoAnnotationAnchor(self) }
 }
-
-extension BarcodeArPopoverAnnotationAnchor {
-    var jsonString: String {
-        switch self {
-        case .top: return "top"
-        case .bottom: return "bottom"
-        case .left: return "left"
-        case .right: return "right"
-        @unknown default: return "bottom"
-        }
-    }
-}

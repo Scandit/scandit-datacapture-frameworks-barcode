@@ -26,10 +26,6 @@ public class BarcodeSelectionModuleCommandFactory {
         switch method.method {
         case "unfreezeCameraInBarcodeSelection":
             return UnfreezeCameraInBarcodeSelectionCommand(module: module, method)
-        case "freezeCameraInBarcodeSelection":
-            return FreezeCameraInBarcodeSelectionCommand(module: module, method)
-        case "selectUnselectedBarcodes":
-            return SelectUnselectedBarcodesCommand(module: module, method)
         case "resetBarcodeSelection":
             return ResetBarcodeSelectionCommand(module: module, method)
         case "selectAimedBarcode":
@@ -52,10 +48,6 @@ public class BarcodeSelectionModuleCommandFactory {
             return GetCountForBarcodeInBarcodeSelectionSessionCommand(module: module, method)
         case "resetBarcodeSelectionSession":
             return ResetBarcodeSelectionSessionCommand(module: module, method)
-        case "selectUnselectedBarcodesInBarcodeSelectionSession":
-            return SelectUnselectedBarcodesInBarcodeSelectionSessionCommand(module: module, method)
-        case "getBarcodeSelectionLicenseInfo":
-            return GetBarcodeSelectionLicenseInfoCommand(module: module, method)
         case "finishBarcodeSelectionDidSelect":
             return FinishBarcodeSelectionDidSelectCommand(module: module, method)
         case "finishBarcodeSelectionDidUpdateSession":
@@ -66,8 +58,6 @@ public class BarcodeSelectionModuleCommandFactory {
             return UnregisterBarcodeSelectionListenerForEventsCommand(module: module, method)
         case "setTextForAimToSelectAutoHint":
             return SetTextForAimToSelectAutoHintCommand(module: module, method)
-        case "clearSelectedBarcodeBrushes":
-            return ClearSelectedBarcodeBrushesCommand(module: module)
         case "removeAimedBarcodeBrushProvider":
             return RemoveAimedBarcodeBrushProviderCommand(module: module)
         case "setAimedBarcodeBrushProvider":

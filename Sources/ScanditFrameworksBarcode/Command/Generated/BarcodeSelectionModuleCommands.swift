@@ -30,38 +30,6 @@ public class UnfreezeCameraInBarcodeSelectionCommand: BarcodeSelectionModuleComm
         )
     }
 }
-/// Freezes the camera in barcode selection mode
-public class FreezeCameraInBarcodeSelectionCommand: BarcodeSelectionModuleCommand {
-    private let module: BarcodeSelectionModule
-    private let modeId: Int
-    public init(module: BarcodeSelectionModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.modeId = method.argument(key: "modeId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        module.freezeCameraInBarcodeSelection(
-            modeId: modeId,
-            result: result
-        )
-    }
-}
-/// Selects the unselected barcodes in the current selection session
-public class SelectUnselectedBarcodesCommand: BarcodeSelectionModuleCommand {
-    private let module: BarcodeSelectionModule
-    private let modeId: Int
-    public init(module: BarcodeSelectionModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.modeId = method.argument(key: "modeId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        module.selectUnselectedBarcodes(
-            modeId: modeId,
-            result: result
-        )
-    }
-}
 /// Resets the barcode selection
 public class ResetBarcodeSelectionCommand: BarcodeSelectionModuleCommand {
     private let module: BarcodeSelectionModule
@@ -317,38 +285,6 @@ public class ResetBarcodeSelectionSessionCommand: BarcodeSelectionModuleCommand 
         )
     }
 }
-/// Selects the unselected barcodes currently tracked in the barcode selection session
-public class SelectUnselectedBarcodesInBarcodeSelectionSessionCommand: BarcodeSelectionModuleCommand {
-    private let module: BarcodeSelectionModule
-    private let modeId: Int
-    public init(module: BarcodeSelectionModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.modeId = method.argument(key: "modeId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        module.selectUnselectedBarcodesInBarcodeSelectionSession(
-            modeId: modeId,
-            result: result
-        )
-    }
-}
-/// Returns the BarcodeSelectionLicenseInfo JSON, or null when not available
-public class GetBarcodeSelectionLicenseInfoCommand: BarcodeSelectionModuleCommand {
-    private let module: BarcodeSelectionModule
-    private let modeId: Int
-    public init(module: BarcodeSelectionModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.modeId = method.argument(key: "modeId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        module.getBarcodeSelectionLicenseInfo(
-            modeId: modeId,
-            result: result
-        )
-    }
-}
 /// Finish callback for barcode selection did select event
 public class FinishBarcodeSelectionDidSelectCommand: BarcodeSelectionModuleCommand {
     private let module: BarcodeSelectionModule
@@ -451,19 +387,6 @@ public class SetTextForAimToSelectAutoHintCommand: BarcodeSelectionModuleCommand
         }
         module.setTextForAimToSelectAutoHint(
             text: text,
-            result: result
-        )
-    }
-}
-/// Clears the brushes applied to selected barcodes
-public class ClearSelectedBarcodeBrushesCommand: BarcodeSelectionModuleCommand {
-    private let module: BarcodeSelectionModule
-    public init(module: BarcodeSelectionModule) {
-        self.module = module
-    }
-
-    public func execute(result: FrameworksResult) {
-        module.clearSelectedBarcodeBrushes(
             result: result
         )
     }

@@ -352,14 +352,6 @@ private extension BarcodeArAnnotationParser {
         _ json: JSONValue,
         _ barcode: Barcode
     ) {
-        if let anchorJson = json.optionalString(forKey: "anchor") {
-            switch anchorJson {
-            case "top": annotation.anchor = .top
-            case "left": annotation.anchor = .left
-            case "right": annotation.anchor = .right
-            default: annotation.anchor = .bottom
-            }
-        }
         annotation.isEntirePopoverTappable = json.bool(forKey: "isEntirePopoverTappable", default: false)
         if json.bool(forKey: "hasListener", default: false) && annotation.delegate == nil {
             if annotation.delegate == nil {

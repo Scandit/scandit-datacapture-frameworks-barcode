@@ -68,8 +68,6 @@ struct DefaultsBarcodeCountView: DefaultsEncodable {
             "shouldShowStatusIconsOnScan": ViewDefaults.defaultShouldShowStatusIconsOnScan,
             "hardwareTriggerSupported": true,
             "hardwareTriggerEnabled": ViewDefaults.defaultHardwareTriggerEnabled,
-            "logoStyle": ViewDefaults.defaultLogoStyle.jsonString,
-            "logoAnchor": ViewDefaults.defaultLogoAnchor.jsonString,
         ]
     }
 }
