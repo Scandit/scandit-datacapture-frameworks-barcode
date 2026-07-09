@@ -78,6 +78,8 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
             "defaultInfoAnnotationBodyElementRightIcon":
                 ViewDefaults.defaultInfoAnnotationBodyComponentRightIcon?.jsonString,
             "defaultBarcodeArPopoverAnnotationButtonEnabled": ViewDefaults.defaultPopoverAnnotationButtonEnabled,
+            "defaultBarcodeArPopoverAnnotationAnchor": ViewDefaults.defaultPopoverAnnotationAnchor.jsonString,
+            "defaultHighlightIsPulsing": ViewDefaults.defaultHighlightIsPulsing,
         ]
     }
     // swiftlint:enable function_body_length

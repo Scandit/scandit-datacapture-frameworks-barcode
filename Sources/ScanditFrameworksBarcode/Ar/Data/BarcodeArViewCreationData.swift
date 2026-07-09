@@ -10,6 +10,7 @@ public class BarcodeArViewCreationData {
     let modeJson: String
     let viewJson: String
     let hasModeListener: Bool
+    let hasBarcodeFilter: Bool
     let hasUIListener: Bool
     let hasHighlightProvider: Bool
     let hasAnnotationProvider: Bool
@@ -26,6 +27,7 @@ public class BarcodeArViewCreationData {
         static let hasAnnotationProviderKey = "hasAnnotationProvider"
         static let viewIdKey = "viewId"
         static let hasModeListenerKey = "hasModeListener"
+        static let hasBarcodeFilterKey = "hasBarcodeFilter"
         static let isStartedKey = "isStarted"
     }
 
@@ -33,6 +35,7 @@ public class BarcodeArViewCreationData {
         modeJson: String,
         viewJson: String,
         hasModeListener: Bool,
+        hasBarcodeFilter: Bool,
         hasUIListener: Bool,
         hasHighlightProvider: Bool,
         hasAnnotationProvider: Bool,
@@ -43,6 +46,7 @@ public class BarcodeArViewCreationData {
         self.modeJson = modeJson
         self.viewJson = viewJson
         self.hasModeListener = hasModeListener
+        self.hasBarcodeFilter = hasBarcodeFilter
         self.hasUIListener = hasUIListener
         self.hasHighlightProvider = hasHighlightProvider
         self.hasAnnotationProvider = hasAnnotationProvider
@@ -80,6 +84,7 @@ public class BarcodeArViewCreationData {
             modeJson: modeJsonString,
             viewJson: viewJsonString,
             hasModeListener: (modeJsonObject[Keys.hasModeListenerKey] as? Bool) ?? false,
+            hasBarcodeFilter: (modeJsonObject[Keys.hasBarcodeFilterKey] as? Bool) ?? false,
             hasUIListener: (viewJsonObject[Keys.hasUIListenerKey] as? Bool) ?? false,
             hasHighlightProvider: (viewJsonObject[Keys.hasHighlightProviderKey] as? Bool) ?? false,
             hasAnnotationProvider: (viewJsonObject[Keys.hasAnnotationProviderKey] as? Bool) ?? false,
@@ -99,6 +104,7 @@ public class BarcodeArViewCreationData {
             modeJson: "{}",
             viewJson: viewJson,
             hasModeListener: false,
+            hasBarcodeFilter: false,
             hasUIListener: (viewJsonObject[Keys.hasUIListenerKey] as? Bool) ?? false,
             hasHighlightProvider: (viewJsonObject[Keys.hasHighlightProviderKey] as? Bool) ?? false,
             hasAnnotationProvider: (viewJsonObject[Keys.hasAnnotationProviderKey] as? Bool) ?? false,
@@ -118,6 +124,7 @@ public class BarcodeArViewCreationData {
             modeJson: modeJson,
             viewJson: "{}",
             hasModeListener: (modeJsonObject[Keys.hasModeListenerKey] as? Bool) ?? false,
+            hasBarcodeFilter: (modeJsonObject[Keys.hasBarcodeFilterKey] as? Bool) ?? false,
             hasUIListener: false,
             hasHighlightProvider: false,
             hasAnnotationProvider: false,
@@ -135,11 +142,11 @@ public class BarcodeArViewCreationData {
     }
 
     private static func getDefaultCreationParams() -> BarcodeArViewCreationData {
-        // Return default values if JSON parsing fails
         BarcodeArViewCreationData(
             modeJson: "{}",
             viewJson: "{}",
             hasModeListener: false,
+            hasBarcodeFilter: false,
             hasUIListener: false,
             hasHighlightProvider: false,
             hasAnnotationProvider: false,
