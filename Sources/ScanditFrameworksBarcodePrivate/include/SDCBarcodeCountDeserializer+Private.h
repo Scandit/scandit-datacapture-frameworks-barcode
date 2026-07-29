@@ -4,7 +4,7 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-#import <ScanditBarcodeCaptureDeserializer/SDCBarcodeCountDeserializer.h>
+#import <ScanditBarcodeCapture/SDCBarcodeCountDeserializer.h>
 
 @protocol SDCBarcodeCountDeserializerDelegate;
 

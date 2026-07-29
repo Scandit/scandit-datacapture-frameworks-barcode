@@ -12,7 +12,6 @@ public enum FrameworksSparkScanViewUIEvent: String, CaseIterable {
     case barcodeCountButtonTapped = "SparkScanViewUiListener.barcodeCountButtonTapped"
     case labelCaptureButtonTapped = "SparkScanViewUiListener.labelCaptureButtonTapped"
     case didChangeViewState = "SparkScanViewUiListener.didChangeViewState"
-    case didChangeScanningMode = "SparkScanViewUiListener.didChangeScanningMode"
 }
 
 fileprivate extension Event {
@@ -35,7 +34,6 @@ open class FrameworksSparkScanViewUIListener: NSObject, SparkScanViewUIDelegate 
     private let barcodeFindButtonTappedEvent = Event(.barcodeFindButtonTapped)
     private let barcodeCountButtonTappedEvent = Event(.barcodeCountButtonTapped)
     private let labelCaptureButtonTappedEvent = Event(.labelCaptureButtonTapped)
-    private let didChangeScanningModeEvent = Event(.didChangeScanningMode)
 
     private var isEnabled = AtomicValue<Bool>()
 
@@ -72,15 +70,5 @@ open class FrameworksSparkScanViewUIListener: NSObject, SparkScanViewUIDelegate 
             emitter.hasViewSpecificListenersForEvent(viewId: viewId, for: labelCaptureButtonTappedEvent)
         else { return }
         labelCaptureButtonTappedEvent.emit(on: emitter, payload: ["viewId": viewId])
-    }
-
-    public func sparkScanView(_ view: SparkScanView, didChange scanningMode: SparkScanScanningMode) {
-        guard isEnabled.value,
-            emitter.hasViewSpecificListenersForEvent(viewId: viewId, for: didChangeScanningModeEvent)
-        else { return }
-        didChangeScanningModeEvent.emit(
-            on: emitter,
-            payload: ["scanningMode": scanningMode.jsonString, "viewId": viewId]
-        )
     }
 }

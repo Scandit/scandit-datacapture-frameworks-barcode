@@ -6,7 +6,6 @@
 
 import Foundation
 import ScanditBarcodeCapture
-import ScanditBarcodeCaptureDeserializer
 import ScanditCaptureCore
 import ScanditFrameworksCore
 import UIKit
@@ -17,7 +16,7 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
     private let barcodeArViewUiDelegate: FrameworksBarcodeArViewUiListener
     private let highlightProvider: FrameworksBarcodeArHighlightProvider
     private let annotationProvider: FrameworksBarcodeArAnnotationProvider
-    private let barcodeFilter: FrameworksBarcodeArFilter
+    private let infoAnnotationDelegate: FrameworksInfoAnnotationDelegate
     private let popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate
     private let deserializer: BarcodeArDeserializer
     private let viewDeserializer: BarcodeArViewDeserializer
@@ -38,7 +37,7 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         barcodeArViewUiDelegate: FrameworksBarcodeArViewUiListener,
         highlightProvider: FrameworksBarcodeArHighlightProvider,
         annotationProvider: FrameworksBarcodeArAnnotationProvider,
-        barcodeFilter: FrameworksBarcodeArFilter,
+        infoAnnotationDelegate: FrameworksInfoAnnotationDelegate,
         popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate,
         context: DataCaptureContext,
         augmentationsCache: BarcodeArAugmentationsCache,
@@ -49,7 +48,7 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         self.barcodeArViewUiDelegate = barcodeArViewUiDelegate
         self.highlightProvider = highlightProvider
         self.annotationProvider = annotationProvider
-        self.barcodeFilter = barcodeFilter
+        self.infoAnnotationDelegate = infoAnnotationDelegate
         self.popoverAnnotationDelegate = popoverAnnotationDelegate
         self.context = context
         self.augmentationsCache = augmentationsCache
@@ -84,11 +83,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
             mode.addListener(barcodeArListener)
         } else {
             mode.removeListener(barcodeArListener)
-        }
-        if creationData.hasBarcodeFilter {
-            addBarcodeArFilter()
-        } else {
-            removeBarcodeArFilter()
         }
     }
 
@@ -163,18 +157,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
 
     public func removeBarcodeArAnnotationProvider() {
         view.annotationProvider = nil
-    }
-
-    public func addBarcodeArFilter() {
-        mode.setBarcodeFilter(barcodeFilter)
-    }
-
-    public func removeBarcodeArFilter() {
-        mode.setBarcodeFilter(nil)
-    }
-
-    public func finishFilterBarcodes(filteredBarcodesJson: String) {
-        barcodeFilter.finishFilterBarcodes(filteredBarcodesJson: filteredBarcodesJson)
     }
 
     public func addBarcodeArListener() {
@@ -261,13 +243,18 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
             parser: BarcodeArHighlightParser(emitter: emitter),
             cache: augmentationsCache
         )
+        let infoAnnotationDelegate = FrameworksInfoAnnotationDelegate(
+            emitter: emitter,
+            viewId: viewCreationParams.viewId
+        )
         let popoverAnnotationDelegate = FrameworksPopoverAnnotationDelegate(
             emitter: emitter,
             viewId: viewCreationParams.viewId
         )
 
-        let annotationParser = BarcodeArAnnotationParser(viewId: viewCreationParams.viewId, emitter: emitter)
+        let annotationParser = BarcodeArAnnotationParser()
         annotationParser.setDelegates(
+            infoAnnotationDelegate: infoAnnotationDelegate,
             popoverAnnotationDelegate: popoverAnnotationDelegate,
             cache: augmentationsCache
         )
@@ -279,17 +266,12 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
             cache: augmentationsCache
         )
 
-        let barcodeFilter = FrameworksBarcodeArFilter(
-            emitter: emitter,
-            viewId: viewCreationParams.viewId
-        )
-
         let instance = FrameworksBarcodeArView(
             barcodeArListener: barcodeArListener,
             barcodeArViewUiDelegate: barcodeArViewUiDelegate,
             highlightProvider: highlightProvider,
             annotationProvider: annotationProvider,
-            barcodeFilter: barcodeFilter,
+            infoAnnotationDelegate: infoAnnotationDelegate,
             popoverAnnotationDelegate: popoverAnnotationDelegate,
             context: context,
             augmentationsCache: augmentationsCache

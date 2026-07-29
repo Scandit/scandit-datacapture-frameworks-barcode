@@ -17,7 +17,6 @@ SDC_EXPORTED_SYMBOL
 @property (class, nonatomic, readonly) BOOL defaultLabelCaptureButtonVisibility;
 @property (class, nonatomic, readonly) BOOL defaultBarcodeFindButtonVisibility;
 @property (class, nonatomic, readonly) BOOL defaultTargetModeButtonVisibility;
-@property (class, nonatomic, readonly) BOOL defaultSelectionModeButtonVisibility;
 @property (class, nonatomic, readonly) BOOL defaultScanningBehaviorButtonVisibility;
 @property (class, nonatomic, readonly) BOOL defaultZoomSwitchControlVisibility;
 @property (class, nonatomic, readonly) UIColor *defaultToolbarBackgroundColor;
@@ -32,8 +31,6 @@ SDC_EXPORTED_SYMBOL
 @property (class, nonatomic, readonly) UIColor *defaultToastTextColor;
 @property (class, nonatomic, readonly) NSString *defaultTargetModeEnabledMessage;
 @property (class, nonatomic, readonly) NSString *defaultTargetModeDisabledMessage;
-@property (class, nonatomic, readonly, nullable) NSString *defaultSelectionModeOnMessage;
-@property (class, nonatomic, readonly, nullable) NSString *defaultSelectionModeOffMessage;
 @property (class, nonatomic, readonly) NSString *defaultContinuousModeEnabledMessage;
 @property (class, nonatomic, readonly) NSString *defaultContinuousModeDisabledMessage;
 
