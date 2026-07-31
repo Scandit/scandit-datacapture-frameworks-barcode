@@ -67,8 +67,7 @@ open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationP
         if let annotation = self.parser.get(
             json: annotationJson,
             barcode: callbackData.barcode,
-            emitter: emitter,
-            viewId: viewId
+            emitter: emitter
         ) {
             cache.addAnnotation(barcodeId: barcodeId, annotation: annotation)
             callbackData.callback(annotation)

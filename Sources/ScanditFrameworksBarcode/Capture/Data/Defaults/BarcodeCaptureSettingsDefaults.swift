@@ -16,6 +16,7 @@ struct BarcodeCaptureSettingsDefaults: DefaultsEncodable {
                 ? barcodeCaptureSettings.codeDuplicateFilter : Int(barcodeCaptureSettings.codeDuplicateFilter * 1000),
             "batterySaving": barcodeCaptureSettings.batterySaving.jsonString,
             "scanIntention": barcodeCaptureSettings.scanIntention.jsonString,
+            "selectionMode": barcodeCaptureSettings.selectionMode.jsonString,
         ]
     }
 }

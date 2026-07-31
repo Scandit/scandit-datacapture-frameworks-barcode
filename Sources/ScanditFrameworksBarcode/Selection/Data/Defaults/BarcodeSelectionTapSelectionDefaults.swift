@@ -14,6 +14,7 @@ struct BarcodeSelectionTapSelectionDefaults: DefaultsEncodable {
         [
             "defaultFreezeBehaviour": tapSelection.freezeBehavior.jsonString,
             "defaultTapBehaviour": tapSelection.tapBehavior.jsonString,
+            "shouldFreezeOnDoubleTap": tapSelection.shouldFreezeOnDoubleTap,
         ]
     }
 }
