@@ -95,6 +95,10 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
         result.success()
     }
 
+    public func getBarcodeCaptureLicenseInfo(modeId: Int, result: FrameworksResult) {
+        result.success(result: getModeFromCache(modeId)?.licenseInfoJsonString)
+    }
+
     public func setBarcodeCaptureModeEnabledState(modeId: Int, enabled: Bool, result: FrameworksResult) {
         getModeFromCache(modeId)?.isEnabled = enabled
         result.success()

@@ -218,6 +218,42 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         }
     }
 
+    public func finishIconForRecognizedBarcodeEvent(icon: BarcodeCountIcon?, trackedBarcodeId: Int) {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
+            with: trackedBarcodeId,
+            for: .iconForRecognizedBarcode
+        ), let icon = icon {
+            view.setIcon(icon, forRecognizedBarcode: trackedBarcode)
+        }
+    }
+
+    public func finishIconForRecognizedBarcodeNotInListEvent(icon: BarcodeCountIcon?, trackedBarcodeId: Int) {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
+            with: trackedBarcodeId,
+            for: .iconForRecognizedBarcodeNotInList
+        ), let icon = icon {
+            view.setIcon(icon, forRecognizedBarcodeNotInList: trackedBarcode)
+        }
+    }
+
+    public func finishIconForAcceptedBarcodeEvent(icon: BarcodeCountIcon?, trackedBarcodeId: Int) {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
+            with: trackedBarcodeId,
+            for: .iconForAcceptedBarcode
+        ), let icon = icon {
+            view.setIcon(icon, forAcceptedBarcode: trackedBarcode)
+        }
+    }
+
+    public func finishIconForRejectedBarcodeEvent(icon: BarcodeCountIcon?, trackedBarcodeId: Int) {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
+            with: trackedBarcodeId,
+            for: .iconForRejectedBarcode
+        ), let icon = icon {
+            view.setIcon(icon, forRejectedBarcode: trackedBarcode)
+        }
+    }
+
     public func resetBarcodeCountSession(frameSequenceId: Int?) {
         barcodeCountListener.resetSession(frameSequenceId: frameSequenceId)
     }
@@ -367,8 +403,10 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         view.uiDelegate = nil
         mode.removeListener(barcodeCountListener)
         mode.reset()
-        DispatchQueue.main.async { [weak self] in
-            self?.view.removeFromSuperview()
+        // Strong capture: dispose cleanup must not race wrapper dealloc.
+        let view: BarcodeCountView = self.view
+        DispatchQueue.main.async {
+            view.removeFromSuperview()
         }
     }
 }

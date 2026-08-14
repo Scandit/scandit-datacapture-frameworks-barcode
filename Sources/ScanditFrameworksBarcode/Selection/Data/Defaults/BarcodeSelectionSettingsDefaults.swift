@@ -16,6 +16,7 @@ struct BarcodeSelectionSettingsDefaults: DefaultsEncodable {
             "singleBarcodeAutoDetectionEnabled": settings.singleBarcodeAutoDetection,
             "selectionType": settings.selectionType.jsonString,
             "swipeGesturesEnabled": settings.swipeGesturesEnabled,
+            "tapGestureForSelectionEnabled": settings.tapGestureForSelectionEnabled,
         ]
     }
 }

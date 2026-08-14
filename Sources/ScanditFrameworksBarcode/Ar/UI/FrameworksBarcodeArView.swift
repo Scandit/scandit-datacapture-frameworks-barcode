@@ -33,6 +33,14 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
     private var internalViewId: Int = 0
     public var viewId: Int { internalViewId }
 
+    // Tracks whether we last asked the native view to be started, independent
+    // of the native view's own internal state. Native `SDCBarcodeArView.start()`
+    // can silently no-op/fail while the view is off-window (e.g. mid navigation
+    // transition) and never self-recovers once re-added to a window, so this
+    // flag lets `reassertStartedIfNeeded()` force a stop→start re-assert on
+    // window-attach (SDC-32484).
+    private var intendedStarted = false
+
     private init(
         barcodeArListener: FrameworksBarcodeArListener,
         barcodeArViewUiDelegate: FrameworksBarcodeArViewUiListener,
@@ -202,12 +210,39 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         mode.apply(settings)
     }
 
+    // start()/stop() drive the view's internal camera + UI and must run on the
+    // main thread. The JS-driven module RPCs arrive on the RN bridge queue —
+    // calling start() there silently fails to engage the camera (SDC-32484
+    // black screen on back-navigation; the creation-path start works only
+    // because addViewFromJson already dispatches to main).
     public func startMode() {
-        view.start()
+        intendedStarted = true
+        dispatchMain { [weak self] in
+            guard let self = self else { return }
+            self.view.start()
+        }
     }
 
     public func stopMode() {
-        view.stop()
+        intendedStarted = false
+        dispatchMain { [weak self] in
+            self?.view.stop()
+        }
+    }
+
+    // Re-asserts `start()` after the host view re-enters a window, in case
+    // the native view silently no-op'd/failed to start while off-window and
+    // never self-recovered (SDC-32484). A bare `start()` may no-op on the
+    // stale internal "started" flag, so this forces a full stop→start cycle.
+    public func reassertStartedIfNeeded() {
+        guard intendedStarted else {
+            return
+        }
+        dispatchMain { [weak self] in
+            guard let self = self else { return }
+            self.view.stop()
+            self.view.start()
+        }
     }
 
     public func hide() {
@@ -230,12 +265,16 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         barcodeArListener.finishDidUpdateSession(enabled: true)
         mode.removeListener(barcodeArListener)
 
-        dispatchMain { [weak self] in
-            guard let self = self else { return }
-            self.view.uiDelegate = nil
-            self.view.highlightProvider = nil
-            self.view.annotationProvider = nil
-            self.view.removeFromSuperview()
+        // Strong capture: the module drops its reference right after calling
+        // dispose(), so a weak-self block can lose the race against dealloc and
+        // silently skip the whole cleanup — leaving the disposed view holding
+        // the context's rendering target (SDC-32484: black SparkScan after AR).
+        let view: BarcodeArView = self.view
+        dispatchMain {
+            view.uiDelegate = nil
+            view.highlightProvider = nil
+            view.annotationProvider = nil
+            view.removeFromSuperview()
         }
     }
 

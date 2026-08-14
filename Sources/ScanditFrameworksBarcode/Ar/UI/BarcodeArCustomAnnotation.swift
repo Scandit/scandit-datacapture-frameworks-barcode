@@ -118,11 +118,16 @@ class BarcodeArCustomAnnotation: UIView, BarcodeArAnnotation {
             "viewId": self.viewId,
         ]
 
-        // We emit once immediately to avoid initial lag
+        // We emit once immediately to avoid initial lag. Wrap in the same
+        // batched shape `{ updates: [...], viewId }` so JS-side consumers
+        // (RN controller) that assume a `.updates` array work on first emit.
         if !hasEmittedOnce {
             emitter.emit(
                 name: BarcodeArCustomAnnotationEvents.updateCustomAnnotation.rawValue,
-                payload: payload
+                payload: [
+                    "updates": [payload],
+                    "viewId": self.viewId,
+                ]
             )
             hasEmittedOnce = true
             return
