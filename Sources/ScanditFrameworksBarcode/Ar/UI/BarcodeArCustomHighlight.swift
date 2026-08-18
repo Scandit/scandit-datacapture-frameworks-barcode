@@ -120,16 +120,11 @@ class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
             "barcodeId": self.barcode.uniqueId,
         ]
 
-        // We emit once immediately to avoid initial lag. Wrap in the same
-        // batched shape `{ updates: [...], viewId }` so JS-side consumers
-        // (RN controller) that assume a `.updates` array work on first emit.
+        // We emit once immediately to avoid initial lag
         if !hasEmittedOnce {
             emitter.emit(
                 name: BarcodeArCustomHighlightEvents.updateCustomHighlight.rawValue,
-                payload: [
-                    "updates": [payload],
-                    "viewId": self.viewId,
-                ]
+                payload: payload
             )
             hasEmittedOnce = true
             return

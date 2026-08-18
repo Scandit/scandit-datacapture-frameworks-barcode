@@ -27,22 +27,6 @@ public class ResetBarcodeCaptureSessionCommand: BarcodeCaptureModuleCommand {
         )
     }
 }
-/// Returns the BarcodeCaptureLicenseInfo JSON, or null when not available
-public class GetBarcodeCaptureLicenseInfoCommand: BarcodeCaptureModuleCommand {
-    private let module: BarcodeCaptureModule
-    private let modeId: Int
-    public init(module: BarcodeCaptureModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.modeId = method.argument(key: "modeId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        module.getBarcodeCaptureLicenseInfo(
-            modeId: modeId,
-            result: result
-        )
-    }
-}
 /// Register persistent event listener for barcode capture events
 public class RegisterBarcodeCaptureListenerForEventsCommand: BarcodeCaptureModuleCommand {
     private let module: BarcodeCaptureModule

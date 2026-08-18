@@ -42,14 +42,6 @@ public class BarcodeCountModuleCommandFactory {
             return FinishBarcodeCountBrushForAcceptedBarcodeCommand(module: module, method)
         case "finishBarcodeCountBrushForRejectedBarcode":
             return FinishBarcodeCountBrushForRejectedBarcodeCommand(module: module, method)
-        case "finishBarcodeCountIconForRecognizedBarcode":
-            return FinishBarcodeCountIconForRecognizedBarcodeCommand(module: module, method)
-        case "finishBarcodeCountIconForRecognizedBarcodeNotInList":
-            return FinishBarcodeCountIconForRecognizedBarcodeNotInListCommand(module: module, method)
-        case "finishBarcodeCountIconForAcceptedBarcode":
-            return FinishBarcodeCountIconForAcceptedBarcodeCommand(module: module, method)
-        case "finishBarcodeCountIconForRejectedBarcode":
-            return FinishBarcodeCountIconForRejectedBarcodeCommand(module: module, method)
         case "showBarcodeCountView":
             return ShowBarcodeCountViewCommand(module: module, method)
         case "hideBarcodeCountView":

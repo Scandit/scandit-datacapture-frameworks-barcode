@@ -27,9 +27,7 @@ public class FrameworksBarcodeArFilter: NSObject, BarcodeArFilter {
     }
 
     public func filterBarcodes(_ barcodes: [Barcode]) -> [Barcode] {
-        // Tracked AR scans can deliver the same barcode twice in one batch;
-        // keep the first occurrence rather than trapping on duplicates.
-        let barcodeMap = Dictionary(barcodes.map { ($0.uniqueId, $0) }, uniquingKeysWith: { first, _ in first })
+        let barcodeMap = Dictionary(uniqueKeysWithValues: barcodes.map { ($0.uniqueId, $0) })
 
         filterBarcodesEvent.emit(
             on: emitter,

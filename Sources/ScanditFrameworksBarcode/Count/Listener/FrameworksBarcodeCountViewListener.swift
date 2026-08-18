@@ -30,10 +30,6 @@ public enum BarcodeCountViewListenerEvent: String, CaseIterable {
     case brushForRecognizedBarcodeNotInList = "BarcodeCountViewListener.brushForRecognizedBarcodeNotInList"
     case brushForAcceptedBarcode = "BarcodeCountViewListener.brushForAcceptedBarcode"
     case brushForRejectedBarcode = "BarcodeCountViewListener.brushForRejectedBarcode"
-    case iconForRecognizedBarcode = "BarcodeCountViewListener.iconForRecognizedBarcode"
-    case iconForRecognizedBarcodeNotInList = "BarcodeCountViewListener.iconForRecognizedBarcodeNotInList"
-    case iconForAcceptedBarcode = "BarcodeCountViewListener.iconForAcceptedBarcode"
-    case iconForRejectedBarcode = "BarcodeCountViewListener.iconForRejectedBarcode"
     case didCompleteCaptureList = "BarcodeCountViewListener.didCompleteCaptureList"
     case didTapCluster = "BarcodeCountViewListener.didTapCluster"
 
@@ -53,11 +49,6 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
     private let brushForAcceptedBarcodeEvent = Event(.brushForAcceptedBarcode)
     private let brushForRejectedBarcodeEvent = Event(.brushForRejectedBarcode)
 
-    private let iconForRecognizedBarcodeEvent = Event(.iconForRecognizedBarcode)
-    private let iconForRecognizedBarcodeNotInListEvent = Event(.iconForRecognizedBarcodeNotInList)
-    private let iconForAcceptedBarcodeEvent = Event(.iconForAcceptedBarcode)
-    private let iconForRejectedBarcodeEvent = Event(.iconForRejectedBarcode)
-
     private let didTapRecognizedBarcodeEvent = Event(.didTapRecognizedBarcode)
     private let didTapFilteredBarcodeEvent = Event(.didTapFilteredBarcode)
     private let didTapRecognizedBarcodeNotInListEvent = Event(.didTapRecognizedBarcodeNotInList)
@@ -67,7 +58,6 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
     private let didTapCluster = Event(.didTapCluster)
 
     private var brushRequests: [String: TrackedBarcode] = [:]
-    private var iconRequests: [String: TrackedBarcode] = [:]
 
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
@@ -84,14 +74,6 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
             return brushForAcceptedBarcodeEvent
         case .brushForRejectedBarcode:
             return brushForRejectedBarcodeEvent
-        case .iconForRecognizedBarcode:
-            return iconForRecognizedBarcodeEvent
-        case .iconForRecognizedBarcodeNotInList:
-            return iconForRecognizedBarcodeNotInListEvent
-        case .iconForAcceptedBarcode:
-            return iconForAcceptedBarcodeEvent
-        case .iconForRejectedBarcode:
-            return iconForRejectedBarcodeEvent
         case .didTapRecognizedBarcode:
             return didTapRecognizedBarcodeEvent
         case .didTapFilteredBarcode:
@@ -122,19 +104,6 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
         return nil
     }
 
-    private func icon(for trackedBarcode: TrackedBarcode, event: BarcodeCountViewListenerEvent) -> BarcodeCountIcon? {
-        if !emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
-            return nil
-        }
-        eventDescriptor(for: event).emit(
-            on: emitter,
-            payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId]
-        )
-        let key = trackedBarcode.identifier.key(for: event)
-        iconRequests[key] = trackedBarcode
-        return nil
-    }
-
     private func emit(event: BarcodeCountViewListenerEvent, for trackedBarcode: TrackedBarcode) {
         if emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
             eventDescriptor(for: event).emit(
@@ -152,18 +121,6 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
         let trackedBarcode = brushRequests[key]
         if trackedBarcode != nil {
             brushRequests.removeValue(forKey: key)
-        }
-        return trackedBarcode
-    }
-
-    func getTrackedBarcodeForIcon(
-        with trackedBarcodeId: Int,
-        for event: BarcodeCountViewListenerEvent
-    ) -> TrackedBarcode? {
-        let key = trackedBarcodeId.key(for: event)
-        let trackedBarcode = iconRequests[key]
-        if trackedBarcode != nil {
-            iconRequests.removeValue(forKey: key)
         }
         return trackedBarcode
     }
@@ -194,34 +151,6 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
         brushForRejectedBarcode trackedBarcode: TrackedBarcode
     ) -> Brush? {
         brush(for: trackedBarcode, event: .brushForRejectedBarcode)
-    }
-
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        iconForRecognizedBarcode trackedBarcode: TrackedBarcode
-    ) -> BarcodeCountIcon? {
-        icon(for: trackedBarcode, event: .iconForRecognizedBarcode)
-    }
-
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        iconForRecognizedBarcodeNotInList trackedBarcode: TrackedBarcode
-    ) -> BarcodeCountIcon? {
-        icon(for: trackedBarcode, event: .iconForRecognizedBarcodeNotInList)
-    }
-
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        iconForAcceptedBarcode trackedBarcode: TrackedBarcode
-    ) -> BarcodeCountIcon? {
-        icon(for: trackedBarcode, event: .iconForAcceptedBarcode)
-    }
-
-    public func barcodeCountView(
-        _ view: BarcodeCountView,
-        iconForRejectedBarcode trackedBarcode: TrackedBarcode
-    ) -> BarcodeCountIcon? {
-        icon(for: trackedBarcode, event: .iconForRejectedBarcode)
     }
 
     public func barcodeCountView(
@@ -279,6 +208,5 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
 
     public func clearCache() {
         brushRequests.removeAll()
-        iconRequests.removeAll()
     }
 }

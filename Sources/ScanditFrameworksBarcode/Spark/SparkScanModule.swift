@@ -81,10 +81,6 @@ open class SparkScanModule: NSObject, FrameworkModule {
         result.success()
     }
 
-    public func getSparkScanLicenseInfo(viewId: Int, result: FrameworksResult) {
-        result.success(result: viewCache.getView(viewId: viewId)?.licenseInfoJsonString)
-    }
-
     public func registerSparkScanViewListenerEvents(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.successAndKeepCallback(result: nil)

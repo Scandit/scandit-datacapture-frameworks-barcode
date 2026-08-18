@@ -96,10 +96,6 @@ public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
         mode.feedback = try BarcodeCaptureFeedback(fromJSONString: feedbackJson)
     }
 
-    public var licenseInfoJsonString: String? {
-        mode.barcodeCaptureLicenseInfo?.jsonString
-    }
-
     // MARK: - Factory Method
 
     public static func create(

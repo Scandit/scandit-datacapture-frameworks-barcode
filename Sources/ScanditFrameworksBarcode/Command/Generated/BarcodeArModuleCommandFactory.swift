@@ -47,10 +47,6 @@ public class BarcodeArModuleCommandFactory {
             return BarcodeArViewStopCommand(module: module, method)
         case "barcodeArViewPause":
             return BarcodeArViewPauseCommand(module: module, method)
-        case "showBarcodeArView":
-            return ShowBarcodeArViewCommand(module: module, method)
-        case "hideBarcodeArView":
-            return HideBarcodeArViewCommand(module: module, method)
         case "barcodeArViewReset":
             return BarcodeArViewResetCommand(module: module, method)
         case "updateBarcodeArView":

@@ -19,23 +19,12 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
 
     private let emitter: Emitter
     private let viewId: Int
+    private let responsiveAnnotationType: ResponsiveAnnotationType?
 
-    // Mutable: this delegate instance is cached and reused across parser updates for a given
-    // threshold slot (see BarcodeArAnnotationParser.responsiveDelegate), so both fields are
-    // refreshed in place rather than requiring a new delegate per update.
-    var responsiveAnnotationType: ResponsiveAnnotationType?
-    var responsiveAnnotationThreshold: Double?
-
-    public init(
-        emitter: Emitter,
-        viewId: Int,
-        responsiveAnnotationType: ResponsiveAnnotationType?,
-        responsiveAnnotationThreshold: Double? = nil
-    ) {
+    public init(emitter: Emitter, viewId: Int, responsiveAnnotationType: ResponsiveAnnotationType?) {
         self.emitter = emitter
         self.viewId = viewId
         self.responsiveAnnotationType = responsiveAnnotationType
-        self.responsiveAnnotationThreshold = responsiveAnnotationThreshold
     }
 
     private let didTapInfoAnnotationHeader = Event(
@@ -52,10 +41,6 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
             payload["responsiveAnnotationType"] = responsiveAnnotationType.rawValue
         }
 
-        if let responsiveAnnotationThreshold = responsiveAnnotationThreshold {
-            payload["responsiveAnnotationThreshold"] = responsiveAnnotationThreshold
-        }
-
         if let mw = mergeWith {
             payload = payload.merging(mw) { (_, new) in new }
         }
@@ -66,7 +51,10 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
     func barcodeArInfoAnnotationDidTapHeader(_ annotation: BarcodeArInfoAnnotation) {
         didTapInfoAnnotationHeader.emit(
             on: self.emitter,
-            payload: generatePayload(barcodeId: annotation.barcode.uniqueId)
+            payload: [
+                "barcodeId": annotation.barcode.uniqueId,
+                "viewId": self.viewId,
+            ]
         )
     }
 

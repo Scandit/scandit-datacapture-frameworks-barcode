@@ -174,9 +174,6 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
         if creationData.startSearching {
             view.startSearching()
         }
-        if let cameraStateOnStop = creationData.cameraStateOnStop {
-            view.cameraStateOnStop = cameraStateOnStop
-        }
     }
 
     private func updateModeProps(creationData: BarcodeFindViewCreationData) {

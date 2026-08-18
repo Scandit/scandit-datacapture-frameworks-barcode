@@ -26,8 +26,6 @@ public class BarcodeCaptureModuleCommandFactory {
         switch method.method {
         case "resetBarcodeCaptureSession":
             return ResetBarcodeCaptureSessionCommand(module: module)
-        case "getBarcodeCaptureLicenseInfo":
-            return GetBarcodeCaptureLicenseInfoCommand(module: module, method)
         case "registerBarcodeCaptureListenerForEvents":
             return RegisterBarcodeCaptureListenerForEventsCommand(module: module, method)
         case "unregisterBarcodeCaptureListenerForEvents":
