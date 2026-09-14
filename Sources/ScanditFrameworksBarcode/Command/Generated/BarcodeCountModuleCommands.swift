@@ -55,6 +55,10 @@ public class RegisterBarcodeCountViewListenerCommand: BarcodeCountModuleCommand 
                 "BarcodeCountViewListener.brushForRecognizedBarcodeNotInList",
                 "BarcodeCountViewListener.brushForAcceptedBarcode",
                 "BarcodeCountViewListener.brushForRejectedBarcode",
+                "BarcodeCountViewListener.iconForRecognizedBarcode",
+                "BarcodeCountViewListener.iconForRecognizedBarcodeNotInList",
+                "BarcodeCountViewListener.iconForAcceptedBarcode",
+                "BarcodeCountViewListener.iconForRejectedBarcode",
                 "BarcodeCountViewListener.didTapRecognizedBarcode",
                 "BarcodeCountViewListener.didTapFilteredBarcode",
                 "BarcodeCountViewListener.didTapRecognizedBarcodeNotInList",
@@ -88,6 +92,10 @@ public class UnregisterBarcodeCountViewListenerCommand: BarcodeCountModuleComman
                 "BarcodeCountViewListener.brushForRecognizedBarcodeNotInList",
                 "BarcodeCountViewListener.brushForAcceptedBarcode",
                 "BarcodeCountViewListener.brushForRejectedBarcode",
+                "BarcodeCountViewListener.iconForRecognizedBarcode",
+                "BarcodeCountViewListener.iconForRecognizedBarcodeNotInList",
+                "BarcodeCountViewListener.iconForAcceptedBarcode",
+                "BarcodeCountViewListener.iconForRejectedBarcode",
                 "BarcodeCountViewListener.didTapRecognizedBarcode",
                 "BarcodeCountViewListener.didTapFilteredBarcode",
                 "BarcodeCountViewListener.didTapRecognizedBarcodeNotInList",
@@ -252,6 +260,94 @@ public class FinishBarcodeCountBrushForRejectedBarcodeCommand: BarcodeCountModul
         module.finishBarcodeCountBrushForRejectedBarcode(
             viewId: viewId,
             brushJson: brushJson,
+            trackedBarcodeId: trackedBarcodeId,
+            result: result
+        )
+    }
+}
+/// Finish callback for recognized barcode icon
+public class FinishBarcodeCountIconForRecognizedBarcodeCommand: BarcodeCountModuleCommand {
+    private let module: BarcodeCountModule
+    private let viewId: Int
+    private let iconJson: String?
+    private let trackedBarcodeId: Int
+    public init(module: BarcodeCountModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+        self.iconJson = method.argument(key: "iconJson")
+        self.trackedBarcodeId = method.argument(key: "trackedBarcodeId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        module.finishBarcodeCountIconForRecognizedBarcode(
+            viewId: viewId,
+            iconJson: iconJson,
+            trackedBarcodeId: trackedBarcodeId,
+            result: result
+        )
+    }
+}
+/// Finish callback for recognized barcode not in list icon
+public class FinishBarcodeCountIconForRecognizedBarcodeNotInListCommand: BarcodeCountModuleCommand {
+    private let module: BarcodeCountModule
+    private let viewId: Int
+    private let iconJson: String?
+    private let trackedBarcodeId: Int
+    public init(module: BarcodeCountModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+        self.iconJson = method.argument(key: "iconJson")
+        self.trackedBarcodeId = method.argument(key: "trackedBarcodeId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        module.finishBarcodeCountIconForRecognizedBarcodeNotInList(
+            viewId: viewId,
+            iconJson: iconJson,
+            trackedBarcodeId: trackedBarcodeId,
+            result: result
+        )
+    }
+}
+/// Finish callback for accepted barcode icon
+public class FinishBarcodeCountIconForAcceptedBarcodeCommand: BarcodeCountModuleCommand {
+    private let module: BarcodeCountModule
+    private let viewId: Int
+    private let iconJson: String?
+    private let trackedBarcodeId: Int
+    public init(module: BarcodeCountModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+        self.iconJson = method.argument(key: "iconJson")
+        self.trackedBarcodeId = method.argument(key: "trackedBarcodeId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        module.finishBarcodeCountIconForAcceptedBarcode(
+            viewId: viewId,
+            iconJson: iconJson,
+            trackedBarcodeId: trackedBarcodeId,
+            result: result
+        )
+    }
+}
+/// Finish callback for rejected barcode icon
+public class FinishBarcodeCountIconForRejectedBarcodeCommand: BarcodeCountModuleCommand {
+    private let module: BarcodeCountModule
+    private let viewId: Int
+    private let iconJson: String?
+    private let trackedBarcodeId: Int
+    public init(module: BarcodeCountModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+        self.iconJson = method.argument(key: "iconJson")
+        self.trackedBarcodeId = method.argument(key: "trackedBarcodeId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        module.finishBarcodeCountIconForRejectedBarcode(
+            viewId: viewId,
+            iconJson: iconJson,
             trackedBarcodeId: trackedBarcodeId,
             result: result
         )

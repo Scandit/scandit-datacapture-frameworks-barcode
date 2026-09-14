@@ -7,6 +7,36 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
+private protocol DeprecatedBarcodeCountToolbarDefaultsAccessor {
+    var colorSchemeOnButtonText: String { get }
+    var colorSchemeOffButtonText: String { get }
+    var colorSchemeButtonAccessibilityHint: String { get }
+    var colorSchemeButtonAccessibilityLabel: String { get }
+}
+
+extension BarcodeCountToolbarSettingsDefaults: DeprecatedBarcodeCountToolbarDefaultsAccessor {
+    // Suppress deprecation warnings — the colorScheme* defaults are still serialized for backward compatibility
+    @available(*, deprecated)
+    fileprivate var colorSchemeOnButtonText: String {
+        BarcodeCountToolbarDefaults.colorSchemeOnButtonText
+    }
+
+    @available(*, deprecated)
+    fileprivate var colorSchemeOffButtonText: String {
+        BarcodeCountToolbarDefaults.colorSchemeOffButtonText
+    }
+
+    @available(*, deprecated)
+    fileprivate var colorSchemeButtonAccessibilityHint: String {
+        BarcodeCountToolbarDefaults.colorSchemeButtonAccessibilityHint
+    }
+
+    @available(*, deprecated)
+    fileprivate var colorSchemeButtonAccessibilityLabel: String {
+        BarcodeCountToolbarDefaults.colorSchemeButtonAccessibilityLabel
+    }
+}
+
 struct BarcodeCountToolbarSettingsDefaults: DefaultsEncodable {
     func toEncodable() -> [String: Any?] {
         [
@@ -22,10 +52,14 @@ struct BarcodeCountToolbarSettingsDefaults: DefaultsEncodable {
             "strapModeOffButtonText": BarcodeCountToolbarDefaults.strapModeOffButtonText,
             "strapModeButtonAccessibilityHint": BarcodeCountToolbarDefaults.strapModeButtonAccessibilityHint,
             "strapModeButtonAccessibilityLabel": BarcodeCountToolbarDefaults.strapModeButtonAccessibilityLabel,
-            "colorSchemeOnButtonText": BarcodeCountToolbarDefaults.colorSchemeOnButtonText,
-            "colorSchemeOffButtonText": BarcodeCountToolbarDefaults.colorSchemeOffButtonText,
-            "colorSchemeButtonAccessibilityHint": BarcodeCountToolbarDefaults.colorSchemeButtonAccessibilityHint,
-            "colorSchemeButtonAccessibilityLabel": BarcodeCountToolbarDefaults.colorSchemeButtonAccessibilityLabel,
+            "colorSchemeOnButtonText":
+                (self as DeprecatedBarcodeCountToolbarDefaultsAccessor).colorSchemeOnButtonText,
+            "colorSchemeOffButtonText":
+                (self as DeprecatedBarcodeCountToolbarDefaultsAccessor).colorSchemeOffButtonText,
+            "colorSchemeButtonAccessibilityHint":
+                (self as DeprecatedBarcodeCountToolbarDefaultsAccessor).colorSchemeButtonAccessibilityHint,
+            "colorSchemeButtonAccessibilityLabel":
+                (self as DeprecatedBarcodeCountToolbarDefaultsAccessor).colorSchemeButtonAccessibilityLabel,
         ]
     }
 }

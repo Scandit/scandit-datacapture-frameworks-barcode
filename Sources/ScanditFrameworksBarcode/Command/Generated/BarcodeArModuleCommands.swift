@@ -310,6 +310,38 @@ public class BarcodeArViewPauseCommand: BarcodeArModuleCommand {
         )
     }
 }
+/// Shows the BarcodeAr view
+public class ShowBarcodeArViewCommand: BarcodeArModuleCommand {
+    private let module: BarcodeArModule
+    private let viewId: Int
+    public init(module: BarcodeArModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        module.showBarcodeArView(
+            viewId: viewId,
+            result: result
+        )
+    }
+}
+/// Hides the BarcodeAr view
+public class HideBarcodeArViewCommand: BarcodeArModuleCommand {
+    private let module: BarcodeArModule
+    private let viewId: Int
+    public init(module: BarcodeArModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        module.hideBarcodeArView(
+            viewId: viewId,
+            result: result
+        )
+    }
+}
 /// Resets the BarcodeAr view
 public class BarcodeArViewResetCommand: BarcodeArModuleCommand {
     private let module: BarcodeArModule

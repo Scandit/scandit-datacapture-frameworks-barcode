@@ -34,6 +34,7 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
             "defaultBarcodeArPopoverAnnotationButtonTextColor":
                 ViewDefaults.defaultPopoverAnnotationButtonTextColor.sdcHexString,
             "defaultStatusIconAnnotationTrigger": ViewDefaults.defaultStatusIconAnnotationTrigger.jsonString,
+            "defaultStatusIconAnnotationAnchor": ViewDefaults.defaultStatusIconAnnotationAnchor.frameworksJsonString,
             "defaultStatusIconAnnotationHasTip": ViewDefaults.defaultStatusIconAnnotationHasTip,
             "defaultStatusIconAnnotationIcon": ViewDefaults.defaultStatusIconAnnotationIcon.jsonString,
             "defaultStatusIconAnnotationTextColor": ViewDefaults.defaultStatusIconAnnotationIconTextColor.sdcHexString,
@@ -80,6 +81,10 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
             "defaultBarcodeArPopoverAnnotationButtonEnabled": ViewDefaults.defaultPopoverAnnotationButtonEnabled,
             "defaultBarcodeArPopoverAnnotationAnchor": ViewDefaults.defaultPopoverAnnotationAnchor.jsonString,
             "defaultHighlightIsPulsing": ViewDefaults.defaultHighlightIsPulsing,
+            "defaultZoomControlOrientation": ViewDefaults.defaultZoomControlOrientation.jsonString,
+            "defaultLogoStyle": ViewDefaults.defaultLogoStyle.jsonString,
+            "defaultLogoAnchor": ViewDefaults.defaultLogoAnchor.jsonString,
+            "defaultLogoOffset": ViewDefaults.defaultLogoOffset.jsonString,
         ]
     }
     // swiftlint:enable function_body_length
@@ -99,5 +104,16 @@ struct DefaultsBarcodeArView: DefaultsEncodable {
             presets[preset.jsonString] = getDefaultCircleHighlightFromPreset(preset: preset)
         }
         return presets
+    }
+}
+
+private extension BarcodeArStatusIconAnnotationAnchor {
+    var frameworksJsonString: String {
+        switch self {
+        case .top: return "top"
+        case .bottom: return "bottom"
+        case .left: return "left"
+        case .right: return "right"
+        }
     }
 }
