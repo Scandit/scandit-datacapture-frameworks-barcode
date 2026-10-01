@@ -12,6 +12,15 @@ public enum FrameworksBarcodeCountListenerEvent: String, CaseIterable {
     case sessionUpdated = "BarcodeCountListener.didUpdateSession"
 }
 
+private extension Emitter {
+    func hasViewSpecificListenersForEvent(
+        _ viewId: Int,
+        for event: FrameworksBarcodeCountListenerEvent
+    ) -> Bool {
+        hasViewSpecificListenersForEvent(viewId, for: event.rawValue)
+    }
+}
+
 open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
     private static let asyncTimeoutInterval: TimeInterval = 600  // 10 mins
     private static let defaultTimeoutInterval: TimeInterval = 2
@@ -24,16 +33,33 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
         event: Event(name: FrameworksBarcodeCountListenerEvent.sessionUpdated.rawValue)
     )
 
+    private let isEnabled = AtomicValue<Bool>(false)
+
     public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
         self.viewId = viewId
     }
 
+    public func enable() {
+        isEnabled.value = true
+        barcodeScannedEvent.open()
+        sessionUpdatedEvent.open()
+    }
+
+    // The mode removes listeners asynchronously, so callbacks can still arrive after
+    // removal was requested; the flag makes the deactivation take effect immediately,
+    // and closing the events unblocks an emit already waiting for a response that can
+    // no longer arrive.
+    public func disable() {
+        isEnabled.value = false
+        barcodeScannedEvent.close()
+        sessionUpdatedEvent.close()
+    }
+
     private var lastSession: BarcodeCountSession?
 
     func reset() {
-        barcodeScannedEvent.reset()
-        sessionUpdatedEvent.reset()
+        disable()
         lastSession = nil
     }
 
@@ -50,6 +76,11 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
         didScanIn session: BarcodeCountSession,
         frameData: FrameData
     ) {
+        // The emit below blocks the engine's callback thread until the framework side responds
+        // (or the timeout elapses), so it must only run when someone is listening.
+        guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId, for: .barcodeScanned) else {
+            return
+        }
         lastSession = session
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
@@ -72,6 +103,11 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
         didUpdate session: BarcodeCountSession,
         frameData: FrameData
     ) {
+        // The emit below blocks the engine's callback thread until the framework side responds
+        // (or the timeout elapses), so it must only run when someone is listening.
+        guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId, for: .sessionUpdated) else {
+            return
+        }
         lastSession = session
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)

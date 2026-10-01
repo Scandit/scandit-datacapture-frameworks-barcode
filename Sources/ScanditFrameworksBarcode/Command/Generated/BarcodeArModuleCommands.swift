@@ -143,6 +143,52 @@ public class RegisterBarcodeArHighlightProviderCommand: BarcodeArModuleCommand {
         )
     }
 }
+/// Register persistent event listener for BarcodeAr augmentation eviction events
+public class RegisterBarcodeArAugmentationsListenerCommand: BarcodeArModuleCommand {
+    private let module: BarcodeArModule
+    private let viewId: Int
+    public init(module: BarcodeArModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        // Register/unregister event callbacks
+        result.registerViewSpecificCallback(
+            viewId,
+            eventNames: [
+                "BarcodeArAugmentations.evicted"
+            ]
+        )
+        module.registerBarcodeArAugmentationsListener(
+            viewId: viewId,
+            result: result
+        )
+    }
+}
+/// Unregister event listener for BarcodeAr augmentation eviction events
+public class UnregisterBarcodeArAugmentationsListenerCommand: BarcodeArModuleCommand {
+    private let module: BarcodeArModule
+    private let viewId: Int
+    public init(module: BarcodeArModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        // Register/unregister event callbacks
+        result.unregisterViewSpecificCallback(
+            viewId,
+            eventNames: [
+                "BarcodeArAugmentations.evicted"
+            ]
+        )
+        module.unregisterBarcodeArAugmentationsListener(
+            viewId: viewId,
+            result: result
+        )
+    }
+}
 /// Unregister event listener for BarcodeAr highlight provider events
 public class UnregisterBarcodeArHighlightProviderCommand: BarcodeArModuleCommand {
     private let module: BarcodeArModule
@@ -162,6 +208,79 @@ public class UnregisterBarcodeArHighlightProviderCommand: BarcodeArModuleCommand
         )
         module.unregisterBarcodeArHighlightProvider(
             viewId: viewId,
+            result: result
+        )
+    }
+}
+/// Register persistent event callback for BarcodeAr filter events
+public class RegisterBarcodeArFilterCommand: BarcodeArModuleCommand {
+    private let module: BarcodeArModule
+    private let viewId: Int
+    public init(module: BarcodeArModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        // Register/unregister event callbacks
+        result.registerViewSpecificCallback(
+            viewId,
+            eventNames: [
+                "BarcodeArFilter.filterBarcodes"
+            ]
+        )
+        module.registerBarcodeArFilter(
+            viewId: viewId,
+            result: result
+        )
+    }
+}
+/// Unregister event callback for BarcodeAr filter events
+public class UnregisterBarcodeArFilterCommand: BarcodeArModuleCommand {
+    private let module: BarcodeArModule
+    private let viewId: Int
+    public init(module: BarcodeArModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        // Register/unregister event callbacks
+        result.unregisterViewSpecificCallback(
+            viewId,
+            eventNames: [
+                "BarcodeArFilter.filterBarcodes"
+            ]
+        )
+        module.unregisterBarcodeArFilter(
+            viewId: viewId,
+            result: result
+        )
+    }
+}
+/// Finish callback for BarcodeAr filter barcodes
+public class FinishBarcodeArFilterBarcodesCommand: BarcodeArModuleCommand {
+    private let module: BarcodeArModule
+    private let viewId: Int
+    private let filteredBarcodesJson: String
+    public init(module: BarcodeArModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+        self.filteredBarcodesJson = method.argument(key: "filteredBarcodesJson") ?? ""
+    }
+
+    public func execute(result: FrameworksResult) {
+        guard !filteredBarcodesJson.isEmpty else {
+            result.reject(
+                code: "MISSING_PARAMETER",
+                message: "Required parameter 'filteredBarcodesJson' is missing",
+                details: nil
+            )
+            return
+        }
+        module.finishBarcodeArFilterBarcodes(
+            viewId: viewId,
+            filteredBarcodesJson: filteredBarcodesJson,
             result: result
         )
     }
@@ -232,6 +351,38 @@ public class BarcodeArViewPauseCommand: BarcodeArModuleCommand {
 
     public func execute(result: FrameworksResult) {
         module.barcodeArViewPause(
+            viewId: viewId,
+            result: result
+        )
+    }
+}
+/// Shows the BarcodeAr view
+public class ShowBarcodeArViewCommand: BarcodeArModuleCommand {
+    private let module: BarcodeArModule
+    private let viewId: Int
+    public init(module: BarcodeArModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        module.showBarcodeArView(
+            viewId: viewId,
+            result: result
+        )
+    }
+}
+/// Hides the BarcodeAr view
+public class HideBarcodeArViewCommand: BarcodeArModuleCommand {
+    private let module: BarcodeArModule
+    private let viewId: Int
+    public init(module: BarcodeArModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        module.hideBarcodeArView(
             viewId: viewId,
             result: result
         )

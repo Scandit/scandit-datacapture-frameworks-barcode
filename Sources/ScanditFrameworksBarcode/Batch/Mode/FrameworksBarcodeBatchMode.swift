@@ -86,6 +86,10 @@ public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
         try deserializer.updateMode(mode, fromJSONString: modeJson)
     }
 
+    public var licenseInfoJsonString: String? {
+        mode.barcodeBatchLicenseInfo?.jsonString
+    }
+
     // MARK: - Factory Method
 
     public static func create(

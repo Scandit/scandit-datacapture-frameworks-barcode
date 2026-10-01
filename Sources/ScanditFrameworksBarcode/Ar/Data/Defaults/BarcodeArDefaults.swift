@@ -11,12 +11,14 @@ struct BarcodeArDefaults: DefaultsEncodable {
     let recommendedCameraSettings: CameraSettingsDefaults
     let barcodeArFeedback: BarcodeArFeedback
     let viewDefaults: DefaultsBarcodeArView
+    let settingsDefaults: BarcodeArSettingsDefaults
 
     static let shared = {
         BarcodeArDefaults(
             recommendedCameraSettings: CameraSettingsDefaults(cameraSettings: BarcodeAr.recommendedCameraSettings),
             barcodeArFeedback: .default,
-            viewDefaults: DefaultsBarcodeArView()
+            viewDefaults: DefaultsBarcodeArView(),
+            settingsDefaults: BarcodeArSettingsDefaults(barcodeArSettings: BarcodeArSettings())
         )
     }()
 
@@ -25,6 +27,7 @@ struct BarcodeArDefaults: DefaultsEncodable {
             "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
             "barcodeArFeedback": barcodeArFeedback.jsonString,
             "BarcodeArView": viewDefaults.toEncodable(),
+            "BarcodeArSettings": settingsDefaults.toEncodable(),
         ]
     }
 }

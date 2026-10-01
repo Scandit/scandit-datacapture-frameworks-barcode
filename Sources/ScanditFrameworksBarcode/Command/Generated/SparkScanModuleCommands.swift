@@ -360,6 +360,22 @@ public class ResetSparkScanSessionCommand: SparkScanModuleCommand {
         )
     }
 }
+/// Returns the SparkScanLicenseInfo JSON, or null when not available
+public class GetSparkScanLicenseInfoCommand: SparkScanModuleCommand {
+    private let module: SparkScanModule
+    private let viewId: Int
+    public init(module: SparkScanModule, _ method: FrameworksMethodCall) {
+        self.module = module
+        self.viewId = method.argument(key: "viewId") ?? Int()
+    }
+
+    public func execute(result: FrameworksResult) {
+        module.getSparkScanLicenseInfo(
+            viewId: viewId,
+            result: result
+        )
+    }
+}
 /// Updates the SparkScan mode configuration
 public class UpdateSparkScanModeCommand: SparkScanModuleCommand {
     private let module: SparkScanModule
