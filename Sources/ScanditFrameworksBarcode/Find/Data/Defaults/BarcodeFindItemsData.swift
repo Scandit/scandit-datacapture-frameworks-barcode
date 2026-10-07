@@ -16,10 +16,7 @@ struct BarcodeFindItemsData {
     }
 
     var items: Set<BarcodeFindItem> {
-        // Half-open range: an empty items array (`count() == 0`) must yield an empty
-        // set, not crash. `0...(count() - 1)` is an invalid ClosedRange (lowerBound >
-        // upperBound) whenever count() == 0 and traps at runtime.
-        let findItems = (0..<backingJson.count()).compactMap {
+        let findItems = (0...backingJson.count() - 1).compactMap {
             barcodeFindItem(from: backingJson.atIndex($0))
         }
         return Set(findItems)
@@ -32,7 +29,7 @@ struct BarcodeFindItemsData {
         let barcodeData = searchOptions.string(forKey: "barcodeData")
         var findItemContent: BarcodeFindItemContent? = nil
 
-        if json.containsObject(withKey: "content") {
+        if json.containsKey("content") {
             let content = json.object(forKey: "content")
             let info = content.optionalString(forKey: "info")
             let additionalInfo = content.optionalString(forKey: "additionalInfo")

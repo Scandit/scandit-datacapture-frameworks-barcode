@@ -14,20 +14,8 @@ private import _ScanditFrameworksBarcodePrivate
 
 private typealias ViewDefaults = BarcodeCountViewDefaults
 
-private func encodedBarcodeCountIcon(_ icon: BarcodeCountIcon) -> [String: Any?] {
-    func parseJSON(_ string: String) -> Any? {
-        guard let data = string.data(using: .utf8) else { return nil }
-        return try? JSONSerialization.jsonObject(with: data)
-    }
-    return [
-        "defaultIcon": icon.defaultIcon.map { parseJSON($0.jsonString) } ?? nil,
-        "accessibleIcon": icon.accessibleIcon.map { parseJSON($0.jsonString) } ?? nil,
-    ]
-}
-
 struct DefaultsBarcodeCountView: DefaultsEncodable {
     let barcodeCountToolbarSettingsDefaults: BarcodeCountToolbarSettingsDefaults
-    let barcodeCountMappingFlowSettingsDefaults: BarcodeCountMappingFlowSettingsDefaults
 
     func toEncodable() -> [String: Any?] {
         [
@@ -43,15 +31,10 @@ struct DefaultsBarcodeCountView: DefaultsEncodable {
             "shouldShowToolbar": ViewDefaults.defaultShouldShowToolbar,
             "shouldShowScanAreaGuides": ViewDefaults.defaultShouldShowScanAreaGuides,
             "toolbarSettings": barcodeCountToolbarSettingsDefaults.toEncodable(),
-            "mappingFlowSettings": barcodeCountMappingFlowSettingsDefaults.toEncodable(),
             "recognizedBrush": EncodableBrush(brush: BarcodeCountView.defaultRecognizedBrush).toEncodable(),
             "notInListBrush": EncodableBrush(brush: BarcodeCountView.defaultNotInListBrush).toEncodable(),
             "acceptedBrush": EncodableBrush(brush: BarcodeCountView.defaultAcceptedBrush).toEncodable(),
             "rejectedBrush": EncodableBrush(brush: BarcodeCountView.defaultRejectedBrush).toEncodable(),
-            "defaultRecognizedIcon": encodedBarcodeCountIcon(BarcodeCountView.defaultRecognizedIcon),
-            "defaultNotInListIcon": encodedBarcodeCountIcon(BarcodeCountView.defaultNotInListIcon),
-            "defaultAcceptedIcon": encodedBarcodeCountIcon(BarcodeCountView.defaultAcceptedIcon),
-            "defaultRejectedIcon": encodedBarcodeCountIcon(BarcodeCountView.defaultRejectedIcon),
             "listButtonAccessibilityHint": ViewDefaults.defaultListButtonAccessibilityHint,
             "listButtonAccessibilityLabel": ViewDefaults.defaultListButtonAccessibilityLabel,
             "exitButtonAccessibilityHint": ViewDefaults.defaultExitButtonAccessibilityHint,
@@ -64,27 +47,18 @@ struct DefaultsBarcodeCountView: DefaultsEncodable {
             "clearHighlightsButtonAccessibilityLabel": ViewDefaults.defaultClearHighlightsButtonAccessibilityLabel,
             "singleScanButtonAccessibilityHint": ViewDefaults.defaultSingleScanButtonAccessibilityHint,
             "singleScanButtonAccessibilityLabel": ViewDefaults.defaultSingleScanButtonAccessibilityLabel,
-            "statusModeButtonAccessibilityHint": ViewDefaults.defaultStatusModeButtonAccessibilityHint,
-            "statusModeButtonAccessibilityLabel": ViewDefaults.defaultStatusModeButtonAccessibilityLabel,
             "clearHighlightsButtonText": ViewDefaults.defaultClearHighlightsButtonText,
             "exitButtonText": ViewDefaults.defaultExitButtonText,
             "textForTapShutterToScanHint": ViewDefaults.defaultTextForTapShutterToScanHint,
             "textForScanningHint": ViewDefaults.defaultTextForScanningHint,
             "textForMoveCloserAndRescanHint": ViewDefaults.defaultTextForMoveCloserAndRescanHint,
             "textForMoveFurtherAndRescanHint": ViewDefaults.defaultTextForMoveFurtherAndRescanHint,
-            "textForClusteringGestureHint": ViewDefaults.defaultTextForClusteringGestureHint,
             "shouldShowListProgressBar": ViewDefaults.defaultShouldShowListProgressBar,
             "shouldShowTorchControl": ViewDefaults.defaultShouldShowTorchControl,
             "torchControlPosition": ViewDefaults.defaultTorchControlPosition.jsonString,
             "tapToUncountEnabled": ViewDefaults.defaultTapToUncountEnabled,
             "textForTapToUncountHint": ViewDefaults.defaultTextForTapToUncountHint,
-            "textForScreenCleanedUpHint": ViewDefaults.defaultTextForScreenCleanedUpHint,
             "shouldShowStatusModeButton": ViewDefaults.defaultShouldShowStatusModeButton,
-            "shouldShowStatusIconsOnScan": ViewDefaults.defaultShouldShowStatusIconsOnScan,
-            "hardwareTriggerSupported": true,
-            "hardwareTriggerEnabled": ViewDefaults.defaultHardwareTriggerEnabled,
-            "logoStyle": ViewDefaults.defaultLogoStyle.jsonString,
-            "logoAnchor": ViewDefaults.defaultLogoAnchor.jsonString,
         ]
     }
 }

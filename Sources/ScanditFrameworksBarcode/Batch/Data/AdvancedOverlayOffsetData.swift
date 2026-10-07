@@ -6,7 +6,6 @@
 
 import ScanditBarcodeCapture
 import ScanditCaptureCore
-import ScanditCaptureCoreDeserializer
 import ScanditFrameworksCore
 
 struct AdvancedOverlayOffsetData {

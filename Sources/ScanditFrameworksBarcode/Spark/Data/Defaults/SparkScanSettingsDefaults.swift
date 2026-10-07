@@ -17,7 +17,6 @@ struct SparkScanSettingsDefaults: DefaultsEncodable {
             "singleBarcodeAutoDetection": false,
             "batterySaving": sparkScanSettings.batterySaving.jsonString,
             "scanIntention": sparkScanSettings.scanIntention.jsonString,
-            "selectionMode": sparkScanSettings.selectionMode.jsonString,
         ]
     }
 }

@@ -13,18 +13,21 @@ public enum FrameworksBarcodeSelectionAimedBrushProviderEvent: String, CaseItera
 
 open class FrameworksBarcodeSelectionAimedBrushProvider: NSObject, BarcodeSelectionBrushProvider {
     private let emitter: Emitter
-    private let cachedBrushes = ConcurrentDictionary<String, Brush>()
+    private let queue: DispatchQueue
 
     private let brushForBarcodeEvent = Event(
         name: FrameworksBarcodeSelectionAimedBrushProviderEvent.brushForBarcode.rawValue
     )
 
-    public init(emitter: Emitter) {
+    private var cachedBrushes: [String: Brush] = [:]
+
+    public init(emitter: Emitter, queue: DispatchQueue) {
         self.emitter = emitter
+        self.queue = queue
     }
 
     public func brush(for barcode: Barcode) -> Brush? {
-        if let brush = cachedBrushes.getValue(for: barcode.selectionIdentifier) {
+        if let brush = queue.sync(execute: { cachedBrushes[barcode.selectionIdentifier] }) {
             return brush
         }
         brushForBarcodeEvent.emit(on: emitter, payload: ["barcode": barcode.jsonString])
@@ -35,10 +38,12 @@ open class FrameworksBarcodeSelectionAimedBrushProvider: NSObject, BarcodeSelect
         guard let selectionIdentifier = selectionIdentifier,
             let brushJson = brushJson, let brush = Brush(jsonString: brushJson)
         else { return }
-        cachedBrushes.setValue(brush, for: selectionIdentifier)
+        queue.async {
+            self.cachedBrushes[selectionIdentifier] = brush
+        }
     }
 
     func clearCache() {
-        cachedBrushes.removeAllValues()
+        cachedBrushes.removeAll()
     }
 }

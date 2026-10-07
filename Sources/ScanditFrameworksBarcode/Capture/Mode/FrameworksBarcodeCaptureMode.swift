@@ -5,7 +5,6 @@
 */
 
 import ScanditBarcodeCapture
-import ScanditBarcodeCaptureDeserializer
 import ScanditFrameworksCore
 
 public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
@@ -94,10 +93,6 @@ public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
 
     public func updateFeedback(feedbackJson: String) throws {
         mode.feedback = try BarcodeCaptureFeedback(fromJSONString: feedbackJson)
-    }
-
-    public var licenseInfoJsonString: String? {
-        mode.barcodeCaptureLicenseInfo?.jsonString
     }
 
     // MARK: - Factory Method

@@ -5,42 +5,31 @@
  */
 
 import ScanditBarcodeCapture
-import ScanditBarcodeCaptureDeserializer
 import ScanditFrameworksCore
 
-open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserver {
+open class BarcodeArModule: NSObject, FrameworkModule, DeserializationLifeCycleObserver {
     private let emitter: Emitter
     private let deserializer: BarcodeArDeserializer
     private let viewDeserialzier: BarcodeArViewDeserializer
+    private let augmentationsCache: BarcodeArAugmentationsCache
     private let captureContext = DefaultFrameworksCaptureContext.shared
 
     private let viewCache = FrameworksViewsCache<FrameworksBarcodeArView>()
-
-    // barcodeArViewStart/barcodeArViewStop can arrive before addViewFromJson has
-    // finished creating the native view for a given viewId (e.g. a rapid enable
-    // racing view creation, or a re-mount that fires start before the
-    // createNativeView RPC resolves). Mirrors Android's
-    // addPostSpecificViewCreationAction (BarcodeArModule.kt): such calls are
-    // parked via BaseFrameworkModule's post-view-creation action store and
-    // replayed once the view exists, instead of being silently dropped
-    // (SDC-32484).
 
     public init(emitter: Emitter) {
         self.emitter = emitter
         self.deserializer = BarcodeArDeserializer()
         self.viewDeserialzier = BarcodeArViewDeserializer()
+        self.augmentationsCache = BarcodeArAugmentationsCache()
     }
 
-    override public func didStart() {
+    public func didStart() {
         DeserializationLifeCycleDispatcher.shared.attach(observer: self)
     }
 
-    override public func didStop() {
+    public func didStop() {
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
         cleanup()
-        // Drops any not-yet-replayed parked start/stop (SDC-32484) so a stale
-        // closure never fires against a torn-down module.
-        clearAllPostViewCreationActions()
     }
 
     public func didDisposeDataCaptureContext() {
@@ -48,54 +37,19 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
     }
 
     private func cleanup() {
-        // Each view owns its augmentations cache and clears it in dispose().
+        augmentationsCache.clear()
         viewCache.disposeAll()
     }
 
-    override public func getDefaults() -> [String: Any?] {
-        BarcodeArDefaults.shared.toEncodable()
-    }
-
-    // Exposes the cached view to the RN host container so it can re-assert
-    // `start()` when the view re-enters a window (SDC-32484).
-    public func getView(viewId: Int) -> FrameworksBarcodeArView? {
-        viewCache.getView(viewId: viewId)
-    }
-
-    public func registerBarcodeArFilter(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
-            return
-        }
-        viewInstance.addBarcodeArFilter()
-        result.successAndKeepCallback(result: nil)
-    }
-
-    public func unregisterBarcodeArFilter(viewId: Int, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.removeBarcodeArFilter()
-        result.success()
-    }
-
-    public func finishBarcodeArFilterBarcodes(viewId: Int, filteredBarcodesJson: String, result: FrameworksResult) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-        viewInstance.finishFilterBarcodes(filteredBarcodesJson: filteredBarcodesJson)
-        result.success()
-    }
+    public let defaults: DefaultsEncodable = BarcodeArDefaults.shared
 
     public func registerBarcodeArViewUiListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
+            result.success()
             return
         }
         viewInstance.addBarcodeArViewUiListener()
-        result.successAndKeepCallback(result: nil)
+        result.success()
     }
 
     public func unregisterBarcodeArViewUiListener(viewId: Int, result: FrameworksResult) {
@@ -107,23 +61,13 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func registerBarcodeArAugmentationsListener(viewId: Int, result: FrameworksResult) {
-        // The cache listener is attached for the whole life of the view, so there is nothing
-        // to install here — the call only keeps the callback alive for the eviction event.
-        result.successAndKeepCallback(result: nil)
-    }
-
-    public func unregisterBarcodeArAugmentationsListener(viewId: Int, result: FrameworksResult) {
-        result.success()
-    }
-
     public func registerBarcodeArHighlightProvider(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
+            result.success()
             return
         }
         viewInstance.addBarcodeArHighlightProvider()
-        result.successAndKeepCallback(result: nil)
+        result.success()
     }
 
     public func unregisterBarcodeArHighlightProvider(viewId: Int, result: FrameworksResult) {
@@ -146,11 +90,11 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
 
     public func registerBarcodeArAnnotationProvider(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.successAndKeepCallback(result: nil)
+            result.success()
             return
         }
         viewInstance.addBarcodeArAnnotationProvider()
-        result.successAndKeepCallback(result: nil)
+        result.success()
     }
 
     public func unregisterBarcodeArAnnotationProvider(viewId: Int, result: FrameworksResult) {
@@ -162,7 +106,7 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func updateBarcodeArFeedback(viewId: Int, feedbackJson: String, result: FrameworksResult) {
+    public func updateFeedback(viewId: Int, feedbackJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -175,7 +119,7 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         }
     }
 
-    public func resetBarcodeArSession(viewId: Int, result: FrameworksResult) {
+    public func resetLatestBarcodeArSession(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -184,21 +128,21 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func applyBarcodeArSettings(viewId: Int, settings: String, result: FrameworksResult) {
+    public func applyBarcodeArModeSettings(viewId: Int, modeSettingsJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
 
         do {
-            try viewInstance.applySettings(settingsJson: settings)
+            try viewInstance.applySettings(settingsJson: modeSettingsJson)
             result.success()
         } catch {
             result.reject(error: error)
         }
     }
 
-    public func updateBarcodeArMode(viewId: Int, modeJson: String, result: FrameworksResult) {
+    public func updateMode(viewId: Int, modeJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -208,26 +152,16 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func registerBarcodeArListener(viewId: Int, result: FrameworksResult) {
+    public func addModeListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            // Registration can race view creation (a listener added before the
-            // widget mounts). Park the listener attachment and replay it once
-            // addViewFromJson creates this viewId — same parking as
-            // barcodeArViewStart/Stop above and Android's BarcodeArModule.kt.
-            // Resolve the result NOW and park only the action: a parked
-            // `result` would leak the bridge callback if the view is never
-            // created (see barcodeArViewStart's rationale).
-            addPostSpecificViewCreationAction(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodeArListener()
-            }
-            result.successAndKeepCallback(result: nil)
+            result.success()
             return
         }
         viewInstance.addBarcodeArListener()
-        result.successAndKeepCallback(result: nil)
+        result.success()
     }
 
-    public func unregisterBarcodeArListener(viewId: Int, result: FrameworksResult) {
+    public func removeModeListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -236,7 +170,7 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func finishBarcodeArOnDidUpdateSession(viewId: Int, result: FrameworksResult) {
+    public func finishDidUpdateSession(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -251,7 +185,7 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         }
     }
 
-    public func finishBarcodeArHighlightForBarcode(viewId: Int, highlightJson: String, result: FrameworksResult) {
+    public func finishHighlightForBarcode(viewId: Int, highlightJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -266,7 +200,7 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func finishBarcodeArAnnotationForBarcode(viewId: Int, annotationJson: String, result: FrameworksResult) {
+    public func finishAnnotationForBarcode(viewId: Int, annotationJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -296,7 +230,7 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func updateBarcodeArHighlight(viewId: Int, highlightJson: String, result: FrameworksResult) {
+    public func updateHighlight(viewId: Int, highlightJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -311,7 +245,7 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func updateBarcodeArAnnotation(viewId: Int, annotationJson: String, result: FrameworksResult) {
+    public func updateAnnotation(viewId: Int, annotationJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -326,7 +260,7 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func updateBarcodeArView(viewId: Int, viewJson: String, result: FrameworksResult) {
+    public func updateView(viewId: Int, viewJson: String, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
@@ -335,22 +269,8 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func barcodeArViewStart(viewId: Int, result: FrameworksResult) {
+    public func viewStart(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            // The RN/JS side can call start() before the native view for this
-            // viewId has been created (e.g. a rapid enable racing addViewFromJson,
-            // or a re-mount that fires start before createNativeView's async RPC
-            // resolves). Mirrors Android's addPostSpecificViewCreationAction
-            // (BarcodeArModule.kt:336-344): park the call and replay it once
-            // addViewFromJson creates that viewId, instead of silently dropping
-            // the start (SDC32484).
-            // Resolve the RN promise NOW and park only the action: if the view
-            // is never created (screen unmounted first), a parked `result`
-            // would leak the bridge promise / hang the JS await. Matches the
-            // pre-parking semantics, which resolved success immediately.
-            addPostSpecificViewCreationAction(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.startMode()
-            }
             result.success()
             return
         }
@@ -358,17 +278,8 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func barcodeArViewStop(viewId: Int, result: FrameworksResult) {
+    public func viewStop(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            // Same parking as barcodeArViewStart above (SDC32484): a stop() that
-            // arrives before the view exists must be replayed once it's created,
-            // not dropped — otherwise a start()+stop() pair racing view creation
-            // can leave the view started when the caller expected it stopped.
-            // Same promise-safety as barcodeArViewStart: resolve now, park the
-            // bare action.
-            addPostSpecificViewCreationAction(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.stopMode()
-            }
             result.success()
             return
         }
@@ -394,29 +305,12 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         result.success()
     }
 
-    public func showBarcodeArView(viewId: Int, result: FrameworksResult) {
-        showView(viewId: viewId, result: result)
-    }
-
-    public func hideBarcodeArView(viewId: Int, result: FrameworksResult) {
-        hideView(viewId: viewId, result: result)
-    }
-
     public func removeView(viewId: Int, result: FrameworksResult) {
-        // Drop any not-yet-replayed parked start/stop for this viewId — the view
-        // is gone, so a later replay would resurrect a stale closure (SDC32484).
-        clearPostSpecificViewCreationActions(viewId: viewId)
         viewCache.remove(viewId: viewId)?.dispose()
         if let previousView = viewCache.getTopMost() {
             previousView.show()
         }
         result.success()
-    }
-
-    override public func createCommand(
-        _ method: any ScanditFrameworksCore.FrameworksMethodCall
-    ) -> (any ScanditFrameworksCore.BaseCommand)? {
-        BarcodeArModuleCommandFactory.create(module: self, method)
     }
 }
 
@@ -459,17 +353,10 @@ public extension BarcodeArModule {
                         emitter: self.emitter,
                         parent: parent,
                         context: context,
-                        viewCreationParams: viewCreationParams
+                        viewCreationParams: viewCreationParams,
+                        augmentationsCache: self.augmentationsCache
                     )
                     viewCache.addView(view: frameworksView)
-                    // Replay any barcodeArViewStart/barcodeArViewStop calls parked
-                    // while this viewId didn't have a view yet (SDC32484 — mirrors
-                    // Android's getPostSpecificViewCreationActions drain in
-                    // BarcodeArModule.kt).
-                    let parkedActions = self.getPostSpecificViewCreationActions(viewId: viewCreationParams.viewId)
-                    for action in parkedActions {
-                        action()
-                    }
                     result.success()
                 } catch {
                     result.reject(error: error)
@@ -486,30 +373,22 @@ public extension BarcodeArModule {
         addViewFromJson(parent: container, viewJson: jsonString, result: result)
     }
 
-    func barcodeArViewPause(viewId: Int, result: FrameworksResult) {
+    func viewPause(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        dispatchMain {
-            viewInstance.view.pause()
-        }
+        viewInstance.view.pause()
         result.success()
     }
 
-    func barcodeArViewReset(viewId: Int, result: FrameworksResult) {
+    func viewReset(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
             result.success()
             return
         }
-        let block = { [weak self] in
-            guard self != nil else {
-                return
-            }
-            viewInstance.view.reset()
-            result.success()
-        }
-        dispatchMain(block)
+        viewInstance.view.reset()
+        result.success()
     }
 
     func getTopMostView() -> BarcodeArView? {

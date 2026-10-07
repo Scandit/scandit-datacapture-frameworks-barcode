@@ -5,7 +5,6 @@
  */
 
 import ScanditBarcodeCapture
-import ScanditBarcodeCaptureDeserializer
 import ScanditFrameworksCore
 
 public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
@@ -84,10 +83,6 @@ public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
 
     public func updateModeFromJson(modeJson: String) throws {
         try deserializer.updateMode(mode, fromJSONString: modeJson)
-    }
-
-    public var licenseInfoJsonString: String? {
-        mode.barcodeBatchLicenseInfo?.jsonString
     }
 
     // MARK: - Factory Method

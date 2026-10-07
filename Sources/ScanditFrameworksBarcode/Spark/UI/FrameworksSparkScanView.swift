@@ -6,7 +6,6 @@
 
 import Foundation
 import ScanditBarcodeCapture
-import ScanditBarcodeCaptureDeserializer
 import ScanditCaptureCore
 import ScanditFrameworksCore
 
@@ -27,7 +26,6 @@ public class FrameworksSparkScanView: FrameworksBaseView {
     private var view: SparkScanView!
     private var mode: SparkScan!
     private var shouldShowOnTopAlways: Bool = false
-    private var context: DataCaptureContext!
 
     private init(
         modeListener: FrameworksSparkScanListener,
@@ -49,11 +47,8 @@ public class FrameworksSparkScanView: FrameworksBaseView {
         viewCreationParams: SparkScanViewCreationData
     ) throws {
         internalViewId = viewCreationParams.viewId
-        self.context = context
 
         mode = try modeDeserializer.mode(fromJSONString: viewCreationParams.modeJson)
-        mode.addListener(modeListener)
-
         shouldShowOnTopAlways = viewCreationParams.shouldShowOnTopAlways
 
         view = try viewDeserializer.view(
@@ -86,8 +81,11 @@ public class FrameworksSparkScanView: FrameworksBaseView {
 
     private func postModeCreate(_ creationData: SparkScanViewCreationData) {
         if creationData.hasModeListener {
+            mode.removeListener(modeListener)
+            mode.addListener(modeListener)
             modeListener.enable()
         } else {
+            mode.removeListener(modeListener)
             modeListener.disable()
         }
     }
@@ -125,17 +123,12 @@ public class FrameworksSparkScanView: FrameworksBaseView {
     }
 
     public func removeFeedbackDelegate() {
-        feedbackDelegate.cancelForBarcode()
-        feedbackDelegate.cancelForScannedItem()
+        feedbackDelegate.cancel()
         self.view.feedbackDelegate = nil
     }
 
-    public func submitFeedbackForBarcode(feedbackJson: String?) {
-        feedbackDelegate.submitFeedbackForBarcode(feedbackJson: feedbackJson)
-    }
-
-    public func submitFeedbackForScannedItem(feedbackJson: String?) {
-        feedbackDelegate.submitFeedbackForScannedItem(feedbackJson: feedbackJson)
+    public func submitFeedback(feedbackJson: String?) {
+        feedbackDelegate.submitFeedback(feedbackJson: feedbackJson)
     }
 
     public func enableSparkScanListener() {
@@ -219,10 +212,6 @@ public class FrameworksSparkScanView: FrameworksBaseView {
 
     public func isModeEnabled() -> Bool {
         mode.isEnabled
-    }
-
-    public var licenseInfoJsonString: String? {
-        mode.sparkScanLicenseInfo?.jsonString
     }
 
     public func bringViewToTop() {
