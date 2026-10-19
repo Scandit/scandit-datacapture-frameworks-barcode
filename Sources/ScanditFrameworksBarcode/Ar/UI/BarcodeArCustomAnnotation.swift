@@ -6,6 +6,7 @@
 
 import QuartzCore
 import ScanditBarcodeCapture
+import ScanditBarcodeCaptureDeserializer
 import ScanditFrameworksCore
 
 public enum BarcodeArCustomAnnotationEvents: String, CaseIterable {

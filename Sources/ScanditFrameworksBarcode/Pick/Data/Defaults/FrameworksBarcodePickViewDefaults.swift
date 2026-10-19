@@ -38,6 +38,8 @@ struct FrameworksBarcodePickViewDefaults: DefaultsEncodable {
             "uiButtonsOffset": nil,  // doesn't exist in iOS
             "hardwareTriggerEnabled": true,  // Always enabled on iOS
             "hardwareTriggerKeyCode": nil,
+            "logoStyle": BarcodePickViewSettingsDefaults.logoStyle.jsonString,
+            "logoAnchor": BarcodePickViewSettingsDefaults.logoAnchor.jsonString,
             "filterHighlightSettings": BarcodeFilterHighlightSettingsDefaults.create(
                 filterSettings: BarcodePickViewSettingsDefaults.filterHighlightSettings
             ),

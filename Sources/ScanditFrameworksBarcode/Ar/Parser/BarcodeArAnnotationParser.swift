@@ -6,6 +6,7 @@
 
 import Foundation
 import ScanditBarcodeCapture
+import ScanditBarcodeCaptureDeserializer
 import ScanditCaptureCore
 import ScanditFrameworksCore
 import UIKit
@@ -21,25 +22,47 @@ public enum FrameworksBarcodeArAnnotationEvents: String, CaseIterable {
 }
 
 public class BarcodeArAnnotationParser {
+    private let viewId: Int
+    private let emitter: Emitter
+
+    // We need three different delegates since their emits need to contain information about are they a closeup or faraway annotation
+    // This is because they are differentiated by a barcodeId but that can be the same for two infoAnnotations with a responsiveAnnotation
     private var infoAnnotationDelegate: FrameworksInfoAnnotationDelegate?
+    private var closeUpInfoAnnotationDelegate: FrameworksInfoAnnotationDelegate?
+    private var farAwayInfoAnnotationDelegate: FrameworksInfoAnnotationDelegate?
     private var popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate?
     private var cache: BarcodeArAugmentationsCache?
 
-    init() {
-        // Initialize without delegates - they will be set later
+    init(viewId: Int, emitter: Emitter) {
+        self.viewId = viewId
+        self.emitter = emitter
+
+        infoAnnotationDelegate = FrameworksInfoAnnotationDelegate(
+            emitter: emitter,
+            viewId: viewId,
+            responsiveAnnotationType: nil
+        )
+        closeUpInfoAnnotationDelegate = FrameworksInfoAnnotationDelegate(
+            emitter: emitter,
+            viewId: viewId,
+            responsiveAnnotationType: .closeUp
+        )
+        farAwayInfoAnnotationDelegate = FrameworksInfoAnnotationDelegate(
+            emitter: emitter,
+            viewId: viewId,
+            responsiveAnnotationType: .farAway
+        )
     }
 
     func setDelegates(
-        infoAnnotationDelegate: FrameworksInfoAnnotationDelegate,
         popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate,
         cache: BarcodeArAugmentationsCache
     ) {
-        self.infoAnnotationDelegate = infoAnnotationDelegate
         self.popoverAnnotationDelegate = popoverAnnotationDelegate
         self.cache = cache
     }
 
-    func get(json: JSONValue, barcode: Barcode, emitter: Emitter, viewId: Int) -> (UIView & BarcodeArAnnotation)? {
+    func get(json: JSONValue, barcode: Barcode, emitter: Emitter) -> (UIView & BarcodeArAnnotation)? {
         guard let type = json.optionalString(forKey: "type") else {
             Log.error("Missing type in JSON.")
             return nil
@@ -52,6 +75,8 @@ public class BarcodeArAnnotationParser {
             return getPopoverAnnotation(barcode: barcode, json: json)
         case "barcodeArStatusIconAnnotation":
             return getStatusIconAnnotation(barcode: barcode, json: json)
+        case "barcodeArResponsiveAnnotation":
+            return getResponsiveAnnotation(barcode: barcode, json: json)
         case "barcodeArCustomAnnotation":
             return BarcodeArCustomAnnotation(barcode: barcode, emitter: emitter, json: json, viewId: viewId)
         default:
@@ -68,6 +93,8 @@ public class BarcodeArAnnotationParser {
                 return
             }
             updateInfoAnnotation(infoAnnotation, json, barcodeId)
+        case let responsiveAnnotation as BarcodeArResponsiveAnnotation:
+            updateResponsiveAnnotation(annotation: responsiveAnnotation, json: json)
         case let statusIconAnnotation as BarcodeArStatusIconAnnotation:
             let iconJson = json.getObjectAsString(forKey: "icon")
             updateStatusIconAnnotation(statusIconAnnotation, iconJson, json)
@@ -130,7 +157,8 @@ private extension BarcodeArAnnotationParser {
     private func updateInfoAnnotation(
         _ annotation: BarcodeArInfoAnnotation,
         _ json: JSONValue,
-        _ barcodeId: String
+        _ barcodeId: String,
+        _ responsiveAnnotationType: ResponsiveAnnotationType? = nil
     ) {
         annotation.hasTip = json.bool(forKey: "hasTip", default: false)
         annotation.isEntireAnnotationTappable = json.bool(forKey: "isEntireAnnotationTappable", default: false)
@@ -166,7 +194,17 @@ private extension BarcodeArAnnotationParser {
 
         if json.bool(forKey: "hasListener", default: false) {
             if annotation.delegate == nil {
-                annotation.delegate = self.infoAnnotationDelegate
+                annotation.delegate = {
+                    switch responsiveAnnotationType {
+                    case .farAway:
+                        return farAwayInfoAnnotationDelegate
+                    case .closeUp:
+                        return closeUpInfoAnnotationDelegate
+                    case nil:
+                        return infoAnnotationDelegate
+                    }
+                }()
+
             }
         } else {
             annotation.delegate = nil
@@ -175,6 +213,22 @@ private extension BarcodeArAnnotationParser {
         var trigger = BarcodeArAnnotationTrigger.highlightTap
         SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
         annotation.annotationTrigger = trigger
+    }
+
+    private func updateResponsiveAnnotation(annotation: BarcodeArResponsiveAnnotation, json: JSONValue) {
+        BarcodeArResponsiveAnnotation.threshold = json.cgFloat(forKey: "threshold")
+
+        if let closeUp = annotation.closeUpAnnotation {
+            let closeUpJson = json.object(forKey: "closeUpAnnotation")
+            updateInfoAnnotation(closeUp, closeUpJson, annotation.barcode.uniqueId)
+        }
+        if let farAway = annotation.farAwayAnnotation {
+            let farAwayJson = json.object(forKey: "farAwayAnnotation")
+            updateInfoAnnotation(farAway, farAwayJson, annotation.barcode.uniqueId)
+        }
+
+        var trigger = BarcodeArAnnotationTrigger.highlightTap
+        SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
     }
 
     private func parseInfoAnnotationHeader(_ json: JSONValue) -> BarcodeArInfoAnnotationHeader {
@@ -298,6 +352,14 @@ private extension BarcodeArAnnotationParser {
         _ json: JSONValue,
         _ barcode: Barcode
     ) {
+        if let anchorJson = json.optionalString(forKey: "anchor") {
+            switch anchorJson {
+            case "top": annotation.anchor = .top
+            case "left": annotation.anchor = .left
+            case "right": annotation.anchor = .right
+            default: annotation.anchor = .bottom
+            }
+        }
         annotation.isEntirePopoverTappable = json.bool(forKey: "isEntirePopoverTappable", default: false)
         if json.bool(forKey: "hasListener", default: false) && annotation.delegate == nil {
             if annotation.delegate == nil {
@@ -334,6 +396,41 @@ private extension BarcodeArAnnotationParser {
         }
         let annotation = BarcodeArStatusIconAnnotation(barcode: barcode)
         updateStatusIconAnnotation(annotation, json.getObjectAsString(forKey: "icon"), json)
+        return annotation
+    }
+
+    private func getResponsiveAnnotation(barcode: Barcode, json: JSONValue) -> BarcodeArResponsiveAnnotation? {
+        var closeUpAnnotation: BarcodeArInfoAnnotation?
+        var farawayAnnotation: BarcodeArInfoAnnotation?
+
+        if json.containsKey("closeUpAnnotation") {
+            let annotation = BarcodeArInfoAnnotation(barcode: barcode)
+            updateInfoAnnotation(
+                annotation,
+                json.object(forKey: "closeUpAnnotation"),
+                barcode.uniqueId,
+                .closeUp
+            )
+            closeUpAnnotation = annotation
+        }
+
+        if json.containsKey("farAwayAnnotation") {
+            let annotation = BarcodeArInfoAnnotation(barcode: barcode)
+            updateInfoAnnotation(
+                annotation,
+                json.object(forKey: "farAwayAnnotation"),
+                barcode.uniqueId,
+                .farAway
+            )
+            farawayAnnotation = annotation
+        }
+
+        let annotation = BarcodeArResponsiveAnnotation(
+            barcode: barcode,
+            closeUp: closeUpAnnotation,
+            farAway: farawayAnnotation
+        )
+        updateResponsiveAnnotation(annotation: annotation, json: json)
         return annotation
     }
 

@@ -6,6 +6,7 @@
 
 import Foundation
 import ScanditBarcodeCapture
+import ScanditBarcodeCaptureDeserializer
 import ScanditCaptureCore
 import ScanditFrameworksCore
 import UIKit
@@ -181,6 +182,9 @@ public class FrameworksBarcodeFindView: FrameworksBaseView {
         }
         if creationData.hasBarcodeTransformer {
             mode.setBarcodeTransformer(findTransformer)
+            findTransformer.enable()
+        } else {
+            findTransformer.disable()
         }
         if let itemsToFind = creationData.itemsToFind {
             mode.setItemList(itemsToFind.items)

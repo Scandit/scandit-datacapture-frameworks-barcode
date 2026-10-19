@@ -7,6 +7,7 @@
 #import <Foundation/Foundation.h>
 #import <ScanditCaptureCore/SDCBase.h>
 #import <ScanditCaptureCore/SDCAnchor.h>
+#import <ScanditCaptureCore/SDCDataCaptureView.h>
 
 @protocol SDCBarcodePickViewHighlightStyle;
 
@@ -39,6 +40,8 @@ SDC_EXPORTED_SYMBOL
 @property (class, nonatomic, assign, readonly) SDCAnchor zoomButtonPosition;
 @property (class, nonatomic, assign, readonly) BOOL showTorchButton;
 @property (class, nonatomic, assign, readonly) SDCAnchor torchButtonPosition;
+@property (class, nonatomic, assign, readonly) SDCLogoStyle logoStyle;
+@property (class, nonatomic, assign, readonly) SDCAnchor logoAnchor;
 
 @property (class, nonatomic, assign, nullable, readonly) id<SDCBarcodeFilterHighlightSettings>
     filterHighlightSettings;

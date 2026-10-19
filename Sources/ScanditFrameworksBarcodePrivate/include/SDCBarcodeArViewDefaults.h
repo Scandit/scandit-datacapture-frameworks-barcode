@@ -8,6 +8,7 @@
 #import <ScanditCaptureCore/SDCBase.h>
 #import <ScanditBarcodeCapture/SDCBarcodeArCircleHighlight.h>
 #import <ScanditCaptureCore/SDCAnchor.h>
+#import <ScanditCaptureCore/SDCMeasureUnit.h>
 #import <ScanditCaptureCore/SDCCamera.h>
 #import <ScanditBarcodeCapture/SDCBarcodeArPopoverAnnotation.h>
 #import <ScanditBarcodeCapture/SDCBarcodeArInfoAnnotation.h>
@@ -36,11 +37,17 @@ NS_SWIFT_NAME(BarcodeArViewDefaults)
 @property (class, nonatomic, assign, readonly) SDCAnchor defaultZoomControlPosition;
 @property (class, nonatomic, assign, readonly) SDCAnchor defaultCameraSwitchControlPosition;
 @property (class, nonatomic, assign, readonly) SDCAnchor defaultMacroModeControlPosition;
+@property (class, nonatomic, assign, readonly) SDCPointWithUnit defaultTorchControlOffset;
+@property (class, nonatomic, assign, readonly) SDCPointWithUnit defaultZoomControlOffset;
+@property (class, nonatomic, assign, readonly) SDCPointWithUnit defaultCameraSwitchControlOffset;
+@property (class, nonatomic, assign, readonly) SDCPointWithUnit defaultMacroModeControlOffset;
 
 @property (class, nonatomic, readonly) SDCBrush *defaultRectangleHighlightBrush;
 @property (class, nonatomic, nullable, readonly) SDCScanditIcon *defaultRectangleHighlightIcon;
 
 @property (class, nonatomic, readonly) BOOL defaultHighlightIsPulsing;
+@property (class, nonatomic, readonly) UIColor *defaultCircleHighlightTextColor;
+@property (class, nonatomic, readonly) UIFont *defaultCircleHighlightTextFont;
 
 @property (class, nonatomic, readonly) SDCBarcodeArStatusIconAnnotationAnchor defaultStatusIconAnnotationAnchor;
 @property (class, nonatomic, readonly) SDCBarcodeArAnnotationTrigger defaultStatusIconAnnotationTrigger;
@@ -86,9 +93,12 @@ NS_SWIFT_NAME(BarcodeArViewDefaults)
 @property (class, nonatomic, nullable, readonly) SDCScanditIcon *defaultInfoAnnotationBodyComponentRightIcon;
 @property (class, nonatomic, readonly) UIFont *defaultInfoAnnotationBodyComponentFont;
 @property (class, nonatomic, readonly) UIColor *defaultInfoAnnotationBodyComponentTextColor;
+
+@property (class, nonatomic, assign, readonly) CGFloat defaultResponsiveAnnotationThreshold;
+@property (class, nonatomic, readonly) SDCBarcodeArAnnotationTrigger defaultResponsiveAnnotationTrigger;
 //clang-format on
 
-- (instancetype)new NS_UNAVAILABLE;
++ (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
 + (CGFloat)defaultCircleHighlightSizeForPreset:(SDCBarcodeArCircleHighlightPreset)preset;
 + (SDCBrush *)defaultCircleHighlightBrushForPreset:(SDCBarcodeArCircleHighlightPreset)preset;

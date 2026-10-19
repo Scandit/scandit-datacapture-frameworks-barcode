@@ -14,6 +14,9 @@ struct FrameworksBarcodePickSettingsDefaults: DefaultsEncodable {
             "hapticsEnabled": barcodePickSettings.isHapticsEnabled,
             "soundEnabled": barcodePickSettings.isSoundEnabled,
             "cachingEnabled": barcodePickSettings.isCachingEnabled,
+            "barcodeFilterSettings": BarcodeFilterSettingsDefaults(
+                barcodeFilterSettings: barcodePickSettings.filterSettings
+            ).toEncodable(),
         ]
     }
 }
