@@ -4,7 +4,6 @@
  * Copyright (C) 2025- Scandit AG. All rights reserved.
  */
 
-import QuartzCore
 import ScanditBarcodeCapture
 import ScanditCaptureCore
 import ScanditFrameworksCore
@@ -120,11 +119,16 @@ class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
             "barcodeId": self.barcode.uniqueId,
         ]
 
-        // We emit once immediately to avoid initial lag
+        // We emit once immediately to avoid initial lag. Wrap in the same
+        // batched shape `{ updates: [...], viewId }` so JS-side consumers
+        // (RN controller) that assume a `.updates` array work on first emit.
         if !hasEmittedOnce {
             emitter.emit(
                 name: BarcodeArCustomHighlightEvents.updateCustomHighlight.rawValue,
-                payload: payload
+                payload: [
+                    "updates": [payload],
+                    "viewId": self.viewId,
+                ]
             )
             hasEmittedOnce = true
             return
@@ -132,40 +136,10 @@ class BarcodeArCustomHighlight: UIView, BarcodeArHighlight {
         // Also move the "shadow" view since annotation locations are based on the highlight's frame
         self.frame.origin = CGPoint(x: centerX, y: centerY)
 
-        BarcodeArCustomHighlight.batchedEmit(emitter: emitter, viewId: self.viewId, payload: payload)
+        Self.batcher.submit(emitter: emitter, viewId: viewId, payload: payload)
     }
 
-    // MARK: - Static batching logic
-    private static let emitInterval: TimeInterval = 1.0 / 30.0  // 30 emits per second
-    private static var lastEmitTime: TimeInterval = 0
-    private static var pendingUpdates: [[String: Any]] = []
-    private static var emitTimer: Timer?
-
-    private static func batchedEmit(emitter: Emitter, viewId: Int, payload: [String: Any]) {
-        pendingUpdates.append(payload)
-
-        // We have a pending emit, no need to schedule another one
-        if emitTimer != nil {
-            return
-        }
-
-        let currentTime = CACurrentMediaTime()
-        let timeUntilNextEmit = emitInterval - (currentTime - lastEmitTime)
-        let delay = max(0, timeUntilNextEmit)
-
-        emitTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-            let batchedPayload: [String: Any] = [
-                "updates": pendingUpdates,
-                "viewId": viewId,
-            ]
-            pendingUpdates.removeAll()
-            lastEmitTime = CACurrentMediaTime()
-            emitter.emit(
-                name: BarcodeArCustomHighlightEvents.updateCustomHighlight.rawValue,
-                payload: batchedPayload
-            )
-            emitTimer = nil
-        }
-    }
-
+    private static let batcher = BarcodeArEmitBatcher(
+        updateEventName: BarcodeArCustomHighlightEvents.updateCustomHighlight.rawValue
+    )
 }

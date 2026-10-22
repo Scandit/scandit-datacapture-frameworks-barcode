@@ -7,28 +7,23 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-struct SparkScanDefaults: DefaultsEncodable {
-    let feedbackDefaults: SparkScanFeedbackDefaults
+struct SparkScanDefaults {
     let viewDefaults: DefaultsSparkScanView
-    let settingsDefaults: SparkScanSettingsDefaults
 
     public static let shared = {
         SparkScanDefaults(
-            feedbackDefaults: SparkScanFeedbackDefaults(
-                successFeedback: SparkScanBarcodeSuccessFeedback(),
-                // the default values passed here will be ignored on the common layer
-                errorFeedback: SparkScanBarcodeErrorFeedback(message: "ignore", resumeCapturingDelay: TimeInterval(1.0))
-            ),
-            viewDefaults: DefaultsSparkScanView(viewSettings: SparkScanViewSettings()),
-            settingsDefaults: SparkScanSettingsDefaults(sparkScanSettings: SparkScanSettings())
+            viewDefaults: DefaultsSparkScanView(viewSettings: SparkScanViewSettings())
         )
     }()
 
-    func toEncodable() -> [String: Any?] {
-        [
-            "Feedback": feedbackDefaults.toEncodable(),
-            "SparkScanSettings": settingsDefaults.toEncodable(),
-            "SparkScanView": viewDefaults.toEncodable(),
-        ]
+    enum Keys {
+        static let sparkScanView = "SparkScanView"
+    }
+
+    /// The residual defaults that a framework plugin cannot resolve statically: the
+    /// SparkScanView block (localized texts, asset handles). Every other SparkScan default
+    /// ships as a generated static file.
+    func toDynamicEncodable() -> [String: Any?] {
+        [Keys.sparkScanView: viewDefaults.toEncodable()]
     }
 }

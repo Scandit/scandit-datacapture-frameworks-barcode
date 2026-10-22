@@ -47,12 +47,12 @@ open class FrameworksBarcodeCaptureListener: NSObject, BarcodeCaptureListener {
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
-        let payload =
-            [
-                "session": session.jsonString,
-                "frameId": frameId,
-                "modeId": modeId,
-            ] as [String: Any?]
+        let payload = SchemaTypes.BarcodeCaptureListenerDidScan(
+            session: session.jsonString,
+            frameId: frameId,
+            modeId: modeId,
+            event: FrameworksBarcodeCaptureEvent.barcodeScanned.rawValue
+        ).toDictionary().mapValues { $0 as Any? }
 
         barcodeScannedEvent.emit(
             on: emitter,
@@ -71,12 +71,12 @@ open class FrameworksBarcodeCaptureListener: NSObject, BarcodeCaptureListener {
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
-        let payload =
-            [
-                "session": session.jsonString,
-                "frameId": frameId,
-                "modeId": modeId,
-            ] as [String: Any?]
+        let payload = SchemaTypes.BarcodeCaptureListenerDidUpdateSession(
+            session: session.jsonString,
+            frameId: frameId,
+            modeId: modeId,
+            event: FrameworksBarcodeCaptureEvent.sessionUpdated.rawValue
+        ).toDictionary().mapValues { $0 as Any? }
 
         sessionUpdatedEvent.emit(
             on: emitter,

@@ -4,7 +4,6 @@
  * Copyright (C) 2025- Scandit AG. All rights reserved.
  */
 
-import QuartzCore
 import ScanditBarcodeCapture
 import ScanditBarcodeCaptureDeserializer
 import ScanditFrameworksCore
@@ -22,13 +21,22 @@ class BarcodeArCustomAnnotation: UIView, BarcodeArAnnotation {
     private var barcode: Barcode
     private var emitter: Emitter
     private var viewId: Int
+    private let responsiveAnnotationThreshold: Double?
 
     private var hasEmittedOnce = false
+    private var isShown = false
 
-    init(barcode: Barcode, emitter: Emitter, json: JSONValue, viewId: Int) {
+    init(
+        barcode: Barcode,
+        emitter: Emitter,
+        json: JSONValue,
+        viewId: Int,
+        responsiveAnnotationThreshold: Double? = nil
+    ) {
         self.barcode = barcode
         self.emitter = emitter
         self.viewId = viewId
+        self.responsiveAnnotationThreshold = responsiveAnnotationThreshold
 
         var trigger = BarcodeArAnnotationTrigger.highlightTap
         SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
@@ -39,9 +47,24 @@ class BarcodeArCustomAnnotation: UIView, BarcodeArAnnotation {
 
     override func didMoveToSuperview() {
         super.didMoveToSuperview()
+        if responsiveAnnotationThreshold != nil { return }
         if superview != nil {
             create()
         } else {
+            dispose()
+        }
+    }
+
+    // A responsive slot stays a subview of its parent when that leaves the screen, so the window is
+    // the nested lifecycle signal.
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard responsiveAnnotationThreshold != nil else { return }
+        if window != nil {
+            create()
+            syncShown()
+        } else {
+            isShown = false
             dispose()
         }
     }
@@ -61,23 +84,43 @@ class BarcodeArCustomAnnotation: UIView, BarcodeArAnnotation {
         }
     }
 
+    // The responsive parent fades its slots with alpha and never touches isHidden.
+    override var alpha: CGFloat {
+        didSet { syncShown() }
+    }
+
+    private func syncShown() {
+        guard responsiveAnnotationThreshold != nil, window != nil else { return }
+        let nowShown = alpha > 0
+        guard nowShown != isShown else { return }
+        isShown = nowShown
+        if nowShown { show() } else { hide() }
+    }
+
+    private func withThreshold(_ payload: [String: Any]) -> [String: Any] {
+        guard let threshold = responsiveAnnotationThreshold else { return payload }
+        var payload = payload
+        payload["responsiveAnnotationThreshold"] = threshold
+        return payload
+    }
+
     func hide() {
         self.emitter.emit(
             name: BarcodeArCustomAnnotationEvents.hideCustomAnnotation.rawValue,
-            payload: [
+            payload: withThreshold([
                 "barcodeId": self.barcode.uniqueId,
                 "viewId": self.viewId,
-            ]
+            ])
         )
     }
 
     func show() {
         self.emitter.emit(
             name: BarcodeArCustomAnnotationEvents.showCustomAnnotation.rawValue,
-            payload: [
+            payload: withThreshold([
                 "barcodeId": self.barcode.uniqueId,
                 "viewId": self.viewId,
-            ]
+            ])
         )
 
     }
@@ -85,21 +128,21 @@ class BarcodeArCustomAnnotation: UIView, BarcodeArAnnotation {
     func create() {
         self.emitter.emit(
             name: BarcodeArCustomAnnotationEvents.createCustomAnnotation.rawValue,
-            payload: [
+            payload: withThreshold([
                 "barcode": self.barcode.jsonString,
                 "barcodeId": self.barcode.uniqueId,
                 "viewId": self.viewId,
-            ]
+            ])
         )
     }
 
     func dispose() {
         self.emitter.emit(
             name: BarcodeArCustomAnnotationEvents.disposeCustomAnnotation.rawValue,
-            payload: [
+            payload: withThreshold([
                 "barcodeId": self.barcode.uniqueId,
                 "viewId": self.viewId,
-            ]
+            ])
         )
 
     }
@@ -112,56 +155,31 @@ class BarcodeArCustomAnnotation: UIView, BarcodeArAnnotation {
             {"x": \(centerX), "y": \(centerY)}
             """
 
-        let payload: [String: Any] = [
+        let payload = withThreshold([
             "centerPosition": centerJson,
             "barcodeId": self.barcode.uniqueId,
             "viewId": self.viewId,
-        ]
+        ])
 
-        // We emit once immediately to avoid initial lag
+        // We emit once immediately to avoid initial lag. Wrap in the same
+        // batched shape `{ updates: [...], viewId }` so JS-side consumers
+        // (RN controller) that assume a `.updates` array work on first emit.
         if !hasEmittedOnce {
             emitter.emit(
                 name: BarcodeArCustomAnnotationEvents.updateCustomAnnotation.rawValue,
-                payload: payload
+                payload: [
+                    "updates": [payload],
+                    "viewId": self.viewId,
+                ]
             )
             hasEmittedOnce = true
             return
         }
 
-        BarcodeArCustomAnnotation.batchedEmit(emitter: emitter, viewId: viewId, payload: payload)
+        Self.batcher.submit(emitter: emitter, viewId: viewId, payload: payload)
     }
 
-    // MARK: - Static batching logic
-    private static let emitInterval: TimeInterval = 1.0 / 30.0  // 30 emits per second
-    private static var lastEmitTime: TimeInterval = 0
-    private static var pendingUpdates: [[String: Any]] = []
-    private static var emitTimer: Timer?
-
-    private static func batchedEmit(emitter: Emitter, viewId: Int, payload: [String: Any]) {
-        pendingUpdates.append(payload)
-
-        // We have a pending emit, no need to schedule another one
-        if emitTimer != nil {
-            return
-        }
-
-        let currentTime = CACurrentMediaTime()
-        let timeUntilNextEmit = emitInterval - (currentTime - lastEmitTime)
-        let delay = max(0, timeUntilNextEmit)
-
-        emitTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-            let batchedPayload: [String: Any] = [
-                "updates": pendingUpdates,
-                "viewId": viewId,
-            ]
-            pendingUpdates.removeAll()
-            lastEmitTime = CACurrentMediaTime()
-            emitter.emit(
-                name: BarcodeArCustomAnnotationEvents.updateCustomAnnotation.rawValue,
-                payload: batchedPayload
-            )
-            emitTimer = nil
-        }
-    }
-
+    private static let batcher = BarcodeArEmitBatcher(
+        updateEventName: BarcodeArCustomAnnotationEvents.updateCustomAnnotation.rawValue
+    )
 }

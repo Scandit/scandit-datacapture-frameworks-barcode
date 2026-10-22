@@ -55,10 +55,6 @@ public class FrameworksBarcodeSelectionMode: FrameworksBaseMode {
 
         captureContext.addMode(mode: mode)
 
-        if creationData.hasListener {
-            mode.addListener(listener)
-        }
-
         mode.isEnabled = creationData.isEnabled
     }
 

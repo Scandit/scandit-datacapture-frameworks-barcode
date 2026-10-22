@@ -31,6 +31,10 @@ public class BarcodeArModuleCommandFactory {
             return UnregisterBarcodeArAnnotationProviderCommand(module: module, method)
         case "registerBarcodeArHighlightProvider":
             return RegisterBarcodeArHighlightProviderCommand(module: module, method)
+        case "registerBarcodeArAugmentationsListener":
+            return RegisterBarcodeArAugmentationsListenerCommand(module: module, method)
+        case "unregisterBarcodeArAugmentationsListener":
+            return UnregisterBarcodeArAugmentationsListenerCommand(module: module, method)
         case "unregisterBarcodeArHighlightProvider":
             return UnregisterBarcodeArHighlightProviderCommand(module: module, method)
         case "registerBarcodeArFilter":
@@ -47,6 +51,10 @@ public class BarcodeArModuleCommandFactory {
             return BarcodeArViewStopCommand(module: module, method)
         case "barcodeArViewPause":
             return BarcodeArViewPauseCommand(module: module, method)
+        case "showBarcodeArView":
+            return ShowBarcodeArViewCommand(module: module, method)
+        case "hideBarcodeArView":
+            return HideBarcodeArViewCommand(module: module, method)
         case "barcodeArViewReset":
             return BarcodeArViewResetCommand(module: module, method)
         case "updateBarcodeArView":

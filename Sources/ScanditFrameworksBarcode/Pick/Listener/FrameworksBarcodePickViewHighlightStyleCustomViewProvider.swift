@@ -38,11 +38,11 @@ open class FrameworksBarcodePickViewHighlightStyleCustomViewProvider: NSObject,
         let requestId = request.hashValue
         emitter.emit(
             name: BarcodePickViewHighlightStyleCustomViewProviderEvent.viewForRequest.rawValue,
-            payload: [
-                "requestId": requestId,
-                "request": request.jsonString,
-                "viewId": self.viewId,
-            ]
+            payload: SchemaTypes.BarcodePickViewHighlightStyleCustomViewProviderViewForRequest(
+                requestId: requestId,
+                request: request.jsonString,
+                viewId: self.viewId
+            ).toDictionary().mapValues { $0 as Any? }
         )
 
         cache.setValue(completionHandler, for: requestId)

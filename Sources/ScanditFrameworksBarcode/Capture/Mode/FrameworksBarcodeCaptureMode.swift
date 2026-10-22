@@ -10,6 +10,7 @@ import ScanditFrameworksCore
 
 public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
     private let listener: FrameworksBarcodeCaptureListener
+    private let areListener: FrameworksBarcodeCaptureAdaptiveRecognitionServiceListener
     private let captureContext: DefaultFrameworksCaptureContext
     private let deserializer: BarcodeCaptureDeserializer
 
@@ -37,10 +38,12 @@ public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
 
     public init(
         listener: FrameworksBarcodeCaptureListener,
+        areListener: FrameworksBarcodeCaptureAdaptiveRecognitionServiceListener,
         captureContext: DefaultFrameworksCaptureContext,
         deserializer: BarcodeCaptureDeserializer = BarcodeCaptureDeserializer()
     ) {
         self.listener = listener
+        self.areListener = areListener
         self.captureContext = captureContext
         self.deserializer = deserializer
     }
@@ -52,10 +55,6 @@ public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
         mode = try deserializer.mode(fromJSONString: creationData.modeJson, with: dataCaptureContext)
         captureContext.addMode(mode: mode)
 
-        if creationData.hasListener {
-            mode.addListener(listener)
-        }
-
         mode.isEnabled = creationData.isEnabled
         internalModeId = creationData.modeId
         internalParentId = creationData.parentId
@@ -64,6 +63,7 @@ public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
     public func dispose() {
         listener.reset()
         mode.removeListener(listener)
+        mode.removeAdaptiveRecognitionServiceListener(areListener)
         captureContext.removeMode(mode: mode)
     }
 
@@ -73,6 +73,14 @@ public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
 
     public func removeListener() {
         mode.removeListener(listener)
+    }
+
+    public func addAdaptiveRecognitionServiceListener() {
+        mode.addAdaptiveRecognitionServiceListener(areListener)
+    }
+
+    public func removeAdaptiveRecognitionServiceListener() {
+        mode.removeAdaptiveRecognitionServiceListener(areListener)
     }
 
     public func finishDidUpdateSession(enabled: Bool) {
@@ -96,6 +104,10 @@ public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
         mode.feedback = try BarcodeCaptureFeedback(fromJSONString: feedbackJson)
     }
 
+    public var licenseInfoJsonString: String? {
+        mode.barcodeCaptureLicenseInfo?.jsonString
+    }
+
     // MARK: - Factory Method
 
     public static func create(
@@ -110,8 +122,13 @@ public class FrameworksBarcodeCaptureMode: FrameworksBaseMode {
             modeId: creationData.modeId,
             cachedCaptureSession: cachedCaptureSession
         )
+        let areListener = FrameworksBarcodeCaptureAdaptiveRecognitionServiceListener(
+            emitter: emitter,
+            modeId: creationData.modeId
+        )
         let mode = FrameworksBarcodeCaptureMode(
             listener: listener,
+            areListener: areListener,
             captureContext: captureContext
         )
 

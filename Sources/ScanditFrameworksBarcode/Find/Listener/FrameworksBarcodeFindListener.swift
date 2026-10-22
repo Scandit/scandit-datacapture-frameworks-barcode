@@ -22,6 +22,16 @@ extension Emitter {
     }
 }
 
+// The `event` value passed into each generated payload struct is redundant on the paths that go
+// through `Event.emit`: it overwrites `payload["event"]` with its own name (`Event.swift:16`).
+// It is passed anyway so the payload struct is constructed complete and identical to the Android
+// side. On those paths the schema's `event` const is not load-bearing, so a divergence between
+// `FrameworksBarcodeFindEvent`'s raw values and the schema consts would be masked on iOS and
+// caught only on Android — the raw values above are the ones to keep in step. This does NOT
+// extend to the transformer: `EventWithResult.emit` calls `emitter.emit(name:payload:)` directly
+// (`EventWithResult.swift:69`), so in `FrameworksBarcodeFindTransformer.swift` the explicitly
+// passed `rawValue` IS the `event` value on the wire (SDC-32667).
+
 extension Event {
     init(_ event: FrameworksBarcodeFindEvent) {
         self.init(name: event.rawValue)
@@ -45,7 +55,11 @@ open class FrameworksBarcodeFindListener: NSObject, BarcodeFindListener {
         guard emitter.hasViewSpecificListenersForEvent(viewId, for: .didStartSearch) else { return }
         dispatchMain { [weak self] in
             guard let self else { return }
-            self.didStartSearchEvent.emit(on: self.emitter, payload: ["viewId": self.viewId])
+            let payload = SchemaTypes.BarcodeFindListenerOnSearchStarted(
+                viewId: self.viewId,
+                event: FrameworksBarcodeFindEvent.didStartSearch.rawValue
+            ).toDictionary()
+            self.didStartSearchEvent.emit(on: self.emitter, payload: payload)
         }
     }
 
@@ -54,13 +68,12 @@ open class FrameworksBarcodeFindListener: NSObject, BarcodeFindListener {
         let foundItemsBarcodeData = foundItems.map { $0.searchOptions.barcodeData }
         dispatchMain { [weak self] in
             guard let self else { return }
-            self.didPauseSearchEvent.emit(
-                on: self.emitter,
-                payload: [
-                    "foundItems": foundItemsBarcodeData,
-                    "viewId": self.viewId,
-                ]
-            )
+            let payload = SchemaTypes.BarcodeFindListenerOnSearchPaused(
+                foundItems: foundItemsBarcodeData,
+                viewId: self.viewId,
+                event: FrameworksBarcodeFindEvent.didPauseSearch.rawValue
+            ).toDictionary()
+            self.didPauseSearchEvent.emit(on: self.emitter, payload: payload)
         }
     }
 
@@ -69,25 +82,22 @@ open class FrameworksBarcodeFindListener: NSObject, BarcodeFindListener {
         let foundItemsBarcodeData = foundItems.map { $0.searchOptions.barcodeData }
         dispatchMain { [weak self] in
             guard let self else { return }
-            self.didStopSearchEvent.emit(
-                on: self.emitter,
-                payload: [
-                    "foundItems": foundItemsBarcodeData,
-                    "viewId": self.viewId,
-                ]
-            )
+            let payload = SchemaTypes.BarcodeFindListenerOnSearchStopped(
+                foundItems: foundItemsBarcodeData,
+                viewId: self.viewId,
+                event: FrameworksBarcodeFindEvent.didStopSearch.rawValue
+            ).toDictionary()
+            self.didStopSearchEvent.emit(on: self.emitter, payload: payload)
         }
     }
 
     public func barcodeFind(_ barcodeFind: BarcodeFind, didUpdate session: BarcodeFindSession) {
         guard emitter.hasViewSpecificListenersForEvent(viewId, for: .didUpdateSession) else { return }
-        didUpdateSessionEvent.emit(
-            on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "viewId": self.viewId,
-            ]
-        )
-
+        let payload = SchemaTypes.BarcodeFindListenerDidUpdateSession(
+            session: session.jsonString,
+            viewId: self.viewId,
+            event: FrameworksBarcodeFindEvent.didUpdateSession.rawValue
+        ).toDictionary()
+        didUpdateSessionEvent.emit(on: emitter, payload: payload)
     }
 }

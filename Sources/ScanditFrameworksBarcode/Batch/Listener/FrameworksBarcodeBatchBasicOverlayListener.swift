@@ -24,7 +24,10 @@ open class FrameworksBarcodeBatchBasicOverlayListener: NSObject, BarcodeBatchBas
         guard emitter.hasListener(for: brushForTrackedBarcodeEvent) else { return overlay.brush }
         brushForTrackedBarcodeEvent.emit(
             on: emitter,
-            payload: ["trackedBarcode": trackedBarcode.jsonString]
+            payload: SchemaTypes.BarcodeBatchBasicOverlayListenerBrushForTrackedBarcode(
+                trackedBarcode: trackedBarcode.jsonString,
+                event: FrameworksBarcodeBatchEvent.brushForTrackedBarcode.rawValue
+            ).toDictionary()
         )
         return nil
     }
@@ -36,7 +39,10 @@ open class FrameworksBarcodeBatchBasicOverlayListener: NSObject, BarcodeBatchBas
         guard emitter.hasListener(for: didTapOnTrackedBarcodeEvent) else { return }
         didTapOnTrackedBarcodeEvent.emit(
             on: emitter,
-            payload: ["trackedBarcode": trackedBarcode.jsonString]
+            payload: SchemaTypes.BarcodeBatchBasicOverlayListenerDidTapTrackedBarcode(
+                trackedBarcode: trackedBarcode.jsonString,
+                event: FrameworksBarcodeBatchEvent.didTapOnTrackedBarcode.rawValue
+            ).toDictionary()
         )
     }
 }

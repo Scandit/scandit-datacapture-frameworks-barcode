@@ -13,9 +13,20 @@ class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeArPopoverAnnotationD
     private let emitter: Emitter
     private let viewId: Int
 
-    public init(emitter: Emitter, viewId: Int) {
+    // Mutable: cached per threshold slot by the parser and refreshed in place on update.
+    var responsiveAnnotationType: ResponsiveAnnotationType?
+    var responsiveAnnotationThreshold: Double?
+
+    public init(
+        emitter: Emitter,
+        viewId: Int,
+        responsiveAnnotationType: ResponsiveAnnotationType? = nil,
+        responsiveAnnotationThreshold: Double? = nil
+    ) {
         self.emitter = emitter
         self.viewId = viewId
+        self.responsiveAnnotationType = responsiveAnnotationType
+        self.responsiveAnnotationThreshold = responsiveAnnotationThreshold
     }
 
     private let didTapPopoverButton = Event(
@@ -29,11 +40,13 @@ class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeArPopoverAnnotationD
     ) {
         didTapPopoverButton.emit(
             on: self.emitter,
-            payload: [
-                "barcodeId": annotation.barcode.uniqueId,
-                "buttonIndex": index,
-                "viewId": self.viewId,
-            ]
+            payload: SchemaTypes.BarcodeArPopoverAnnotationListenerDidTapPopoverButton(
+                barcodeId: annotation.barcode.uniqueId,
+                buttonIndex: index,
+                viewId: self.viewId,
+                responsiveAnnotationType: responsiveAnnotationType?.rawValue,
+                responsiveAnnotationThreshold: responsiveAnnotationThreshold
+            ).toDictionary()
         )
     }
 
@@ -44,10 +57,12 @@ class FrameworksPopoverAnnotationDelegate: NSObject, BarcodeArPopoverAnnotationD
     func barcodeArPopoverAnnotationDidTap(_ annotation: BarcodeArPopoverAnnotation) {
         didTapPopover.emit(
             on: self.emitter,
-            payload: [
-                "barcodeId": annotation.barcode.uniqueId,
-                "viewId": self.viewId,
-            ]
+            payload: SchemaTypes.BarcodeArPopoverAnnotationListenerDidTapPopover(
+                barcodeId: annotation.barcode.uniqueId,
+                viewId: self.viewId,
+                responsiveAnnotationType: responsiveAnnotationType?.rawValue,
+                responsiveAnnotationThreshold: responsiveAnnotationThreshold
+            ).toDictionary()
         )
     }
 }

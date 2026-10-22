@@ -7,40 +7,25 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-struct BarcodeSelectionDefaults: DefaultsEncodable {
-    let feedback: BarcodeSelectionFeedback
+struct BarcodeSelectionDefaults {
     let recommendedCameraSettings: CameraSettingsDefaults
-    let settings: BarcodeSelectionSettingsDefaults
-    let tapSelection: BarcodeSelectionTapSelectionDefaults
-    let aimerSelection: BarcodeSelectionAimerSelectionDefaults
-    let overlay: BarcodeSelectionBasicOverlayDefaults
 
     public static let shared: BarcodeSelectionDefaults = {
-        let settings = BarcodeSelectionSettings()
-        let overlay = {
-            let mode = BarcodeSelection(context: nil, settings: settings)
-            return BarcodeSelectionBasicOverlay(barcodeSelection: mode, view: nil)
-        }()
-        return BarcodeSelectionDefaults(
-            feedback: .default,
+        BarcodeSelectionDefaults(
             recommendedCameraSettings: CameraSettingsDefaults(
                 cameraSettings: BarcodeSelection.recommendedCameraSettings
-            ),
-            settings: BarcodeSelectionSettingsDefaults(settings: settings),
-            tapSelection: BarcodeSelectionTapSelectionDefaults(tapSelection: BarcodeSelectionTapSelection()),
-            aimerSelection: BarcodeSelectionAimerSelectionDefaults(aimerSelection: BarcodeSelectionAimerSelection()),
-            overlay: BarcodeSelectionBasicOverlayDefaults(overlay: overlay)
+            )
         )
     }()
 
-    func toEncodable() -> [String: Any?] {
-        [
-            "BarcodeSelectionBasicOverlay": overlay.toEncodable(),
-            "BarcodeSelectionSettings": settings.toEncodable(),
-            "Feedback": feedback.jsonString,
-            "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
-            "BarcodeSelectionTapSelection": tapSelection.toEncodable(),
-            "BarcodeSelectionAimerSelection": aimerSelection.toEncodable(),
-        ]
+    enum Keys {
+        static let recommendedCameraSettings = "RecommendedCameraSettings"
+    }
+
+    /// The residual defaults that a framework plugin cannot resolve statically: the
+    /// device-probed recommended camera settings. Every other BarcodeSelection default ships
+    /// as a generated static file.
+    func toDynamicEncodable() -> [String: Any?] {
+        [Keys.recommendedCameraSettings: recommendedCameraSettings.toEncodable()]
     }
 }

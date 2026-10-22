@@ -35,11 +35,11 @@ open class FrameworksBarcodePickViewHighlightStyleAsyncProvider: NSObject, Barco
         let requestId = request.hashValue
         emitter.emit(
             name: BarcodePickViewHighlightStyleAsyncProviderEvent.styleForRequest.rawValue,
-            payload: [
-                "requestId": requestId,
-                "request": request.jsonString,
-                "viewId": self.viewId,
-            ]
+            payload: SchemaTypes.BarcodePickViewHighlightStyleAsyncProviderStyleForRequest(
+                requestId: requestId,
+                request: request.jsonString,
+                viewId: self.viewId
+            ).toDictionary().mapValues { $0 as Any? }
         )
         cache.setValue(completionHandler, for: requestId)
     }

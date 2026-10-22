@@ -7,24 +7,25 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-struct BarcodeBatchDefaults: DefaultsEncodable {
+struct BarcodeBatchDefaults {
     let recommendedCameraSettings: CameraSettingsDefaults
-    let basicOverlayDefaults: BarcodeBatchBasicOverlayDefaults
 
     public static let shared: BarcodeBatchDefaults = {
-        let mode = BarcodeBatch(context: nil, settings: BarcodeBatchSettings())
-        let overlay = BarcodeBatchBasicOverlay(barcodeBatch: mode, view: nil)
-        let overlayDefaults = BarcodeBatchBasicOverlayDefaults(defaultStyle: overlay.style)
-        return BarcodeBatchDefaults(
-            recommendedCameraSettings: CameraSettingsDefaults(cameraSettings: BarcodeBatch.recommendedCameraSettings),
-            basicOverlayDefaults: overlayDefaults
+        BarcodeBatchDefaults(
+            recommendedCameraSettings: CameraSettingsDefaults(
+                cameraSettings: BarcodeBatch.recommendedCameraSettings
+            )
         )
     }()
 
-    func toEncodable() -> [String: Any?] {
-        [
-            "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
-            "BarcodeBatchBasicOverlay": basicOverlayDefaults.toEncodable(),
-        ]
+    enum Keys {
+        static let recommendedCameraSettings = "RecommendedCameraSettings"
+    }
+
+    /// The residual defaults that a framework plugin cannot resolve statically: the
+    /// device-probed recommended camera settings. Every other BarcodeBatch default ships as a
+    /// generated static file.
+    func toDynamicEncodable() -> [String: Any?] {
+        [Keys.recommendedCameraSettings: recommendedCameraSettings.toEncodable()]
     }
 }

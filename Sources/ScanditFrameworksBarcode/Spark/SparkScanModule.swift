@@ -20,6 +20,10 @@ open class SparkScanModule: NSObject, FrameworkModule {
 
     private let viewCache = FrameworksViewsCache<FrameworksSparkScanView>()
 
+    // Registration calls that raced view creation (addViewToContainer hasn't added the
+    // view to viewCache yet); replayed once the view is added (SDC-32821).
+    let viewCreationActionQueue = ViewCreationActionQueue()
+
     public init(emitter: Emitter) {
         self.emitter = emitter
     }
@@ -30,14 +34,14 @@ open class SparkScanModule: NSObject, FrameworkModule {
 
     public func didStop() {
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
-    }
-
-    public func getDefaults() -> [String: Any?] {
-        SparkScanDefaults.shared.toEncodable()
+        viewCreationActionQueue.clearAll()
     }
 
     public func registerSparkScanListenerForEvents(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.enableSparkScanListener()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -81,8 +85,19 @@ open class SparkScanModule: NSObject, FrameworkModule {
         result.success()
     }
 
+    public func getSparkScanLicenseInfo(viewId: Int, result: FrameworksResult) {
+        result.success(result: viewCache.getView(viewId: viewId)?.licenseInfoJsonString)
+    }
+
+    public func getSparkScanScanningMode(viewId: Int, result: FrameworksResult) {
+        result.success(result: viewCache.getView(viewId: viewId)?.scanningModeJsonString)
+    }
+
     public func registerSparkScanViewListenerEvents(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addSparkScanViewUiListener()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -134,6 +149,13 @@ open class SparkScanModule: NSObject, FrameworkModule {
                     viewCreationParams: viewCreationParams
                 )
                 self.viewCache.addView(view: view)
+                // Replay any registration calls parked while this viewId didn't have a
+                // view yet (SDC-32821). Must run after addView above, or a replayed
+                // action's own cache lookup would miss and re-park it forever.
+                let parkedActions = self.viewCreationActionQueue.drain(viewId: viewCreationParams.viewId)
+                for action in parkedActions {
+                    action()
+                }
                 result.success()
                 completion?(view.viewId)
             } catch {
@@ -258,6 +280,9 @@ open class SparkScanModule: NSObject, FrameworkModule {
 
     public func registerSparkScanFeedbackDelegateForEvents(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addFeedbackDelegate()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -294,6 +319,7 @@ open class SparkScanModule: NSObject, FrameworkModule {
     }
 
     public func disposeSparkScanView(viewId: Int, result: FrameworksResult) {
+        viewCreationActionQueue.clear(viewId: viewId)
         guard let viewInstance = viewCache.remove(viewId: viewId) else {
             result.success()
             return
@@ -342,5 +368,6 @@ open class SparkScanModule: NSObject, FrameworkModule {
 extension SparkScanModule: DeserializationLifeCycleObserver {
     public func didDisposeDataCaptureContext() {
         viewCache.disposeAll()
+        viewCreationActionQueue.clearAll()
     }
 }

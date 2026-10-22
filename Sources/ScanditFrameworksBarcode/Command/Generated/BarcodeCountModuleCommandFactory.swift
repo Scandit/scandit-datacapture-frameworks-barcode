@@ -42,6 +42,14 @@ public class BarcodeCountModuleCommandFactory {
             return FinishBarcodeCountBrushForAcceptedBarcodeCommand(module: module, method)
         case "finishBarcodeCountBrushForRejectedBarcode":
             return FinishBarcodeCountBrushForRejectedBarcodeCommand(module: module, method)
+        case "finishBarcodeCountIconForRecognizedBarcode":
+            return FinishBarcodeCountIconForRecognizedBarcodeCommand(module: module, method)
+        case "finishBarcodeCountIconForRecognizedBarcodeNotInList":
+            return FinishBarcodeCountIconForRecognizedBarcodeNotInListCommand(module: module, method)
+        case "finishBarcodeCountIconForAcceptedBarcode":
+            return FinishBarcodeCountIconForAcceptedBarcodeCommand(module: module, method)
+        case "finishBarcodeCountIconForRejectedBarcode":
+            return FinishBarcodeCountIconForRejectedBarcodeCommand(module: module, method)
         case "showBarcodeCountView":
             return ShowBarcodeCountViewCommand(module: module, method)
         case "hideBarcodeCountView":
@@ -60,6 +68,10 @@ public class BarcodeCountModuleCommandFactory {
             return UnregisterBarcodeCountListenerCommand(module: module, method)
         case "unregisterBarcodeCountAsyncListener":
             return UnregisterBarcodeCountAsyncListenerCommand(module: module, method)
+        case "registerBarcodeCountAdaptiveRecognitionServiceListener":
+            return RegisterBarcodeCountAdaptiveRecognitionServiceListenerCommand(module: module, method)
+        case "unregisterBarcodeCountAdaptiveRecognitionServiceListener":
+            return UnregisterBarcodeCountAdaptiveRecognitionServiceListenerCommand(module: module, method)
         case "finishBarcodeCountOnScan":
             return FinishBarcodeCountOnScanCommand(module: module, method)
         case "finishBarcodeCountOnSessionUpdated":
@@ -84,6 +96,8 @@ public class BarcodeCountModuleCommandFactory {
             return GetBarcodeCountSpatialMapWithHintsCommand(module: module, method)
         case "addBarcodeCountStatusProvider":
             return AddBarcodeCountStatusProviderCommand(module: module, method)
+        case "removeBarcodeCountStatusProvider":
+            return RemoveBarcodeCountStatusProviderCommand(module: module, method)
         case "submitBarcodeCountStatusProviderCallback":
             return SubmitBarcodeCountStatusProviderCallbackCommand(module: module, method)
         default:
