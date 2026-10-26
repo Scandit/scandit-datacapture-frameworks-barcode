@@ -32,10 +32,6 @@ public class BarcodeCaptureModuleCommandFactory {
             return RegisterBarcodeCaptureListenerForEventsCommand(module: module, method)
         case "unregisterBarcodeCaptureListenerForEvents":
             return UnregisterBarcodeCaptureListenerForEventsCommand(module: module, method)
-        case "registerBarcodeCaptureAdaptiveRecognitionServiceListener":
-            return RegisterBarcodeCaptureAdaptiveRecognitionServiceListenerCommand(module: module, method)
-        case "unregisterBarcodeCaptureAdaptiveRecognitionServiceListener":
-            return UnregisterBarcodeCaptureAdaptiveRecognitionServiceListenerCommand(module: module, method)
         case "finishBarcodeCaptureDidUpdateSession":
             return FinishBarcodeCaptureDidUpdateSessionCommand(module: module, method)
         case "finishBarcodeCaptureDidScan":

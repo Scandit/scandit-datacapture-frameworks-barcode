@@ -27,14 +27,7 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
         if emitter.hasListener(for: widgetForTrackedBarcodeEvent) {
             widgetForTrackedBarcodeEvent.emit(
                 on: emitter,
-                payload: payload(for: trackedBarcode) { full, identifier, location in
-                    SchemaTypes.BarcodeBatchAdvancedOverlayListenerViewForTrackedBarcode(
-                        trackedBarcode: full,
-                        identifier: identifier,
-                        location: location,
-                        event: FrameworksBarcodeBatchEvent.widgetForTrackedBarcode.rawValue
-                    ).toDictionary()
-                }
+                payload: payload(for: trackedBarcode)
             )
         }
         return nil
@@ -47,14 +40,7 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
         if emitter.hasListener(for: anchorForTrackedBarcodeEvent) {
             anchorForTrackedBarcodeEvent.emit(
                 on: emitter,
-                payload: payload(for: trackedBarcode) { full, identifier, location in
-                    SchemaTypes.BarcodeBatchAdvancedOverlayListenerAnchorForTrackedBarcode(
-                        trackedBarcode: full,
-                        identifier: identifier,
-                        location: location,
-                        event: FrameworksBarcodeBatchEvent.anchorForTrackedBarcode.rawValue
-                    ).toDictionary()
-                }
+                payload: payload(for: trackedBarcode)
             )
         }
         return .center
@@ -67,14 +53,7 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
         if emitter.hasListener(for: offsetForTrackedBarcodeEvent) {
             offsetForTrackedBarcodeEvent.emit(
                 on: emitter,
-                payload: payload(for: trackedBarcode) { full, identifier, location in
-                    SchemaTypes.BarcodeBatchAdvancedOverlayListenerOffsetForTrackedBarcode(
-                        trackedBarcode: full,
-                        identifier: identifier,
-                        location: location,
-                        event: FrameworksBarcodeBatchEvent.offsetForTrackedBarcode.rawValue
-                    ).toDictionary()
-                }
+                payload: payload(for: trackedBarcode)
             )
         }
         return .zero
@@ -87,14 +66,7 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
     /// is where the module already tracks the tapped `TrackedBarcode`), so the module calls
     /// into this method to share the same full-payload gate as the other three events.
     public func payload(forTappedTrackedBarcode trackedBarcode: TrackedBarcode) -> [String: Any] {
-        payload(for: trackedBarcode) { full, identifier, location in
-            SchemaTypes.BarcodeBatchAdvancedOverlayListenerDidTapViewForTrackedBarcode(
-                trackedBarcode: full,
-                identifier: identifier,
-                location: location,
-                event: FrameworksBarcodeBatchEvent.didTapViewForTrackedBarcode.rawValue
-            ).toDictionary()
-        }
+        payload(for: trackedBarcode)
     }
 
     /// Resets the full-payload gate, so the next emission for every identifier is full again.
@@ -108,22 +80,13 @@ open class FrameworksBarcodeBatchAdvancedOverlayListener: NSObject, BarcodeBatch
     /// time a given identifier is seen, and just `{identifier, location}` on every repeat ask
     /// for an identifier already sent in full - the location is always current-frame, only the
     /// rest of the (unchanging, ~1.1 KB) TrackedBarcode content is elided.
-    ///
-    /// The four call sites each have their own generated schema type (identical shape:
-    /// `trackedBarcode`/`identifier`/`location`, all optional), so `toDictionary()` is supplied
-    /// by the caller rather than hardcoded here.
-    // `event` is passed explicitly at every call site below, even though the `Event.emit`
-    // wrapper re-assigns the same string on iOS (`Event.swift`). That makes a wrong const
-    // silently CORRECTED here and observable only on Android, where nothing injects it — so
-    // the Kotlin value assertions are the real guard. Do not "simplify" either side by
-    // analogy with the other.
-    private func payload(
-        for trackedBarcode: TrackedBarcode,
-        toDictionary: (_ full: String?, _ identifier: Int?, _ location: String?) -> [String: Any]
-    ) -> [String: Any] {
+    private func payload(for trackedBarcode: TrackedBarcode) -> [String: Any] {
         if fullPayloadGate.shouldEmitFull(identifier: trackedBarcode.identifier) {
-            return toDictionary(trackedBarcode.jsonString, nil, nil)
+            return ["trackedBarcode": trackedBarcode.jsonString]
         }
-        return toDictionary(nil, trackedBarcode.identifier, trackedBarcode.location.jsonString)
+        return [
+            "identifier": trackedBarcode.identifier,
+            "location": trackedBarcode.location.jsonString,
+        ]
     }
 }

@@ -40,11 +40,11 @@ open class FrameworksBarcodeArHighlightProvider: NSObject, BarcodeArHighlightPro
 
         highlightForBarcode.emit(
             on: emitter,
-            payload: SchemaTypes.BarcodeArHighlightProviderHighlightForBarcode(
-                barcode: barcode.jsonString,
-                barcodeId: barcode.uniqueId,
-                viewId: self.viewId
-            ).toDictionary()
+            payload: [
+                "barcode": barcode.jsonString,
+                "barcodeId": barcode.uniqueId,
+                "viewId": self.viewId,
+            ]
         )
     }
 

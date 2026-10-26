@@ -1,6 +1,8 @@
 #import "SDCBarcode+Private.h"
 #import "SDCBarcode+Private.h"
 #import "SDCBarcodeArViewDefaults.h"
+#import "SDCBarcodeCountDeserializer+Private.h"
+#import "SDCBarcodeCountDeserializerDelegate.h"
 #import "SDCBarcodeCountViewDefaults.h"
 #import "SDCBarcodePickSettingsDefaults.h"
 #import "SDCBarcodePickViewSettingsDefaults.h"

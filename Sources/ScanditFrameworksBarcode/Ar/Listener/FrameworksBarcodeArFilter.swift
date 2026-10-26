@@ -14,15 +14,16 @@ public enum BarcodeArFilterEvents: String, CaseIterable {
 public class FrameworksBarcodeArFilter: NSObject, BarcodeArFilter {
     private let emitter: Emitter
     private let viewId: Int
-    private let filterBarcodesEvent: EventWithResult<[String]>
 
-    public init(emitter: Emitter, viewId: Int, timeout: TimeInterval = defaultTimeoutInterval) {
+    private let semaphore = DispatchSemaphore(value: 0)
+    private let lock = NSLock()
+    private var pendingResult: [String] = []
+
+    private let filterBarcodesEvent = Event(name: BarcodeArFilterEvents.filterBarcodes.rawValue)
+
+    public init(emitter: Emitter, viewId: Int) {
         self.emitter = emitter
         self.viewId = viewId
-        self.filterBarcodesEvent = EventWithResult(
-            event: Event(name: BarcodeArFilterEvents.filterBarcodes.rawValue),
-            timeout: timeout
-        )
     }
 
     public func filterBarcodes(_ barcodes: [Barcode]) -> [Barcode] {
@@ -30,22 +31,25 @@ public class FrameworksBarcodeArFilter: NSObject, BarcodeArFilter {
         // keep the first occurrence rather than trapping on duplicates.
         let barcodeMap = Dictionary(barcodes.map { ($0.uniqueId, $0) }, uniquingKeysWith: { first, _ in first })
 
-        // EventWithResult.emit does not add the event key the way Event.emit does.
-        let payload = SchemaTypes.BarcodeArFilterFilterBarcodes(
-            barcodes: barcodes.map { b in
-                SchemaTypes.BarcodeArFilterFilterBarcodesBarcodesItem(
-                    barcode: b.jsonString,
-                    barcodeId: b.uniqueId
-                )
-            },
-            viewId: viewId,
-            event: BarcodeArFilterEvents.filterBarcodes.rawValue
-        ).toDictionary()
+        filterBarcodesEvent.emit(
+            on: emitter,
+            payload: [
+                "barcodes": barcodes.map { b in
+                    ["barcode": b.jsonString, "barcodeId": b.uniqueId]
+                },
+                "viewId": viewId,
+            ]
+        )
 
-        // nil means timed out, malformed answer, or closed: let every barcode through.
-        guard let ids = filterBarcodesEvent.emit(on: emitter, payload: payload) else {
+        let timeout = DispatchTime.now() + .seconds(2)
+        if semaphore.wait(timeout: timeout) == .timedOut {
             return barcodes
         }
+
+        lock.lock()
+        let ids = pendingResult
+        lock.unlock()
+
         return ids.compactMap { barcodeMap[$0] }
     }
 
@@ -54,17 +58,12 @@ public class FrameworksBarcodeArFilter: NSObject, BarcodeArFilter {
             let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let ids = json["barcodes"] as? [String]
         else {
-            filterBarcodesEvent.reset()
+            semaphore.signal()
             return
         }
-        filterBarcodesEvent.unlock(value: ids)
-    }
-
-    public func open() {
-        filterBarcodesEvent.open()
-    }
-
-    public func close() {
-        filterBarcodesEvent.close()
+        lock.lock()
+        pendingResult = ids
+        lock.unlock()
+        semaphore.signal()
     }
 }

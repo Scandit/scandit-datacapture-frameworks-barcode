@@ -30,11 +30,7 @@ open class FrameworksBarcodePickViewListener: NSObject, BarcodePickViewListener 
                 for: BarcodePickViewListenerEvents.didFreezeScanning.rawValue
             )
         else { return }
-        emitter.emit(
-            name: BarcodePickViewListenerEvents.didFreezeScanning.rawValue,
-            payload: SchemaTypes.BarcodePickViewListenerDidFreezeScanning(viewId: self.viewId)
-                .toDictionary().mapValues { $0 as Any? }
-        )
+        emitter.emit(name: BarcodePickViewListenerEvents.didFreezeScanning.rawValue, payload: ["viewId": self.viewId])
     }
 
     public func barcodePickViewDidStopScanning(_ view: BarcodePickView) {
@@ -44,11 +40,7 @@ open class FrameworksBarcodePickViewListener: NSObject, BarcodePickViewListener 
                 for: BarcodePickViewListenerEvents.didStopScanning.rawValue
             )
         else { return }
-        emitter.emit(
-            name: BarcodePickViewListenerEvents.didStopScanning.rawValue,
-            payload: SchemaTypes.BarcodePickViewListenerDidStopScanning(viewId: self.viewId)
-                .toDictionary().mapValues { $0 as Any? }
-        )
+        emitter.emit(name: BarcodePickViewListenerEvents.didStopScanning.rawValue, payload: ["viewId": self.viewId])
     }
 
     public func barcodePickViewDidPauseScanning(_ view: BarcodePickView) {
@@ -58,11 +50,7 @@ open class FrameworksBarcodePickViewListener: NSObject, BarcodePickViewListener 
                 for: BarcodePickViewListenerEvents.didPauseScanning.rawValue
             )
         else { return }
-        emitter.emit(
-            name: BarcodePickViewListenerEvents.didPauseScanning.rawValue,
-            payload: SchemaTypes.BarcodePickViewListenerDidPauseScanning(viewId: self.viewId)
-                .toDictionary().mapValues { $0 as Any? }
-        )
+        emitter.emit(name: BarcodePickViewListenerEvents.didPauseScanning.rawValue, payload: ["viewId": self.viewId])
     }
 
     public func barcodePickViewDidStartScanning(_ view: BarcodePickView) {
@@ -72,10 +60,6 @@ open class FrameworksBarcodePickViewListener: NSObject, BarcodePickViewListener 
                 for: BarcodePickViewListenerEvents.didStartScanning.rawValue
             )
         else { return }
-        emitter.emit(
-            name: BarcodePickViewListenerEvents.didStartScanning.rawValue,
-            payload: SchemaTypes.BarcodePickViewListenerDidStartScanning(viewId: self.viewId)
-                .toDictionary().mapValues { $0 as Any? }
-        )
+        emitter.emit(name: BarcodePickViewListenerEvents.didStartScanning.rawValue, payload: ["viewId": self.viewId])
     }
 }

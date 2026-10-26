@@ -12,9 +12,7 @@ public enum FrameworksBarcodeCountStatusProviderEvent: String, CaseIterable {
 }
 
 open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusProvider {
-    private let lock = NSLock()
-    private var events: [String: BarcodeCountStatusProviderRequest] = [:]
-    private var isAttached = false
+    private let events = ConcurrentDictionary<String, BarcodeCountStatusProviderRequest>()
 
     private let emitter: Emitter
     private let viewId: Int
@@ -27,39 +25,14 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
         self.viewId = viewId
     }
 
-    public func attach() {
-        withLock { isAttached = true }
-    }
-
-    public func detach() {
-        let pending: [BarcodeCountStatusProviderRequest] = withLock {
-            isAttached = false
-            let drained = Array(events.values)
-            events.removeAll()
-            return drained
-        }
-
-        for request in pending {
-            request.callback.onStatusReady(BarcodeCountStatusAbortResult(errorMessage: nil))
-        }
-    }
-
     public func statusRequested(for barcodes: [TrackedBarcode], callback: BarcodeCountStatusProviderCallback) {
-        let request: BarcodeCountStatusProviderRequest? = withLock {
-            let hasListener = emitter.hasViewSpecificListenersForEvent(
-                viewId,
-                for: FrameworksBarcodeCountStatusProviderEvent.onStatusRequested.rawValue
-            )
-            guard isAttached, hasListener else { return nil }
-            let newRequest = BarcodeCountStatusProviderRequest(barcodes: barcodes, callback: callback)
-            events[newRequest.requestId] = newRequest
-            return newRequest
-        }
-
-        guard let request else {
-            callback.onStatusReady(BarcodeCountStatusAbortResult(errorMessage: nil))
+        guard emitter.hasListener(for: FrameworksBarcodeCountStatusProviderEvent.onStatusRequested.rawValue) else {
             return
         }
+
+        let request = BarcodeCountStatusProviderRequest(barcodes: barcodes, callback: callback)
+
+        addEvent(request: request)
 
         onStatusRequestedEvent.emit(
             on: emitter,
@@ -76,7 +49,7 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
             return
         }
 
-        guard let event = withLock({ events.removeValue(forKey: result.requestId) }) else {
+        guard let event = getEvent(for: result.requestId) else {
             return
         }
 
@@ -86,13 +59,18 @@ open class FrameworksBarcodeCountStatusProvider: NSObject, BarcodeCountStatusPro
             event.callback.onStatusReady(statusesForBarcodes)
         } catch {
             Log.error(error)
-            event.callback.onStatusReady(BarcodeCountStatusAbortResult(errorMessage: nil))
         }
     }
 
-    private func withLock<T>(_ body: () -> T) -> T {
-        lock.lock()
-        defer { lock.unlock() }
-        return body()
+    private func addEvent(request: BarcodeCountStatusProviderRequest) {
+        events.setValue(request, for: request.requestId)
+    }
+
+    private func getEvent(for key: String) -> BarcodeCountStatusProviderRequest? {
+        events.getValue(for: key)
+    }
+
+    private func removeEvent(for key: String) {
+        _ = events.removeValue(for: key)
     }
 }

@@ -31,23 +31,13 @@ open class FrameworksBarcodeCountCaptureListListener: NSObject, BarcodeCountCapt
         _ captureList: BarcodeCountCaptureList,
         didUpdate session: BarcodeCountCaptureListSession
     ) {
-        let payload = SchemaTypes.BarcodeCountCaptureListListenerDidUpdateSession(
-            session: session.jsonString,
-            viewId: viewId,
-            event: nil
-        )
-        sessionUpdatedEvent.emit(on: emitter, payload: payload.toDictionary())
+        sessionUpdatedEvent.emit(on: emitter, payload: ["session": session.jsonString, "viewId": self.viewId])
     }
 
     public func captureList(
         _ captureList: BarcodeCountCaptureList,
         didComplete session: BarcodeCountCaptureListSession
     ) {
-        let payload = SchemaTypes.BarcodeCountCaptureListListenerDidCompleteCaptureList(
-            session: session.jsonString,
-            viewId: viewId,
-            event: nil
-        )
-        captureListCompletedEvent.emit(on: emitter, payload: payload.toDictionary())
+        captureListCompletedEvent.emit(on: emitter, payload: ["session": session.jsonString, "viewId": self.viewId])
     }
 }

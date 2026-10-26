@@ -13,7 +13,7 @@ public enum FrameworksBarcodeSelectionTrackedBrushProviderEvent: String, CaseIte
 
 open class FrameworksBarcodeSelectionTrackedBrushProvider: NSObject, BarcodeSelectionBrushProvider {
     private let emitter: Emitter
-    private let cache = FrameworksBarcodeSelectionBrushCache()
+    private let cachedBrushes = ConcurrentDictionary<String, Brush>()
 
     private let brushForBarcodeEvent = Event(
         name: FrameworksBarcodeSelectionTrackedBrushProviderEvent.brushForBarcode.rawValue
@@ -24,22 +24,21 @@ open class FrameworksBarcodeSelectionTrackedBrushProvider: NSObject, BarcodeSele
     }
 
     public func brush(for barcode: Barcode) -> Brush? {
-        let eventName = FrameworksBarcodeSelectionTrackedBrushProviderEvent.brushForBarcode.rawValue
-        guard emitter.hasListener(for: eventName) else { return nil }
-        return cache.brush(for: barcode.selectionIdentifier) {
-            let payload = SchemaTypes.BarcodeSelectionTrackedBrushProviderBrushForBarcode(
-                barcode: barcode.jsonString,
-                event: eventName
-            ).toDictionary()
-            brushForBarcodeEvent.emit(on: emitter, payload: payload)
+        if let brush = cachedBrushes.getValue(for: barcode.selectionIdentifier) {
+            return brush
         }
+        brushForBarcodeEvent.emit(on: emitter, payload: ["barcode": barcode.jsonString])
+        return .transparent
     }
 
     public func finishCallback(brushJson: String?, selectionIdentifier: String?) {
-        cache.finish(brushJson: brushJson, selectionIdentifier: selectionIdentifier)
+        guard let selectionIdentifier = selectionIdentifier,
+            let brushJson = brushJson, let brush = Brush(jsonString: brushJson)
+        else { return }
+        cachedBrushes.setValue(brush, for: selectionIdentifier)
     }
 
     public func clearCache() {
-        cache.clear()
+        cachedBrushes.removeAllValues()
     }
 }

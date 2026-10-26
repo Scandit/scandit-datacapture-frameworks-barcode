@@ -85,14 +85,13 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
-        let payload = SchemaTypes.BarcodeCountListenerOnScan(
-            session: session.jsonString,
-            frameId: frameId,
-            viewId: self.viewId
-        )
         barcodeScannedEvent.emit(
             on: emitter,
-            payload: payload.toDictionary().mapValues { $0 as Any? },
+            payload: [
+                "session": session.jsonString,
+                "frameId": frameId,
+                "viewId": self.viewId,
+            ],
             default: barcodeCount.isEnabled
         )
 
@@ -113,14 +112,13 @@ open class FrameworksBarcodeCountListener: NSObject, BarcodeCountListener {
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
-        let payload = SchemaTypes.BarcodeCountListenerDidUpdateSession(
-            session: session.jsonString,
-            frameId: frameId,
-            viewId: self.viewId
-        )
         sessionUpdatedEvent.emit(
             on: emitter,
-            payload: payload.toDictionary().mapValues { $0 as Any? },
+            payload: [
+                "session": session.jsonString,
+                "frameId": frameId,
+                "viewId": self.viewId,
+            ],
             default: barcodeCount.isEnabled
         )
 

@@ -543,56 +543,6 @@ public class UnregisterBarcodeCountAsyncListenerCommand: BarcodeCountModuleComma
         )
     }
 }
-/// Register persistent event listener for barcode count adaptive recognition service events
-public class RegisterBarcodeCountAdaptiveRecognitionServiceListenerCommand: BarcodeCountModuleCommand {
-    private let module: BarcodeCountModule
-    private let viewId: Int
-    public init(module: BarcodeCountModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.viewId = method.argument(key: "viewId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        // Register/unregister event callbacks
-        result.registerViewSpecificCallback(
-            viewId,
-            eventNames: [
-                "BarcodeCountAdaptiveRecognitionListener.dispatchStarted",
-                "BarcodeCountAdaptiveRecognitionListener.response",
-                "BarcodeCountAdaptiveRecognitionListener.error",
-            ]
-        )
-        module.registerBarcodeCountAdaptiveRecognitionServiceListener(
-            viewId: viewId,
-            result: result
-        )
-    }
-}
-/// Unregister event listener for barcode count adaptive recognition service events
-public class UnregisterBarcodeCountAdaptiveRecognitionServiceListenerCommand: BarcodeCountModuleCommand {
-    private let module: BarcodeCountModule
-    private let viewId: Int
-    public init(module: BarcodeCountModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.viewId = method.argument(key: "viewId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        // Register/unregister event callbacks
-        result.unregisterViewSpecificCallback(
-            viewId,
-            eventNames: [
-                "BarcodeCountAdaptiveRecognitionListener.dispatchStarted",
-                "BarcodeCountAdaptiveRecognitionListener.response",
-                "BarcodeCountAdaptiveRecognitionListener.error",
-            ]
-        )
-        module.unregisterBarcodeCountAdaptiveRecognitionServiceListener(
-            viewId: viewId,
-            result: result
-        )
-    }
-}
 /// Finish callback for BarcodeCount on scan event
 public class FinishBarcodeCountOnScanCommand: BarcodeCountModuleCommand {
     private let module: BarcodeCountModule
@@ -825,37 +775,7 @@ public class AddBarcodeCountStatusProviderCommand: BarcodeCountModuleCommand {
     }
 
     public func execute(result: FrameworksResult) {
-        // Register/unregister event callbacks
-        result.registerViewSpecificCallback(
-            viewId,
-            eventNames: [
-                "BarcodeCountStatusProvider.onStatusRequested"
-            ]
-        )
         module.addBarcodeCountStatusProvider(
-            viewId: viewId,
-            result: result
-        )
-    }
-}
-/// Stops delivering barcode count status requests to the framework
-public class RemoveBarcodeCountStatusProviderCommand: BarcodeCountModuleCommand {
-    private let module: BarcodeCountModule
-    private let viewId: Int
-    public init(module: BarcodeCountModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.viewId = method.argument(key: "viewId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        // Register/unregister event callbacks
-        result.unregisterViewSpecificCallback(
-            viewId,
-            eventNames: [
-                "BarcodeCountStatusProvider.onStatusRequested"
-            ]
-        )
-        module.removeBarcodeCountStatusProvider(
             viewId: viewId,
             result: result
         )

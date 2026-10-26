@@ -31,10 +31,7 @@ open class FrameworksBarcodePickScanningListener: NSObject, BarcodePickScanningL
 
         emitter.emit(
             name: BarcodePickScanningEvent.didCompleteScanningSession.rawValue,
-            payload: SchemaTypes.BarcodePickScanningListenerDidCompleteScanningSession(
-                session: scanningSession.jsonString,
-                viewId: self.viewId
-            ).toDictionary().mapValues { $0 as Any? }
+            payload: ["session": scanningSession.jsonString, "viewId": self.viewId]
         )
     }
 
@@ -48,10 +45,7 @@ open class FrameworksBarcodePickScanningListener: NSObject, BarcodePickScanningL
 
         emitter.emit(
             name: BarcodePickScanningEvent.didUpdateScanningSession.rawValue,
-            payload: SchemaTypes.BarcodePickScanningListenerDidUpdateScanningSession(
-                session: scanningSession.jsonString,
-                viewId: self.viewId
-            ).toDictionary().mapValues { $0 as Any? }
+            payload: ["session": scanningSession.jsonString, "viewId": self.viewId]
         )
     }
 }

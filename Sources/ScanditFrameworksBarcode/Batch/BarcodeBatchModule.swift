@@ -38,47 +38,21 @@ open class BarcodeBatchModule: BasicFrameworkModule<FrameworksBarcodeBatchMode> 
     private var pendingBasicOverlayListenerViewIds = Set<Int>()
     private var pendingAdvancedOverlayListenerViewIds = Set<Int>()
 
-    internal func setAdvancedOverlayViewPoolForTesting(_ pool: AdvancedOverlayViewCache?) {
-        advancedOverlayViewPool = pool
-    }
-
     // MARK: - FrameworkModule API
 
-    private lazy var listenerAttachments: [ListenerAttachment] = [
-        ModuleListenerAttachment.forMode(
-            ["BarcodeBatchListener.didUpdateSession"],
-            attach: { [weak self] in
-                self?.registerBarcodeBatchListenerForEvents(modeId: $0, result: NoopFrameworksResult())
-            },
-            detach: { [weak self] in
-                self?.unregisterBarcodeBatchListenerForEvents(modeId: $0, result: NoopFrameworksResult())
-            }
-        ),
-        ModuleListenerAttachment.forView(
-            [
-                "BarcodeBatchBasicOverlayListener.brushForTrackedBarcode",
-                "BarcodeBatchBasicOverlayListener.didTapTrackedBarcode",
-            ],
-            attach: { [weak self] in
-                self?.registerListenerForBasicOverlayEvents(dataCaptureViewId: $0, result: NoopFrameworksResult())
-            },
-            detach: { [weak self] in
-                self?.unregisterListenerForBasicOverlayEvents(dataCaptureViewId: $0, result: NoopFrameworksResult())
-            }
-        ),
-    ]
-
     public override func didStart() {
-        listenerAttachments.forEach { ListenerRegistry.shared.register(attachment: $0) }
         DeserializationLifeCycleDispatcher.shared.attach(observer: self)
     }
 
     public override func didStop() {
-        listenerAttachments.forEach { ListenerRegistry.shared.unregister(attachment: $0) }
         pendingBasicOverlayListenerViewIds.removeAll()
         pendingAdvancedOverlayListenerViewIds.removeAll()
         barcodeBatchAdvancedOverlayListener.reset()
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
+    }
+
+    open override func getDefaults() -> [String: Any?] {
+        BarcodeBatchDefaults.shared.toEncodable()
     }
 
     // MARK: - Module API exposed to the platform native modules
@@ -94,14 +68,10 @@ open class BarcodeBatchModule: BasicFrameworkModule<FrameworksBarcodeBatchMode> 
             return
         }
         mode.addListener()
-        rememberListenerRegistration(modeId: modeId) { [weak self] in
-            self?.registerBarcodeBatchListenerForEvents(modeId: modeId, result: NoopFrameworksResult())
-        }
         result.successAndKeepCallback(result: nil)
     }
 
     public func unregisterBarcodeBatchListenerForEvents(modeId: Int, result: FrameworksResult) {
-        forgetListenerRegistration(modeId: modeId)
         if let mode = getModeFromCache(modeId) {
             mode.removeListener()
         }
@@ -148,7 +118,6 @@ open class BarcodeBatchModule: BasicFrameworkModule<FrameworksBarcodeBatchMode> 
             {
                 overlay.delegate = nil
             }
-            result.success(result: nil)
         }
     }
 
@@ -339,7 +308,6 @@ open class BarcodeBatchModule: BasicFrameworkModule<FrameworksBarcodeBatchMode> 
 
         dispatchMain {
             if view.isAnimating {
-                result.success(result: nil)
                 return
             }
             view.isAnimating = true
@@ -372,7 +340,6 @@ open class BarcodeBatchModule: BasicFrameworkModule<FrameworksBarcodeBatchMode> 
                     view.isAnimating = false
                 }
             )
-            result.success(result: nil)
         }
     }
 

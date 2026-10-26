@@ -40,11 +40,11 @@ open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationP
 
         annotationForBarcode.emit(
             on: emitter,
-            payload: SchemaTypes.BarcodeArAnnotationProviderAnnotationForBarcode(
-                barcode: barcode.jsonString,
-                barcodeId: barcode.uniqueId,
-                viewId: self.viewId
-            ).toDictionary()
+            payload: [
+                "barcode": barcode.jsonString,
+                "barcodeId": barcode.uniqueId,
+                "viewId": self.viewId,
+            ]
         )
     }
 
@@ -93,16 +93,13 @@ open class FrameworksBarcodeArAnnotationProvider: NSObject, BarcodeArAnnotationP
         let json = JSONValue(string: updateJson)
 
         guard let barcodeId = json.optionalString(forKey: "barcodeId"),
-            let annotation = cache.getAnnotation(barcodeId: barcodeId)
+            let annotation = cache.getAnnotation(barcodeId: barcodeId) as? BarcodeArPopoverAnnotation
         else {
             return
         }
 
         let buttonJson = json.object(forKey: "button")
-        let threshold =
-            json.containsKey("responsiveAnnotationThreshold")
-            ? Double(json.cgFloat(forKey: "responsiveAnnotationThreshold")) : nil
-        parser.updateBarcodeArPopoverButton(annotation, json: buttonJson, responsiveAnnotationThreshold: threshold)
+        parser.updateBarcodeArPopoverButton(annotation, json: buttonJson)
     }
 
 }

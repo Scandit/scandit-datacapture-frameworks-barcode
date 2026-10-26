@@ -91,56 +91,6 @@ public class UnregisterBarcodeCaptureListenerForEventsCommand: BarcodeCaptureMod
         )
     }
 }
-/// Register persistent event listener for barcode capture adaptive recognition service events
-public class RegisterBarcodeCaptureAdaptiveRecognitionServiceListenerCommand: BarcodeCaptureModuleCommand {
-    private let module: BarcodeCaptureModule
-    private let modeId: Int
-    public init(module: BarcodeCaptureModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.modeId = method.argument(key: "modeId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        // Register/unregister event callbacks
-        result.registerModeSpecificCallback(
-            modeId,
-            eventNames: [
-                "BarcodeCaptureAdaptiveRecognitionListener.dispatchStarted",
-                "BarcodeCaptureAdaptiveRecognitionListener.response",
-                "BarcodeCaptureAdaptiveRecognitionListener.error",
-            ]
-        )
-        module.registerBarcodeCaptureAdaptiveRecognitionServiceListener(
-            modeId: modeId,
-            result: result
-        )
-    }
-}
-/// Unregister event listener for barcode capture adaptive recognition service events
-public class UnregisterBarcodeCaptureAdaptiveRecognitionServiceListenerCommand: BarcodeCaptureModuleCommand {
-    private let module: BarcodeCaptureModule
-    private let modeId: Int
-    public init(module: BarcodeCaptureModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.modeId = method.argument(key: "modeId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        // Register/unregister event callbacks
-        result.unregisterModeSpecificCallback(
-            modeId,
-            eventNames: [
-                "BarcodeCaptureAdaptiveRecognitionListener.dispatchStarted",
-                "BarcodeCaptureAdaptiveRecognitionListener.response",
-                "BarcodeCaptureAdaptiveRecognitionListener.error",
-            ]
-        )
-        module.unregisterBarcodeCaptureAdaptiveRecognitionServiceListener(
-            modeId: modeId,
-            result: result
-        )
-    }
-}
 /// Finish callback for barcode capture did update session event
 public class FinishBarcodeCaptureDidUpdateSessionCommand: BarcodeCaptureModuleCommand {
     private let module: BarcodeCaptureModule

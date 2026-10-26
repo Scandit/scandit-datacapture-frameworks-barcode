@@ -23,11 +23,9 @@ open class FrameworksBarcodeFindViewUIListener: NSObject, BarcodeFindViewUIDeleg
     ) {
         guard emitter.hasViewSpecificListenersForEvent(viewId, for: .finishButtonTapped) else { return }
         let foundItemsBarcodeData = foundItems.map { $0.searchOptions.barcodeData }
-        let payload = SchemaTypes.BarcodeFindViewUiListenerOnFinishButtonTapped(
-            foundItems: foundItemsBarcodeData,
-            viewId: self.viewId,
-            event: FrameworksBarcodeFindEvent.finishButtonTapped.rawValue
-        ).toDictionary()
-        didTapFinishButtonEvent.emit(on: emitter, payload: payload)
+        didTapFinishButtonEvent.emit(
+            on: emitter,
+            payload: ["foundItems": foundItemsBarcodeData, "viewId": self.viewId]
+        )
     }
 }
