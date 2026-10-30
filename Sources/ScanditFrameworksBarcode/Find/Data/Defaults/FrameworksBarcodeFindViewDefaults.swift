@@ -5,7 +5,6 @@
  */
 
 import ScanditBarcodeCapture
-import ScanditCaptureCore
 import ScanditFrameworksCore
 
 struct FrameworksBarcodeFindViewDefaults: DefaultsEncodable {
@@ -28,8 +27,6 @@ struct FrameworksBarcodeFindViewDefaults: DefaultsEncodable {
             "textForTapShutterToResumeSearchHint": BarcodeFindViewDefaults.defaultTextForTapShutterToResumeSearchHint,
             "textForItemListUpdatedHint": BarcodeFindViewDefaults.defaultTextForItemListUpdatedHint,
             "textForItemListUpdatedWhenPausedHint": BarcodeFindViewDefaults.defaultTextForItemListUpdatedWhenPausedHint,
-            "logoStyle": BarcodeFindViewDefaults.defaultLogoStyle.jsonString,
-            "logoAnchor": BarcodeFindViewDefaults.defaultLogoAnchor.jsonString,
         ]
     }
 }

@@ -35,9 +35,12 @@ open class FrameworksBarcodeArListener: NSObject, BarcodeArListener {
 
     private var latestSession: BarcodeArSession?
 
-    public init(emitter: Emitter, viewId: Int) {
+    private let cache: BarcodeArAugmentationsCache
+
+    public init(emitter: Emitter, viewId: Int, cache: BarcodeArAugmentationsCache) {
         self.emitter = emitter
         self.viewId = viewId
+        self.cache = cache
     }
 
     public func barcodeAr(
@@ -48,6 +51,7 @@ open class FrameworksBarcodeArListener: NSObject, BarcodeArListener {
         guard emitter.hasViewSpecificListenersForEvent(viewId, for: BarcodeArListenerEvents.didUpdateSession.rawValue)
         else { return }
         latestSession = session
+        cache.updateFromSession(session)
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 

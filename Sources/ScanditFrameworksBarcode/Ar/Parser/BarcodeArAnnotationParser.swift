@@ -25,15 +25,11 @@ public class BarcodeArAnnotationParser {
     private let viewId: Int
     private let emitter: Emitter
 
-    // Plain (non-responsive) info annotations share this single delegate.
+    // We need three different delegates since their emits need to contain information about are they a closeup or faraway annotation
+    // This is because they are differentiated by a barcodeId but that can be the same for two infoAnnotations with a responsiveAnnotation
     private var infoAnnotationDelegate: FrameworksInfoAnnotationDelegate?
-    // Responsive info annotations need one delegate per threshold slot, since their emits need
-    // to identify which slot's annotation was interacted with (they can share a barcodeId).
-    // Keyed by the same string form of the threshold used in the annotationsByThreshold JSON
-    // (or "closeUp"/"farAway" for the legacy two-slot JSON shape); delegates are cached and
-    // refreshed in place across updates rather than recreated, so a listener registered on a
-    // still-live child annotation keeps working.
-    private var responsiveInfoAnnotationDelegates: [String: FrameworksInfoAnnotationDelegate] = [:]
+    private var closeUpInfoAnnotationDelegate: FrameworksInfoAnnotationDelegate?
+    private var farAwayInfoAnnotationDelegate: FrameworksInfoAnnotationDelegate?
     private var popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate?
     private var cache: BarcodeArAugmentationsCache?
 
@@ -45,6 +41,16 @@ public class BarcodeArAnnotationParser {
             emitter: emitter,
             viewId: viewId,
             responsiveAnnotationType: nil
+        )
+        closeUpInfoAnnotationDelegate = FrameworksInfoAnnotationDelegate(
+            emitter: emitter,
+            viewId: viewId,
+            responsiveAnnotationType: .closeUp
+        )
+        farAwayInfoAnnotationDelegate = FrameworksInfoAnnotationDelegate(
+            emitter: emitter,
+            viewId: viewId,
+            responsiveAnnotationType: .farAway
         )
     }
 
@@ -148,49 +154,11 @@ private extension BarcodeArAnnotationParser {
         return annotation
     }
 
-    /// The close-up (threshold 1.0) and far-away (lowest threshold) slots are tagged so their
-    /// emits can be told apart; every other in-between slot has no type.
-    private func responsiveAnnotationType(
-        for threshold: CGFloat,
-        minThreshold: CGFloat?
-    ) -> ResponsiveAnnotationType? {
-        if threshold == 1.0 {
-            return .closeUp
-        }
-        if threshold == minThreshold {
-            return .farAway
-        }
-        return nil
-    }
-
-    /// Returns the cached delegate for a responsive-annotation threshold slot, creating it on
-    /// first use and refreshing its type/threshold on every call (the underlying threshold value
-    /// can change across updates, e.g. via the deprecated `threshold` setter).
-    private func responsiveDelegate(
-        slotKey: String,
-        threshold: Double,
-        responsiveAnnotationType: ResponsiveAnnotationType?
-    ) -> FrameworksInfoAnnotationDelegate {
-        if let existing = responsiveInfoAnnotationDelegates[slotKey] {
-            existing.responsiveAnnotationType = responsiveAnnotationType
-            existing.responsiveAnnotationThreshold = threshold
-            return existing
-        }
-        let delegate = FrameworksInfoAnnotationDelegate(
-            emitter: emitter,
-            viewId: viewId,
-            responsiveAnnotationType: responsiveAnnotationType,
-            responsiveAnnotationThreshold: threshold
-        )
-        responsiveInfoAnnotationDelegates[slotKey] = delegate
-        return delegate
-    }
-
     private func updateInfoAnnotation(
         _ annotation: BarcodeArInfoAnnotation,
         _ json: JSONValue,
         _ barcodeId: String,
-        _ responsiveDelegate: FrameworksInfoAnnotationDelegate? = nil
+        _ responsiveAnnotationType: ResponsiveAnnotationType? = nil
     ) {
         annotation.hasTip = json.bool(forKey: "hasTip", default: false)
         annotation.isEntireAnnotationTappable = json.bool(forKey: "isEntireAnnotationTappable", default: false)
@@ -225,11 +193,19 @@ private extension BarcodeArAnnotationParser {
         annotation.body = bodyComponents
 
         if json.bool(forKey: "hasListener", default: false) {
-            // Always reassign, as Android does: on a threshold remap the resolved delegate is a
-            // different object carrying the new threshold, and gating on `delegate == nil` would
-            // keep the stale one, so taps would be emitted under a threshold the framework no
-            // longer knows about and silently dropped.
-            annotation.delegate = responsiveDelegate ?? infoAnnotationDelegate
+            if annotation.delegate == nil {
+                annotation.delegate = {
+                    switch responsiveAnnotationType {
+                    case .farAway:
+                        return farAwayInfoAnnotationDelegate
+                    case .closeUp:
+                        return closeUpInfoAnnotationDelegate
+                    case nil:
+                        return infoAnnotationDelegate
+                    }
+                }()
+
+            }
         } else {
             annotation.delegate = nil
         }
@@ -240,92 +216,15 @@ private extension BarcodeArAnnotationParser {
     }
 
     private func updateResponsiveAnnotation(annotation: BarcodeArResponsiveAnnotation, json: JSONValue) {
-        if json.containsKey("annotationsByThreshold") {
-            let thresholdsJson = json.object(forKey: "annotationsByThreshold")
-            let existingByThreshold = annotation.annotationsByThreshold
-            let minThreshold = existingByThreshold.keys.min()
+        BarcodeArResponsiveAnnotation.threshold = json.cgFloat(forKey: "threshold")
 
-            // Both sides derive the number from the same string form (Dart's `threshold.toString()`),
-            // so exact key equality normally hits without an epsilon comparison. It can still miss:
-            // the native annotation's thresholds are fixed at construction, while the deprecated
-            // `threshold` setter changes the key the framework sends. In that case we pair the
-            // incoming slots with the existing ones by ascending threshold order, so a slot's
-            // configuration still reaches its annotation (which is what the pre-N-state
-            // `.first`/`.last` path did unconditionally).
-            let sortedIncoming = thresholdsJson.keys().compactMap { key -> (key: String, threshold: CGFloat)? in
-                guard let threshold = Double(key) else {
-                    Log.error("Invalid annotationsByThreshold key received.", error: NSError(domain: key, code: -1))
-                    return nil
-                }
-                return (key: key, threshold: CGFloat(threshold))
-            }.sorted { $0.threshold < $1.threshold }
-            let keysMatchExisting = sortedIncoming.allSatisfy { existingByThreshold.keys.contains($0.threshold) }
-            let sortedExistingKeys = existingByThreshold.keys.sorted()
-
-            if !keysMatchExisting {
-                Log.info(
-                    "The received annotationsByThreshold keys do not match the ones the annotation was built "
-                        + "with; remapping the slots by ascending threshold order. Rebuild the annotation "
-                        + "instead of using the deprecated threshold setter, which is removed in 9.0."
-                )
-            }
-
-            for (index, incoming) in sortedIncoming.enumerated()
-            where thresholdsJson.containsObject(withKey: incoming.key) {
-                let resolvedThreshold: CGFloat
-                if keysMatchExisting {
-                    resolvedThreshold = incoming.threshold
-                } else if index < sortedExistingKeys.count {
-                    resolvedThreshold = sortedExistingKeys[index]
-                } else {
-                    Log.error(
-                        "Received an annotationsByThreshold update with more slots than the annotation was built with."
-                    )
-                    continue
-                }
-
-                guard let childAnnotation = existingByThreshold[resolvedThreshold] ?? nil else { continue }
-
-                let delegate = responsiveDelegate(
-                    slotKey: incoming.key,
-                    threshold: Double(incoming.threshold),
-                    responsiveAnnotationType: responsiveAnnotationType(
-                        for: incoming.threshold,
-                        minThreshold: minThreshold
-                    )
-                )
-                updateInfoAnnotation(
-                    childAnnotation,
-                    thresholdsJson.object(forKey: incoming.key),
-                    annotation.barcode.uniqueId,
-                    delegate
-                )
-            }
-        } else {
-            // Legacy fallback, behaviour identical to before the annotationsByThreshold JSON key existed.
-            let sortedByThreshold = annotation.annotationsByThreshold.sorted { $0.key < $1.key }
-            let farAway = sortedByThreshold.first?.value ?? nil
-            let closeUp = sortedByThreshold.last?.value ?? nil
-
-            if let closeUp = closeUp {
-                let closeUpJson = json.object(forKey: "closeUpAnnotation")
-                let delegate = responsiveDelegate(
-                    slotKey: "closeUp",
-                    threshold: 1.0,
-                    responsiveAnnotationType: .closeUp
-                )
-                updateInfoAnnotation(closeUp, closeUpJson, annotation.barcode.uniqueId, delegate)
-            }
-            if let farAway = farAway {
-                let farAwayJson = json.object(forKey: "farAwayAnnotation")
-                let threshold = Double(json.cgFloat(forKey: "threshold"))
-                let delegate = responsiveDelegate(
-                    slotKey: "farAway",
-                    threshold: threshold,
-                    responsiveAnnotationType: .farAway
-                )
-                updateInfoAnnotation(farAway, farAwayJson, annotation.barcode.uniqueId, delegate)
-            }
+        if let closeUp = annotation.closeUpAnnotation {
+            let closeUpJson = json.object(forKey: "closeUpAnnotation")
+            updateInfoAnnotation(closeUp, closeUpJson, annotation.barcode.uniqueId)
+        }
+        if let farAway = annotation.farAwayAnnotation {
+            let farAwayJson = json.object(forKey: "farAwayAnnotation")
+            updateInfoAnnotation(farAway, farAwayJson, annotation.barcode.uniqueId)
         }
 
         var trigger = BarcodeArAnnotationTrigger.highlightTap
@@ -462,7 +361,7 @@ private extension BarcodeArAnnotationParser {
             }
         }
         annotation.isEntirePopoverTappable = json.bool(forKey: "isEntirePopoverTappable", default: false)
-        if json.bool(forKey: "hasListener", default: false) {
+        if json.bool(forKey: "hasListener", default: false) && annotation.delegate == nil {
             if annotation.delegate == nil {
                 annotation.delegate = self.popoverAnnotationDelegate
             }
@@ -501,73 +400,35 @@ private extension BarcodeArAnnotationParser {
     }
 
     private func getResponsiveAnnotation(barcode: Barcode, json: JSONValue) -> BarcodeArResponsiveAnnotation? {
-        if json.containsKey("annotationsByThreshold") {
-            let thresholdsJson = json.object(forKey: "annotationsByThreshold")
-            let keys = thresholdsJson.keys()
-            let numericKeys = keys.compactMap { Double($0).map { CGFloat($0) } }
-            let minThreshold = numericKeys.min()
-
-            var annotationsByThreshold: [CGFloat: BarcodeArInfoAnnotation?] = [:]
-            for key in keys {
-                guard let parsedKey = Double(key) else {
-                    Log.error("Invalid annotationsByThreshold key received.", error: NSError(domain: key, code: -1))
-                    continue
-                }
-                let threshold = CGFloat(parsedKey)
-                if thresholdsJson.containsObject(withKey: key) {
-                    let childAnnotation = BarcodeArInfoAnnotation(barcode: barcode)
-                    let delegate = responsiveDelegate(
-                        slotKey: key,
-                        threshold: parsedKey,
-                        responsiveAnnotationType: responsiveAnnotationType(for: threshold, minThreshold: minThreshold)
-                    )
-                    updateInfoAnnotation(
-                        childAnnotation,
-                        thresholdsJson.object(forKey: key),
-                        barcode.uniqueId,
-                        delegate
-                    )
-                    annotationsByThreshold.updateValue(childAnnotation, forKey: threshold)
-                } else {
-                    annotationsByThreshold.updateValue(nil, forKey: threshold)
-                }
-            }
-
-            let annotation = BarcodeArResponsiveAnnotation(
-                barcode: barcode,
-                annotationsByThreshold: annotationsByThreshold
-            )
-            updateResponsiveAnnotation(annotation: annotation, json: json)
-            return annotation
-        }
-
-        // Legacy fallback, behaviour identical to before the annotationsByThreshold JSON key existed.
         var closeUpAnnotation: BarcodeArInfoAnnotation?
         var farawayAnnotation: BarcodeArInfoAnnotation?
 
         if json.containsKey("closeUpAnnotation") {
             let annotation = BarcodeArInfoAnnotation(barcode: barcode)
-            let delegate = responsiveDelegate(slotKey: "closeUp", threshold: 1.0, responsiveAnnotationType: .closeUp)
-            updateInfoAnnotation(annotation, json.object(forKey: "closeUpAnnotation"), barcode.uniqueId, delegate)
+            updateInfoAnnotation(
+                annotation,
+                json.object(forKey: "closeUpAnnotation"),
+                barcode.uniqueId,
+                .closeUp
+            )
             closeUpAnnotation = annotation
         }
 
         if json.containsKey("farAwayAnnotation") {
-            let threshold = json.cgFloat(forKey: "threshold")
             let annotation = BarcodeArInfoAnnotation(barcode: barcode)
-            let delegate = responsiveDelegate(
-                slotKey: "farAway",
-                threshold: Double(threshold),
-                responsiveAnnotationType: .farAway
+            updateInfoAnnotation(
+                annotation,
+                json.object(forKey: "farAwayAnnotation"),
+                barcode.uniqueId,
+                .farAway
             )
-            updateInfoAnnotation(annotation, json.object(forKey: "farAwayAnnotation"), barcode.uniqueId, delegate)
             farawayAnnotation = annotation
         }
 
-        let threshold = json.cgFloat(forKey: "threshold")
         let annotation = BarcodeArResponsiveAnnotation(
             barcode: barcode,
-            annotationsByThreshold: [threshold: farawayAnnotation, 1.0: closeUpAnnotation]
+            closeUp: closeUpAnnotation,
+            farAway: farawayAnnotation
         )
         updateResponsiveAnnotation(annotation: annotation, json: json)
         return annotation
@@ -596,15 +457,6 @@ private extension BarcodeArAnnotationParser {
             var trigger = BarcodeArAnnotationTrigger.highlightTap
             SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
             annotation.annotationTrigger = trigger
-
-            if let anchorJson = json.optionalString(forKey: "anchor") {
-                switch anchorJson {
-                case "top": annotation.anchor = .top
-                case "left": annotation.anchor = .left
-                case "right": annotation.anchor = .right
-                default: annotation.anchor = .bottom
-                }
-            }
         } catch {
             Log.error("Unable to parse the BarcodeArStatusIconAnnotation from the provided json.", error: error)
         }

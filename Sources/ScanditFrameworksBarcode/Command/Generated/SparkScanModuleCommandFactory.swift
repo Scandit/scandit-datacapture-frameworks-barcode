@@ -57,8 +57,6 @@ public class SparkScanModuleCommandFactory {
             return UnregisterSparkScanViewListenerEventsCommand(module: module, method)
         case "resetSparkScanSession":
             return ResetSparkScanSessionCommand(module: module, method)
-        case "getSparkScanLicenseInfo":
-            return GetSparkScanLicenseInfoCommand(module: module, method)
         case "updateSparkScanMode":
             return UpdateSparkScanModeCommand(module: module, method)
         case "registerSparkScanListenerForEvents":

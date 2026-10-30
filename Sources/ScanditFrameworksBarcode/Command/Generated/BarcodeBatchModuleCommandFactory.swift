@@ -24,8 +24,6 @@ public class BarcodeBatchModuleCommandFactory {
         switch method.method {
         case "resetBarcodeBatchSession":
             return ResetBarcodeBatchSessionCommand(module: module)
-        case "getBarcodeBatchLicenseInfo":
-            return GetBarcodeBatchLicenseInfoCommand(module: module, method)
         case "registerBarcodeBatchListenerForEvents":
             return RegisterBarcodeBatchListenerForEventsCommand(module: module, method)
         case "unregisterBarcodeBatchListenerForEvents":

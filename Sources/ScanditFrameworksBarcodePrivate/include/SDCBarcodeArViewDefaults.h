@@ -10,8 +10,6 @@
 #import <ScanditCaptureCore/SDCAnchor.h>
 #import <ScanditCaptureCore/SDCMeasureUnit.h>
 #import <ScanditCaptureCore/SDCCamera.h>
-#import <ScanditCaptureCore/SDCDataCaptureView.h>
-#import <ScanditCaptureCore/SDCZoomSwitchControl.h>
 #import <ScanditBarcodeCapture/SDCBarcodeArPopoverAnnotation.h>
 #import <ScanditBarcodeCapture/SDCBarcodeArInfoAnnotation.h>
 #import <ScanditBarcodeCapture/SDCBarcodeArInfoAnnotationBodyComponent.h>
@@ -43,12 +41,6 @@ NS_SWIFT_NAME(BarcodeArViewDefaults)
 @property (class, nonatomic, assign, readonly) SDCPointWithUnit defaultZoomControlOffset;
 @property (class, nonatomic, assign, readonly) SDCPointWithUnit defaultCameraSwitchControlOffset;
 @property (class, nonatomic, assign, readonly) SDCPointWithUnit defaultMacroModeControlOffset;
-
-@property (class, nonatomic, assign, readonly) SDCZoomSwitchOrientation defaultZoomControlOrientation;
-
-@property (class, nonatomic, assign, readonly) SDCLogoStyle defaultLogoStyle;
-@property (class, nonatomic, assign, readonly) SDCAnchor defaultLogoAnchor;
-@property (class, nonatomic, assign, readonly) SDCPointWithUnit defaultLogoOffset;
 
 @property (class, nonatomic, readonly) SDCBrush *defaultRectangleHighlightBrush;
 @property (class, nonatomic, nullable, readonly) SDCScanditIcon *defaultRectangleHighlightIcon;

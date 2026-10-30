@@ -5,7 +5,6 @@
  */
 
 import ScanditBarcodeCapture
-import ScanditCaptureCore
 import ScanditFrameworksCore
 
 open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCycleObserver {
@@ -253,96 +252,6 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
         dispatchMain { [weak self] in
             guard self != nil else { return }
             viewInstance.finishBrushForRejectedBarcodeEvent(brush: brush, trackedBarcodeId: trackedBarcodeId)
-            result.success()
-        }
-    }
-
-    private func barcodeCountIcon(fromJSONString jsonString: String) -> BarcodeCountIcon? {
-        guard let data = jsonString.data(using: .utf8),
-            let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        else { return nil }
-        func icon(_ key: String) -> ScanditIcon? {
-            guard let value = dict[key], !(value is NSNull),
-                let iconData = try? JSONSerialization.data(withJSONObject: value),
-                let iconStr = String(data: iconData, encoding: .utf8)
-            else { return nil }
-            return try? ScanditIcon(fromJSONString: iconStr)
-        }
-        return BarcodeCountIcon(defaultIcon: icon("defaultIcon"), accessibleIcon: icon("accessibleIcon"))
-    }
-
-    public func finishBarcodeCountIconForRecognizedBarcode(
-        viewId: Int,
-        iconJson: String?,
-        trackedBarcodeId: Int,
-        result: FrameworksResult
-    ) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-
-        let icon = iconJson.flatMap { barcodeCountIcon(fromJSONString: $0) }
-        dispatchMain { [weak self] in
-            guard self != nil else { return }
-            viewInstance.finishIconForRecognizedBarcodeEvent(icon: icon, trackedBarcodeId: trackedBarcodeId)
-            result.success()
-        }
-    }
-
-    public func finishBarcodeCountIconForRecognizedBarcodeNotInList(
-        viewId: Int,
-        iconJson: String?,
-        trackedBarcodeId: Int,
-        result: FrameworksResult
-    ) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-
-        let icon = iconJson.flatMap { barcodeCountIcon(fromJSONString: $0) }
-        dispatchMain { [weak self] in
-            guard self != nil else { return }
-            viewInstance.finishIconForRecognizedBarcodeNotInListEvent(icon: icon, trackedBarcodeId: trackedBarcodeId)
-            result.success()
-        }
-    }
-
-    public func finishBarcodeCountIconForAcceptedBarcode(
-        viewId: Int,
-        iconJson: String?,
-        trackedBarcodeId: Int,
-        result: FrameworksResult
-    ) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-
-        let icon = iconJson.flatMap { barcodeCountIcon(fromJSONString: $0) }
-        dispatchMain { [weak self] in
-            guard self != nil else { return }
-            viewInstance.finishIconForAcceptedBarcodeEvent(icon: icon, trackedBarcodeId: trackedBarcodeId)
-            result.success()
-        }
-    }
-
-    public func finishBarcodeCountIconForRejectedBarcode(
-        viewId: Int,
-        iconJson: String?,
-        trackedBarcodeId: Int,
-        result: FrameworksResult
-    ) {
-        guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            result.success()
-            return
-        }
-
-        let icon = iconJson.flatMap { barcodeCountIcon(fromJSONString: $0) }
-        dispatchMain { [weak self] in
-            guard self != nil else { return }
-            viewInstance.finishIconForRejectedBarcodeEvent(icon: icon, trackedBarcodeId: trackedBarcodeId)
             result.success()
         }
     }

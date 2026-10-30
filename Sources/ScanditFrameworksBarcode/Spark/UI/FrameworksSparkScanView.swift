@@ -27,7 +27,6 @@ public class FrameworksSparkScanView: FrameworksBaseView {
     private var view: SparkScanView!
     private var mode: SparkScan!
     private var shouldShowOnTopAlways: Bool = false
-    private var context: DataCaptureContext!
 
     private init(
         modeListener: FrameworksSparkScanListener,
@@ -49,7 +48,6 @@ public class FrameworksSparkScanView: FrameworksBaseView {
         viewCreationParams: SparkScanViewCreationData
     ) throws {
         internalViewId = viewCreationParams.viewId
-        self.context = context
 
         mode = try modeDeserializer.mode(fromJSONString: viewCreationParams.modeJson)
         mode.addListener(modeListener)
@@ -219,10 +217,6 @@ public class FrameworksSparkScanView: FrameworksBaseView {
 
     public func isModeEnabled() -> Bool {
         mode.isEnabled
-    }
-
-    public var licenseInfoJsonString: String? {
-        mode.sparkScanLicenseInfo?.jsonString
     }
 
     public func bringViewToTop() {
