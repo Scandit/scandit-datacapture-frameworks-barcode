@@ -21,7 +21,7 @@ public class BarcodeCountViewCreationData {
         static let viewKey = "View"
         static let modeEnabledKey = "isEnabled"
         static let hasUIListenerKey = "hasUiListener"
-        static let hasViewListenerKey = "hasListeners"
+        static let hasViewListenerKey = "hasListener"
         static let viewIdKey = "viewId"
         static let hasModeListenerKey = "hasListeners"
         static let hasStatusProviderKey = "hasStatusProvider"

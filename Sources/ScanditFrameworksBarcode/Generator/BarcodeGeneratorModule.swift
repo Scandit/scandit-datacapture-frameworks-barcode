@@ -48,10 +48,6 @@ open class BarcodeGeneratorModule: NSObject, FrameworkModule, DeserializationLif
         buildBarcodeGenerator(using: builder, with: data, result: result)
     }
 
-    public func getDefaults() -> [String: Any?] {
-        [:]
-    }
-
     private func buildGenerator(
         for data: BarcodeGeneratorDataParser,
         with context: DataCaptureContext

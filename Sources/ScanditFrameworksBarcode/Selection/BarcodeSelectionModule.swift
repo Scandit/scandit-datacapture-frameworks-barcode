@@ -15,8 +15,6 @@ public enum BarcodeSelectionError: Error {
 
 open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelectionMode> {
     private let emitter: Emitter
-    private var aimedBrushProviderFlag: Bool = false
-    private var trackedBrushProviderFlag: Bool = false
     private let aimedBrushProvider: FrameworksBarcodeSelectionAimedBrushProvider
     private let trackedBrushProvider: FrameworksBarcodeSelectionTrackedBrushProvider
     private let barcodeSelectionDeserializer: BarcodeSelectionDeserializer
@@ -35,12 +33,29 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         self.barcodeSelectionDeserializer = barcodeSelectionDeserializer
     }
 
+    private lazy var listenerAttachments: [ListenerAttachment] = [
+        ModuleListenerAttachment.forMode(
+            [
+                "BarcodeSelectionListener.didUpdateSelection",
+                "BarcodeSelectionListener.didUpdateSession",
+            ],
+            attach: { [weak self] in
+                self?.registerBarcodeSelectionListenerForEvents(modeId: $0, result: NoopFrameworksResult())
+            },
+            detach: { [weak self] in
+                self?.unregisterBarcodeSelectionListenerForEvents(modeId: $0, result: NoopFrameworksResult())
+            }
+        )
+    ]
+
     public override func didStart() {
+        listenerAttachments.forEach { ListenerRegistry.shared.register(attachment: $0) }
         Deserializers.Factory.add(barcodeSelectionDeserializer)
         DeserializationLifeCycleDispatcher.shared.attach(observer: self)
     }
 
     public override func didStop() {
+        listenerAttachments.forEach { ListenerRegistry.shared.unregister(attachment: $0) }
         Deserializers.Factory.remove(barcodeSelectionDeserializer)
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
         removeAimedBarcodeBrushProvider(result: NoopFrameworksResult())
@@ -48,18 +63,27 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
         self.dataCaptureContextAllModeRemoved()
     }
 
-    open override func getDefaults() -> [String: Any?] {
-        BarcodeSelectionDefaults.shared.toEncodable()
-    }
-
     // MARK: - Module API
 
     public func registerBarcodeSelectionListenerForEvents(modeId: Int, result: FrameworksResult) {
-        getModeFromCache(modeId)?.addListener()
+        guard let mode = getModeFromCache(modeId) else {
+            addPostModeCreationAction(
+                modeId,
+                action: {
+                    self.registerBarcodeSelectionListenerForEvents(modeId: modeId, result: result)
+                }
+            )
+            return
+        }
+        mode.addListener()
+        rememberListenerRegistration(modeId: modeId) { [weak self] in
+            self?.registerBarcodeSelectionListenerForEvents(modeId: modeId, result: NoopFrameworksResult())
+        }
         result.successAndKeepCallback(result: nil)
     }
 
     public func unregisterBarcodeSelectionListenerForEvents(modeId: Int, result: FrameworksResult) {
+        forgetListenerRegistration(modeId: modeId)
         getModeFromCache(modeId)?.removeListener()
         result.success()
     }
@@ -131,12 +155,14 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
     }
 
     public func setAimedBarcodeBrushProvider(result: FrameworksResult) {
-        aimedBrushProviderFlag = true
+        aimedBrushProvider.clearCache()
+        if let overlay: BarcodeSelectionBasicOverlay = captureViewHandler.findFirstOverlayOfType() {
+            overlay.setAimedBarcodeBrushProvider(aimedBrushProvider)
+        }
         result.successAndKeepCallback(result: nil)
     }
 
     public func removeAimedBarcodeBrushProvider(result: FrameworksResult) {
-        aimedBrushProviderFlag = false
         aimedBrushProvider.clearCache()
         if let overlay: BarcodeSelectionBasicOverlay = captureViewHandler.findFirstOverlayOfType() {
             overlay.setAimedBarcodeBrushProvider(nil)
@@ -181,12 +207,14 @@ open class BarcodeSelectionModule: BasicFrameworkModule<FrameworksBarcodeSelecti
     }
 
     public func setTrackedBarcodeBrushProvider(result: FrameworksResult) {
-        trackedBrushProviderFlag = true
+        trackedBrushProvider.clearCache()
+        if let overlay: BarcodeSelectionBasicOverlay = captureViewHandler.findFirstOverlayOfType() {
+            overlay.setTrackedBarcodeBrushProvider(trackedBrushProvider)
+        }
         result.successAndKeepCallback(result: nil)
     }
 
     public func removeTrackedBarcodeBrushProvider(result: FrameworksResult) {
-        trackedBrushProviderFlag = false
         trackedBrushProvider.clearCache()
         if let overlay: BarcodeSelectionBasicOverlay = captureViewHandler.findFirstOverlayOfType() {
             overlay.setTrackedBarcodeBrushProvider(nil)

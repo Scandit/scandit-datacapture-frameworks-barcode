@@ -42,7 +42,10 @@ open class FrameworksSparkScanFeedbackDelegate: NSObject, SparkScanFeedbackDeleg
         guard
             let feedbackJson = feedbackForBarcodeEvent.emit(
                 on: emitter,
-                payload: ["barcode": barcode.jsonString, "viewId": viewId]
+                payload: SchemaTypes.SparkScanFeedbackDelegateFeedbackForBarcode(
+                    barcode: barcode.jsonString,
+                    viewId: viewId
+                ).toDictionary().mapValues { $0 as Any? }
             ) ?? nil
         else {
             return nil
@@ -61,7 +64,10 @@ open class FrameworksSparkScanFeedbackDelegate: NSObject, SparkScanFeedbackDeleg
         guard
             let feedbackJson = feedbackForScannedItemEvent.emit(
                 on: emitter,
-                payload: ["scannedItem": item.jsonString, "viewId": viewId]
+                payload: SchemaTypes.SparkScanFeedbackDelegateFeedbackForScannedItem(
+                    scannedItem: item.jsonString,
+                    viewId: viewId
+                ).toDictionary().mapValues { $0 as Any? }
             ) ?? nil
         else {
             return nil

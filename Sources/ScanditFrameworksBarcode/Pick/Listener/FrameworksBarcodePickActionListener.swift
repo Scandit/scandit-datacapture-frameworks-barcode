@@ -64,10 +64,10 @@ open class FrameworksBarcodePickActionListener: NSObject, BarcodePickActionListe
         }
         emitter.emit(
             .pick,
-            payload: [
-                "itemData": data,
-                "viewId": self.viewId,
-            ]
+            payload: SchemaTypes.BarcodePickActionListenerDidPick(
+                itemData: data,
+                viewId: self.viewId
+            ).toDictionary().mapValues { $0 as Any? }
         )
     }
 
@@ -78,10 +78,10 @@ open class FrameworksBarcodePickActionListener: NSObject, BarcodePickActionListe
         }
         emitter.emit(
             .unpick,
-            payload: [
-                "itemData": data,
-                "viewId": self.viewId,
-            ]
+            payload: SchemaTypes.BarcodePickActionListenerDidUnpick(
+                itemData: data,
+                viewId: self.viewId
+            ).toDictionary().mapValues { $0 as Any? }
         )
     }
 

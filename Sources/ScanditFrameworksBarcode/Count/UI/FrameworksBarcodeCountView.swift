@@ -19,6 +19,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     private let viewListener: FrameworksBarcodeCountViewListener
     private let viewUiListener: FrameworksBarcodeCountViewUIListener
     private let statusProvider: FrameworksBarcodeCountStatusProvider
+    private let areListener: FrameworksBarcodeCountAdaptiveRecognitionServiceListener
     private let modeDeserializer: BarcodeCountDeserializer
     private let viewDeserializer: BarcodeCountViewDeserializer
     private let barcodeDataTransformer: FrameworksBarcodeDataTransformer
@@ -37,6 +38,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         viewListener: FrameworksBarcodeCountViewListener,
         viewUiListener: FrameworksBarcodeCountViewUIListener,
         statusProvider: FrameworksBarcodeCountStatusProvider,
+        areListener: FrameworksBarcodeCountAdaptiveRecognitionServiceListener,
         barcodeDataTransformer: FrameworksBarcodeDataTransformer,
         modeDeserializer: BarcodeCountDeserializer = BarcodeCountDeserializer(),
         viewDeserializer: BarcodeCountViewDeserializer = BarcodeCountViewDeserializer()
@@ -47,6 +49,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         self.viewListener = viewListener
         self.viewUiListener = viewUiListener
         self.statusProvider = statusProvider
+        self.areListener = areListener
         self.modeDeserializer = modeDeserializer
         self.viewDeserializer = viewDeserializer
         self.barcodeDataTransformer = barcodeDataTransformer
@@ -159,7 +162,12 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     }
 
     public func addBarcodeCountStatusProvider() {
+        statusProvider.attach()
         view.setStatusProvider(statusProvider)
+    }
+
+    public func removeBarcodeCountStatusProvider() {
+        statusProvider.detach()
     }
 
     public func addBarcodeCountViewListener() {
@@ -218,6 +226,48 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         }
     }
 
+    // SDC-33589: unlike finishBrushFor*Event above, these do NOT guard on a non-nil icon.
+    // setIcon(_:for:) is declared nullable and treats nil as removal, so forwarding the nil is
+    // what lets a listener clear an icon. The frameworks listener answers with the platform
+    // default when the app never implemented iconFor*, so a nil here really did come from the
+    // app. Do not "restore" the guard, and do not drop the brush one -- setBrush has no
+    // equivalent removal path.
+    public func finishIconForRecognizedBarcodeEvent(icon: BarcodeCountIcon?, trackedBarcodeId: Int) {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
+            with: trackedBarcodeId,
+            for: .iconForRecognizedBarcode
+        ) {
+            view.setIcon(icon, forRecognizedBarcode: trackedBarcode)
+        }
+    }
+
+    public func finishIconForRecognizedBarcodeNotInListEvent(icon: BarcodeCountIcon?, trackedBarcodeId: Int) {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
+            with: trackedBarcodeId,
+            for: .iconForRecognizedBarcodeNotInList
+        ) {
+            view.setIcon(icon, forRecognizedBarcodeNotInList: trackedBarcode)
+        }
+    }
+
+    public func finishIconForAcceptedBarcodeEvent(icon: BarcodeCountIcon?, trackedBarcodeId: Int) {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
+            with: trackedBarcodeId,
+            for: .iconForAcceptedBarcode
+        ) {
+            view.setIcon(icon, forAcceptedBarcode: trackedBarcode)
+        }
+    }
+
+    public func finishIconForRejectedBarcodeEvent(icon: BarcodeCountIcon?, trackedBarcodeId: Int) {
+        if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
+            with: trackedBarcodeId,
+            for: .iconForRejectedBarcode
+        ) {
+            view.setIcon(icon, forRejectedBarcode: trackedBarcode)
+        }
+    }
+
     public func resetBarcodeCountSession(frameSequenceId: Int?) {
         barcodeCountListener.resetSession(frameSequenceId: frameSequenceId)
     }
@@ -250,6 +300,14 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         barcodeCountListener.disable()
         barcodeCountListener.disableAsync()
         mode.removeListener(barcodeCountListener)
+    }
+
+    public func addAdaptiveRecognitionServiceListener() {
+        mode.addAdaptiveRecognitionServiceListener(areListener)
+    }
+
+    public func removeAdaptiveRecognitionServiceListener() {
+        mode.removeAdaptiveRecognitionServiceListener(areListener)
     }
 
     public func resetBarcodeCount() {
@@ -344,6 +402,10 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         let viewListener = FrameworksBarcodeCountViewListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let viewUiListener = FrameworksBarcodeCountViewUIListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let statusProvider = FrameworksBarcodeCountStatusProvider(emitter: emitter, viewId: viewCreationParams.viewId)
+        let areListener = FrameworksBarcodeCountAdaptiveRecognitionServiceListener(
+            emitter: emitter,
+            viewId: viewCreationParams.viewId
+        )
         let instance = FrameworksBarcodeCountView(
             context: context,
             barcodeCountListener: barcodeCountListener,
@@ -351,6 +413,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
             viewListener: viewListener,
             viewUiListener: viewUiListener,
             statusProvider: statusProvider,
+            areListener: areListener,
             barcodeDataTransformer: FrameworksBarcodeDataTransformer(
                 emitter: emitter,
                 viewId: viewCreationParams.viewId
@@ -366,9 +429,13 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         view.delegate = nil
         view.uiDelegate = nil
         mode.removeListener(barcodeCountListener)
+        mode.removeAdaptiveRecognitionServiceListener(areListener)
         mode.reset()
-        DispatchQueue.main.async { [weak self] in
-            self?.view.removeFromSuperview()
+        statusProvider.detach()
+        // Strong capture: dispose cleanup must not race wrapper dealloc.
+        let view: BarcodeCountView = self.view
+        DispatchQueue.main.async {
+            view.removeFromSuperview()
         }
     }
 }

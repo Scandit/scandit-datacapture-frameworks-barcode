@@ -23,6 +23,7 @@ public class BarcodeSelectionModuleCommandFactory {
         module: BarcodeSelectionModule,
         _ method: FrameworksMethodCall
     ) -> BarcodeSelectionModuleCommand? {
+        _ = LogMetadata.registered
         switch method.method {
         case "unfreezeCameraInBarcodeSelection":
             return UnfreezeCameraInBarcodeSelectionCommand(module: module, method)

@@ -5,6 +5,7 @@
  */
 
 import ScanditBarcodeCapture
+import ScanditCaptureCore
 import ScanditFrameworksCore
 
 open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCycleObserver {
@@ -17,21 +18,56 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
 
     private let viewCache = FrameworksViewsCache<FrameworksBarcodeCountView>()
 
+    // Registration calls that raced view creation (addViewFromJson hasn't added the
+    // view to viewCache yet); replayed once the view is added (SDC-32821).
+    let viewCreationActionQueue = ViewCreationActionQueue()
+
+    private lazy var listenerAttachments: [ListenerAttachment] = [
+        ModuleListenerAttachment.forView(
+            [
+                "BarcodeCountViewUiListener.onListButtonTapped",
+                "BarcodeCountViewUiListener.onExitButtonTapped",
+                "BarcodeCountViewUiListener.onSingleScanButtonTapped",
+            ],
+            attach: { [weak self] in
+                self?.registerBarcodeCountViewUiListener(viewId: $0, result: NoopFrameworksResult())
+            },
+            detach: { [weak self] in
+                self?.unregisterBarcodeCountViewUiListener(viewId: $0, result: NoopFrameworksResult())
+            }
+        ),
+        ModuleListenerAttachment.forView(
+            Set(FrameworksBarcodeCountAdaptiveRecognitionEvent.allCases.map { $0.rawValue }),
+            attach: { [weak self] in
+                self?.registerBarcodeCountAdaptiveRecognitionServiceListener(
+                    viewId: $0,
+                    result: NoopFrameworksResult()
+                )
+            },
+            detach: { [weak self] in
+                self?.unregisterBarcodeCountAdaptiveRecognitionServiceListener(
+                    viewId: $0,
+                    result: NoopFrameworksResult()
+                )
+            }
+        ),
+    ]
+
     public func didStart() {
+        listenerAttachments.forEach { ListenerRegistry.shared.register(attachment: $0) }
         DeserializationLifeCycleDispatcher.shared.attach(observer: self)
     }
 
     public func didStop() {
+        listenerAttachments.forEach { ListenerRegistry.shared.unregister(attachment: $0) }
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
         viewCache.disposeAll()
+        viewCreationActionQueue.clearAll()
     }
 
     public func didDisposeDataCaptureContext() {
         viewCache.disposeAll()
-    }
-
-    public func getDefaults() -> [String: Any?] {
-        BarcodeCountDefaults.shared.toEncodable()
+        viewCreationActionQueue.clearAll()
     }
 
     public func addViewFromJson(parent: UIView, viewJson: String, result: FrameworksResult) {
@@ -65,6 +101,13 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
                     viewCreationParams: viewCreationParams
                 )
                 viewCache.addView(view: view)
+                // Replay any registration calls parked while this viewId didn't have a
+                // view yet (SDC-32821). Must run after addView above, or a replayed
+                // action's own cache lookup would miss and re-park it forever.
+                let parkedActions = self.viewCreationActionQueue.drain(viewId: viewCreationParams.viewId)
+                for action in parkedActions {
+                    action()
+                }
                 result.success()
             } catch {
                 Log.error("Unable to create the BarcodeCountView.", error: error)
@@ -89,6 +132,7 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
     }
 
     public func removeBarcodeCountView(viewId: Int, result: FrameworksResult) {
+        viewCreationActionQueue.clear(viewId: viewId)
         guard let viewInstance = viewCache.remove(viewId: viewId) else {
             result.success()
             return
@@ -97,8 +141,15 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
         result.success()
     }
 
+    // A provider, not a listener - but the same "JS believes it's wired up" semantic
+    // applies: if the view isn't cached yet, the provider attachment would silently
+    // no-op while still reporting success, so native status requests would never reach
+    // JS. Guarded the same way as the listener registrations below (SDC-32821).
     public func addBarcodeCountStatusProvider(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addBarcodeCountStatusProvider()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -123,6 +174,9 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
 
     public func registerBarcodeCountViewListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addBarcodeCountViewListener()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -148,6 +202,9 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
 
     public func registerBarcodeCountViewUiListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addBarcodeCountViewUiListener()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -156,6 +213,19 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
             guard self != nil else { return }
             viewInstance.addBarcodeCountViewUiListener()
             result.successAndKeepCallback(result: nil)
+        }
+    }
+
+    public func removeBarcodeCountStatusProvider(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+
+        dispatchMain { [weak self] in
+            guard self != nil else { return }
+            viewInstance.removeBarcodeCountStatusProvider()
+            result.success()
         }
     }
 
@@ -256,6 +326,96 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
         }
     }
 
+    private func barcodeCountIcon(fromJSONString jsonString: String) -> BarcodeCountIcon? {
+        guard let data = jsonString.data(using: .utf8),
+            let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        func icon(_ key: String) -> ScanditIcon? {
+            guard let value = dict[key], !(value is NSNull),
+                let iconData = try? JSONSerialization.data(withJSONObject: value),
+                let iconStr = String(data: iconData, encoding: .utf8)
+            else { return nil }
+            return try? ScanditIcon(fromJSONString: iconStr)
+        }
+        return BarcodeCountIcon(defaultIcon: icon("defaultIcon"), accessibleIcon: icon("accessibleIcon"))
+    }
+
+    public func finishBarcodeCountIconForRecognizedBarcode(
+        viewId: Int,
+        iconJson: String?,
+        trackedBarcodeId: Int,
+        result: FrameworksResult
+    ) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+
+        let icon = iconJson.flatMap { barcodeCountIcon(fromJSONString: $0) }
+        dispatchMain { [weak self] in
+            guard self != nil else { return }
+            viewInstance.finishIconForRecognizedBarcodeEvent(icon: icon, trackedBarcodeId: trackedBarcodeId)
+            result.success()
+        }
+    }
+
+    public func finishBarcodeCountIconForRecognizedBarcodeNotInList(
+        viewId: Int,
+        iconJson: String?,
+        trackedBarcodeId: Int,
+        result: FrameworksResult
+    ) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+
+        let icon = iconJson.flatMap { barcodeCountIcon(fromJSONString: $0) }
+        dispatchMain { [weak self] in
+            guard self != nil else { return }
+            viewInstance.finishIconForRecognizedBarcodeNotInListEvent(icon: icon, trackedBarcodeId: trackedBarcodeId)
+            result.success()
+        }
+    }
+
+    public func finishBarcodeCountIconForAcceptedBarcode(
+        viewId: Int,
+        iconJson: String?,
+        trackedBarcodeId: Int,
+        result: FrameworksResult
+    ) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+
+        let icon = iconJson.flatMap { barcodeCountIcon(fromJSONString: $0) }
+        dispatchMain { [weak self] in
+            guard self != nil else { return }
+            viewInstance.finishIconForAcceptedBarcodeEvent(icon: icon, trackedBarcodeId: trackedBarcodeId)
+            result.success()
+        }
+    }
+
+    public func finishBarcodeCountIconForRejectedBarcode(
+        viewId: Int,
+        iconJson: String?,
+        trackedBarcodeId: Int,
+        result: FrameworksResult
+    ) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+
+        let icon = iconJson.flatMap { barcodeCountIcon(fromJSONString: $0) }
+        dispatchMain { [weak self] in
+            guard self != nil else { return }
+            viewInstance.finishIconForRejectedBarcodeEvent(icon: icon, trackedBarcodeId: trackedBarcodeId)
+            result.success()
+        }
+    }
+
     public func setBarcodeCountCaptureList(
         viewId: Int,
         captureListJson: String,
@@ -323,6 +483,9 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
 
     public func registerBarcodeCountListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addBarcodeCountListener()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -332,6 +495,9 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
 
     public func registerBarcodeCountAsyncListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addAsyncBarcodeCountListener()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -354,6 +520,27 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
             return
         }
         viewInstance.removeBarcodeCountListener()
+        result.success()
+    }
+
+    public func registerBarcodeCountAdaptiveRecognitionServiceListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addAdaptiveRecognitionServiceListener()
+            }
+            result.successAndKeepCallback(result: nil)
+            return
+        }
+        viewInstance.addAdaptiveRecognitionServiceListener()
+        result.successAndKeepCallback(result: nil)
+    }
+
+    public func unregisterBarcodeCountAdaptiveRecognitionServiceListener(viewId: Int, result: FrameworksResult) {
+        guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            result.success()
+            return
+        }
+        viewInstance.removeAdaptiveRecognitionServiceListener()
         result.success()
     }
 
@@ -463,6 +650,7 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
     }
 
     public func disposeBarcodeCountView(viewId: Int) {
+        viewCreationActionQueue.clear(viewId: viewId)
         viewCache.remove(viewId: viewId)?.dispose()
 
         if let previousView = viewCache.getTopMost() {

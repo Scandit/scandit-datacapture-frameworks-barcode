@@ -52,7 +52,7 @@ public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
         mode = try deserializer.mode(fromJSONString: creationData.modeJson, with: dataCaptureContext)
         captureContext.addMode(mode: mode)
         mode.addListener(listener)
-        listener.setEnabled(enabled: creationData.hasListener)
+        listener.setEnabled(enabled: false)
 
         mode.isEnabled = creationData.isEnabled
         internalModeId = creationData.modeId
@@ -84,6 +84,10 @@ public class FrameworksBarcodeBatchMode: FrameworksBaseMode {
 
     public func updateModeFromJson(modeJson: String) throws {
         try deserializer.updateMode(mode, fromJSONString: modeJson)
+    }
+
+    public var licenseInfoJsonString: String? {
+        mode.barcodeBatchLicenseInfo?.jsonString
     }
 
     // MARK: - Factory Method

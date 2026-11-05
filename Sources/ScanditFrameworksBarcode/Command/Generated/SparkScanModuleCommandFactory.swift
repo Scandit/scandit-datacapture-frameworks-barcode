@@ -20,6 +20,7 @@ public class SparkScanModuleCommandFactory {
     /// - Parameter method: The method call containing method name and arguments
     /// - Returns: The corresponding command, or nil if method is not recognized
     public static func create(module: SparkScanModule, _ method: FrameworksMethodCall) -> SparkScanModuleCommand? {
+        _ = LogMetadata.registered
         switch method.method {
         case "updateSparkScanView":
             return UpdateSparkScanViewCommand(module: module, method)
@@ -57,6 +58,10 @@ public class SparkScanModuleCommandFactory {
             return UnregisterSparkScanViewListenerEventsCommand(module: module, method)
         case "resetSparkScanSession":
             return ResetSparkScanSessionCommand(module: module, method)
+        case "getSparkScanLicenseInfo":
+            return GetSparkScanLicenseInfoCommand(module: module, method)
+        case "getSparkScanScanningMode":
+            return GetSparkScanScanningModeCommand(module: module, method)
         case "updateSparkScanMode":
             return UpdateSparkScanModeCommand(module: module, method)
         case "registerSparkScanListenerForEvents":

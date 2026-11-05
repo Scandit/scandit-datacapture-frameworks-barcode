@@ -5,6 +5,7 @@
  */
 
 import ScanditCaptureCore
+import ScanditCaptureCoreDeserializer
 import ScanditFrameworksCore
 
 struct BarcodeFindViewCreationData {
@@ -17,6 +18,9 @@ struct BarcodeFindViewCreationData {
     let hasModeListeners: Bool
     let hasViewListener: Bool
     let viewId: Int
+    /// iOS-only BarcodeFindView property. `nil` when the view JSON does not
+    /// carry the key, so the native default is left untouched.
+    let cameraStateOnStop: FrameSourceState?
 
     private static let modeKey = "BarcodeFind"
     private static let viewKey = "View"
@@ -27,6 +31,14 @@ struct BarcodeFindViewCreationData {
     private static let hasModeListenersKey = "hasListeners"
     private static let hasViewListenerKey = "hasListener"
     private static let viewIdKey = "viewId"
+    private static let cameraStateOnStopKey = "cameraStateOnStop"
+
+    private static func parseCameraStateOnStop(_ viewJson: JSONValue) -> FrameSourceState? {
+        guard viewJson.containsKey(cameraStateOnStopKey) else { return nil }
+        var state = FrameSourceState.off
+        SDCFrameSourceStateFromJSONString(viewJson.string(forKey: cameraStateOnStopKey), &state)
+        return state
+    }
 
     static func fromJson(viewJson: String) throws -> BarcodeFindViewCreationData {
         let json = JSONValue(string: viewJson)
@@ -66,7 +78,8 @@ struct BarcodeFindViewCreationData {
             isModeEnabled: modeJsonObject.bool(forKey: modeEnabledKey, default: false),
             hasModeListeners: modeJsonObject.bool(forKey: hasModeListenersKey, default: false),
             hasViewListener: viewJsonObject.bool(forKey: hasViewListenerKey, default: false),
-            viewId: viewJsonObject.integer(forKey: viewIdKey)
+            viewId: viewJsonObject.integer(forKey: viewIdKey),
+            cameraStateOnStop: parseCameraStateOnStop(viewJsonObject)
         )
     }
 
@@ -87,12 +100,14 @@ struct BarcodeFindViewCreationData {
             isModeEnabled: json.bool(forKey: modeEnabledKey, default: false),
             hasModeListeners: json.bool(forKey: hasModeListenersKey, default: false),
             hasViewListener: false,
-            viewId: -1
+            viewId: -1,
+            cameraStateOnStop: nil
         )
     }
 
     static func fromViewJsonOnly(viewJson: String) -> BarcodeFindViewCreationData {
-        let json = JSONValue(string: viewJson)
+        let envelope = JSONValue(string: viewJson)
+        let json = envelope.containsKey(viewKey) ? envelope.object(forKey: viewKey) : envelope
 
         var itemsToFind: BarcodeFindItemsData? = nil
         if json.containsKey(itemsToFindKey) {
@@ -101,14 +116,15 @@ struct BarcodeFindViewCreationData {
 
         return BarcodeFindViewCreationData(
             modeJson: "{}",
-            viewJson: viewJson,
+            viewJson: json.jsonString(),
             itemsToFind: itemsToFind,
             startSearching: json.bool(forKey: startSearchingKey, default: false),
             hasBarcodeTransformer: false,
             isModeEnabled: false,
             hasModeListeners: false,
             hasViewListener: json.bool(forKey: hasViewListenerKey, default: false),
-            viewId: json.integer(forKey: viewIdKey)
+            viewId: json.integer(forKey: viewIdKey),
+            cameraStateOnStop: parseCameraStateOnStop(json)
         )
     }
 }

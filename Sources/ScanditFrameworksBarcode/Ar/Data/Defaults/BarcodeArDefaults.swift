@@ -7,24 +7,29 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-struct BarcodeArDefaults: DefaultsEncodable {
+struct BarcodeArDefaults {
     let recommendedCameraSettings: CameraSettingsDefaults
-    let barcodeArFeedback: BarcodeArFeedback
     let viewDefaults: DefaultsBarcodeArView
 
     static let shared = {
         BarcodeArDefaults(
             recommendedCameraSettings: CameraSettingsDefaults(cameraSettings: BarcodeAr.recommendedCameraSettings),
-            barcodeArFeedback: .default,
             viewDefaults: DefaultsBarcodeArView()
         )
     }()
 
-    func toEncodable() -> [String: Any?] {
+    enum Keys {
+        static let recommendedCameraSettings = "RecommendedCameraSettings"
+        static let barcodeArView = "BarcodeArView"
+    }
+
+    /// The residual defaults that a framework plugin cannot resolve statically: the
+    /// device-probed recommended camera settings and the view block (localized texts, asset
+    /// handles). Every other BarcodeAr default ships as a generated static file.
+    func toDynamicEncodable() -> [String: Any?] {
         [
-            "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
-            "barcodeArFeedback": barcodeArFeedback.jsonString,
-            "BarcodeArView": viewDefaults.toEncodable(),
+            Keys.recommendedCameraSettings: recommendedCameraSettings.toEncodable(),
+            Keys.barcodeArView: viewDefaults.toEncodable(),
         ]
     }
 }

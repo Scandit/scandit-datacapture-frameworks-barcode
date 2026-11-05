@@ -27,10 +27,10 @@ open class FrameworksBarcodePickListener: NSObject, BarcodePickListener {
         else { return }
         emitter.emit(
             name: BarcodePickListenerEvent.didUpdateSession.rawValue,
-            payload: [
-                "session": session.jsonString,
-                "viewId": self.viewId,
-            ]
+            payload: SchemaTypes.BarcodePickListenerDidUpdateSession(
+                session: session.jsonString,
+                viewId: self.viewId
+            ).toDictionary().mapValues { $0 as Any? }
         )
     }
 }

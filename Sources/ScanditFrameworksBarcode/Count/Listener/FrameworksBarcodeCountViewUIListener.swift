@@ -28,15 +28,35 @@ open class FrameworksBarcodeCountViewUIListener: NSObject, BarcodeCountViewUIDel
         self.viewId = viewId
     }
 
-    public func exitButtonTapped(for view: BarcodeCountView) {
-        exitButtonTappedEvent.emit(on: emitter, payload: ["viewId": self.viewId])
+    public func exitButtonTapped(for view: BarcodeCountView, sessionSnapshot: BarcodeCountSessionSnapshot) {
+        exitButtonTappedEvent.emit(
+            on: emitter,
+            payload: SchemaTypes.BarcodeCountViewUiListenerOnExitButtonTapped(
+                viewId: viewId,
+                snapshot: sessionSnapshot.jsonString,
+                event: nil
+            ).toDictionary()
+        )
     }
 
-    public func listButtonTapped(for view: BarcodeCountView) {
-        listButtonTappedEvent.emit(on: emitter, payload: ["viewId": self.viewId])
+    public func listButtonTapped(for view: BarcodeCountView, sessionSnapshot: BarcodeCountSessionSnapshot) {
+        listButtonTappedEvent.emit(
+            on: emitter,
+            payload: SchemaTypes.BarcodeCountViewUiListenerOnListButtonTapped(
+                viewId: viewId,
+                snapshot: sessionSnapshot.jsonString,
+                event: nil
+            ).toDictionary()
+        )
     }
 
     public func singleScanButtonTapped(for view: BarcodeCountView) {
-        singleScanButtonTappedEvent.emit(on: emitter, payload: ["viewId": self.viewId])
+        singleScanButtonTappedEvent.emit(
+            on: emitter,
+            payload: SchemaTypes.BarcodeCountViewUiListenerOnSingleScanButtonTapped(
+                viewId: viewId,
+                event: nil
+            ).toDictionary()
+        )
     }
 }
