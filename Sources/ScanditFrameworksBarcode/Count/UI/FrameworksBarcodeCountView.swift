@@ -268,6 +268,24 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         }
     }
 
+    // The app's listener for event is gone, so no reply will come: draw the default instead.
+    public func setDefaultIconsForPendingRequests(event: BarcodeCountViewListenerEvent) {
+        for trackedBarcode in viewListener.takePendingIconRequests(for: event) {
+            switch event {
+            case .iconForRecognizedBarcode:
+                view.setIcon(BarcodeCountView.defaultRecognizedIcon, forRecognizedBarcode: trackedBarcode)
+            case .iconForRecognizedBarcodeNotInList:
+                view.setIcon(BarcodeCountView.defaultNotInListIcon, forRecognizedBarcodeNotInList: trackedBarcode)
+            case .iconForAcceptedBarcode:
+                view.setIcon(BarcodeCountView.defaultAcceptedIcon, forAcceptedBarcode: trackedBarcode)
+            case .iconForRejectedBarcode:
+                view.setIcon(BarcodeCountView.defaultRejectedIcon, forRejectedBarcode: trackedBarcode)
+            default:
+                break
+            }
+        }
+    }
+
     public func resetBarcodeCountSession(frameSequenceId: Int?) {
         barcodeCountListener.resetSession(frameSequenceId: frameSequenceId)
     }

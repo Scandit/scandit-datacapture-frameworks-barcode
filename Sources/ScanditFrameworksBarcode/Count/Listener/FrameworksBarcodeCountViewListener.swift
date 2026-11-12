@@ -223,22 +223,24 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
         event: BarcodeCountViewListenerEvent,
         defaultIcon: BarcodeCountIcon
     ) -> BarcodeCountIcon? {
-        if emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
+        // nil (no default flash) only when a registered app callback will reply via setIcon(_:for:).
+        // Stored before the emit for fast replies; re-checked after it for a listener removed meanwhile.
+        let registered = emitter.hasRegisteredViewListenersForEvent(viewId, for: event.rawValue)
+        if registered || emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
+            let key = trackedBarcode.identifier.key(for: event)
+            iconRequests[key] = trackedBarcode
             eventDescriptor(for: event).emit(
                 on: emitter,
                 payload: trackedBarcodePayload(for: event, trackedBarcode: trackedBarcode)
             )
-            let key = trackedBarcode.identifier.key(for: event)
-            iconRequests[key] = trackedBarcode
+            if registered,
+                !emitter.hasRegisteredViewListenersForEvent(viewId, for: event.rawValue),
+                iconRequests.removeValue(forKey: key) != nil
+            {
+                return defaultIcon
+            }
         }
-
-        // Never return nil here. This delegate call is synchronous while the framework listener
-        // answers asynchronously, so at this point the app has not been asked yet. The SDK treats a
-        // set view delegate as authoritative and does not fall back to its own defaults, so nil
-        // means "draw no highlight at all" instead of "use the default icon". Returning the default
-        // keeps the overlay visible until the real answer arrives: a later finishIconFor* reply
-        // replaces it via setIcon(_:for:), and a nil icon in that reply clears it (SDC-33589).
-        return defaultIcon
+        return registered ? nil : defaultIcon
     }
 
     private func emit(event: BarcodeCountViewListenerEvent, for trackedBarcode: TrackedBarcode) {
@@ -260,6 +262,12 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
             brushRequests.removeValue(forKey: key)
         }
         return trackedBarcode
+    }
+
+    func takePendingIconRequests(for event: BarcodeCountViewListenerEvent) -> [TrackedBarcode] {
+        let prefix = "\(event.rawValue)-"
+        let keys = iconRequests.keys.filter { $0.hasPrefix(prefix) }
+        return keys.compactMap { iconRequests.removeValue(forKey: $0) }
     }
 
     func getTrackedBarcodeForIcon(

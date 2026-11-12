@@ -22,36 +22,55 @@ open class BarcodeCountModule: NSObject, FrameworkModule, DeserializationLifeCyc
     // view to viewCache yet); replayed once the view is added (SDC-32821).
     let viewCreationActionQueue = ViewCreationActionQueue()
 
-    private lazy var listenerAttachments: [ListenerAttachment] = [
-        ModuleListenerAttachment.forView(
-            [
-                "BarcodeCountViewUiListener.onListButtonTapped",
-                "BarcodeCountViewUiListener.onExitButtonTapped",
-                "BarcodeCountViewUiListener.onSingleScanButtonTapped",
-            ],
-            attach: { [weak self] in
-                self?.registerBarcodeCountViewUiListener(viewId: $0, result: NoopFrameworksResult())
-            },
-            detach: { [weak self] in
-                self?.unregisterBarcodeCountViewUiListener(viewId: $0, result: NoopFrameworksResult())
-            }
-        ),
-        ModuleListenerAttachment.forView(
-            Set(FrameworksBarcodeCountAdaptiveRecognitionEvent.allCases.map { $0.rawValue }),
-            attach: { [weak self] in
-                self?.registerBarcodeCountAdaptiveRecognitionServiceListener(
-                    viewId: $0,
-                    result: NoopFrameworksResult()
-                )
-            },
-            detach: { [weak self] in
-                self?.unregisterBarcodeCountAdaptiveRecognitionServiceListener(
-                    viewId: $0,
-                    result: NoopFrameworksResult()
-                )
-            }
-        ),
-    ]
+    private lazy var listenerAttachments: [ListenerAttachment] =
+        [
+            ModuleListenerAttachment.forView(
+                [
+                    "BarcodeCountViewUiListener.onListButtonTapped",
+                    "BarcodeCountViewUiListener.onExitButtonTapped",
+                    "BarcodeCountViewUiListener.onSingleScanButtonTapped",
+                ],
+                attach: { [weak self] in
+                    self?.registerBarcodeCountViewUiListener(viewId: $0, result: NoopFrameworksResult())
+                },
+                detach: { [weak self] in
+                    self?.unregisterBarcodeCountViewUiListener(viewId: $0, result: NoopFrameworksResult())
+                }
+            ),
+            ModuleListenerAttachment.forView(
+                Set(FrameworksBarcodeCountAdaptiveRecognitionEvent.allCases.map { $0.rawValue }),
+                attach: { [weak self] in
+                    self?.registerBarcodeCountAdaptiveRecognitionServiceListener(
+                        viewId: $0,
+                        result: NoopFrameworksResult()
+                    )
+                },
+                detach: { [weak self] in
+                    self?.unregisterBarcodeCountAdaptiveRecognitionServiceListener(
+                        viewId: $0,
+                        result: NoopFrameworksResult()
+                    )
+                }
+            ),
+        ] + iconEventAttachments
+
+    // One event per attachment, so detach fires when this icon event alone is removed.
+    private var iconEventAttachments: [ListenerAttachment] {
+        let events: [BarcodeCountViewListenerEvent] = [
+            .iconForRecognizedBarcode, .iconForRecognizedBarcodeNotInList,
+            .iconForAcceptedBarcode, .iconForRejectedBarcode,
+        ]
+        return events.map { event in
+            ModuleListenerAttachment.forView(
+                [event.rawValue],
+                attach: { _ in },
+                detach: { [weak self] viewId in
+                    guard let viewInstance = self?.viewCache.getView(viewId: viewId) else { return }
+                    dispatchMain { viewInstance.setDefaultIconsForPendingRequests(event: event) }
+                }
+            )
+        }
+    }
 
     public func didStart() {
         listenerAttachments.forEach { ListenerRegistry.shared.register(attachment: $0) }
