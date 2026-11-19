@@ -62,11 +62,11 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
 
         didScanEvent.emit(
             on: emitter,
-            payload: SchemaTypes.SparkScanListenerDidScan(
-                session: session.jsonString,
-                frameId: frameId,
-                viewId: viewId
-            ).toDictionary().mapValues { $0 as Any? }
+            payload: [
+                "session": session.jsonString,
+                "frameId": frameId,
+                "viewId": viewId,
+            ]
         )
 
         if let id = frameId {
@@ -95,11 +95,11 @@ open class FrameworksSparkScanListener: NSObject, SparkScanListener {
 
         didUpdateEvent.emit(
             on: emitter,
-            payload: SchemaTypes.SparkScanListenerDidUpdateSession(
-                session: session.jsonString,
-                frameId: frameId,
-                viewId: viewId
-            ).toDictionary().mapValues { $0 as Any? }
+            payload: [
+                "session": session.jsonString,
+                "frameId": frameId,
+                "viewId": viewId,
+            ]
         )
 
         if let id = frameId {

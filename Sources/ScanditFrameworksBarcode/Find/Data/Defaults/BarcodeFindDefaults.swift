@@ -7,40 +7,43 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-struct BarcodeFindDefaults {
+struct BarcodeFindDefaults: DefaultsEncodable {
+    private let feedback: BarcodeFindFeedback
     private let viewDefaults: FrameworksBarcodeFindViewDefaults
+    private let viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults
     private let recommendedCameraSettings: CameraSettingsDefaults
 
     init(
+        feedback: BarcodeFindFeedback,
         viewDefaults: FrameworksBarcodeFindViewDefaults,
+        viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults,
         recommendedCameraSettings: CameraSettingsDefaults
     ) {
+        self.feedback = feedback
         self.viewDefaults = viewDefaults
+        self.viewSettingsDefaults = viewSettingsDefaults
         self.recommendedCameraSettings = recommendedCameraSettings
     }
 
     static let shared = {
         BarcodeFindDefaults(
+            feedback: .default,
             viewDefaults: FrameworksBarcodeFindViewDefaults(),
+            viewSettingsDefaults: FrameworksBarcodeFindViewSettingsDefaults(
+                barcodeFindViewSettings: BarcodeFindViewSettings()
+            ),
             recommendedCameraSettings: CameraSettingsDefaults(
                 cameraSettings: BarcodeFind.recommendedCameraSettings
             )
         )
     }()
 
-    enum Keys {
-        static let recommendedCameraSettings = "RecommendedCameraSettings"
-        static let barcodeFindView = "BarcodeFindView"
-    }
-
-    /// The residual defaults that a framework plugin cannot resolve statically: the
-    /// device-probed recommended camera settings and the view block (localized texts, asset
-    /// handles, device-probed hardware-trigger flags). Every other BarcodeFind default ships
-    /// as a generated static file.
-    func toDynamicEncodable() -> [String: Any?] {
+    func toEncodable() -> [String: Any?] {
         [
-            Keys.recommendedCameraSettings: recommendedCameraSettings.toEncodable(),
-            Keys.barcodeFindView: viewDefaults.toEncodable(),
+            "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
+            "BarcodeFindFeedback": feedback.jsonString,
+            "BarcodeFindView": viewDefaults.toEncodable(),
+            "BarcodeFindViewSettings": viewSettingsDefaults.toEncodable(),
         ]
     }
 }

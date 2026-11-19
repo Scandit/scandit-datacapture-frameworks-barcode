@@ -7,13 +7,17 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-struct BarcodeCountDefaults {
+struct BarcodeCountDefaults: DefaultsEncodable {
     let recommendedCameraSettings: CameraSettingsDefaults
+    let barcodeCountSettings: BarcodeCountSettingsDefaults
+    let barcodeCountFeedback: BarcodeCountFeedback
     let barcodeCountView: DefaultsBarcodeCountView
 
     static let shared = {
         BarcodeCountDefaults(
             recommendedCameraSettings: CameraSettingsDefaults(cameraSettings: BarcodeCount.recommendedCameraSettings),
+            barcodeCountSettings: BarcodeCountSettingsDefaults(barcodeCountSettings: BarcodeCountSettings()),
+            barcodeCountFeedback: .default,
             barcodeCountView: DefaultsBarcodeCountView(
                 barcodeCountToolbarSettingsDefaults: BarcodeCountToolbarSettingsDefaults(),
                 barcodeCountMappingFlowSettingsDefaults: BarcodeCountMappingFlowSettingsDefaults()
@@ -21,19 +25,12 @@ struct BarcodeCountDefaults {
         )
     }()
 
-    enum Keys {
-        static let recommendedCameraSettings = "RecommendedCameraSettings"
-        static let barcodeCountView = "BarcodeCountView"
-    }
-
-    /// The residual defaults that a framework plugin cannot resolve statically: the
-    /// device-probed recommended camera settings and the view block (localized texts, asset
-    /// handles, device-probed hardware-trigger flags). Every other BarcodeCount default ships
-    /// as a generated static file.
-    func toDynamicEncodable() -> [String: Any?] {
+    func toEncodable() -> [String: Any?] {
         [
-            Keys.recommendedCameraSettings: recommendedCameraSettings.toEncodable(),
-            Keys.barcodeCountView: barcodeCountView.toEncodable(),
+            "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
+            "BarcodeCountSettings": barcodeCountSettings.toEncodable(),
+            "BarcodeCountFeedback": barcodeCountFeedback.jsonString,
+            "BarcodeCountView": barcodeCountView.toEncodable(),
         ]
     }
 }

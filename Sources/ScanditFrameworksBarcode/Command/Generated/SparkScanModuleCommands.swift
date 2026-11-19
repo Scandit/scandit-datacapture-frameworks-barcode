@@ -376,22 +376,6 @@ public class GetSparkScanLicenseInfoCommand: SparkScanModuleCommand {
         )
     }
 }
-/// Returns the SparkScanScanningMode JSON of the view, or null when not available
-public class GetSparkScanScanningModeCommand: SparkScanModuleCommand {
-    private let module: SparkScanModule
-    private let viewId: Int
-    public init(module: SparkScanModule, _ method: FrameworksMethodCall) {
-        self.module = module
-        self.viewId = method.argument(key: "viewId") ?? Int()
-    }
-
-    public func execute(result: FrameworksResult) {
-        module.getSparkScanScanningMode(
-            viewId: viewId,
-            result: result
-        )
-    }
-}
 /// Updates the SparkScan mode configuration
 public class UpdateSparkScanModeCommand: SparkScanModuleCommand {
     private let module: SparkScanModule

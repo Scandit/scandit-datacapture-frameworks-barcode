@@ -182,12 +182,10 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
     }
 
     public func addBarcodeArFilter() {
-        barcodeFilter.open()
         mode.setBarcodeFilter(barcodeFilter)
     }
 
     public func removeBarcodeArFilter() {
-        barcodeFilter.close()
         mode.setBarcodeFilter(nil)
     }
 
@@ -273,7 +271,6 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
 
     public func dispose() {
         barcodeArListener.finishDidUpdateSession(enabled: true)
-        barcodeFilter.close()
         mode.removeListener(barcodeArListener)
         mode.removeListener(cacheListener)
         augmentationsCache.clear()
@@ -301,12 +298,14 @@ public class FrameworksBarcodeArView: FrameworksBaseView {
         // and the script layers filter events by viewId.
         let augmentationsEvicted = Event(name: BarcodeArAugmentationsEvents.evicted.rawValue)
         let augmentationsCache = BarcodeArAugmentationsCache { barcodeId in
+            // Built by hand: the 8.6 line has no generated Swift schema types, so the keys
+            // here are the contract with barcode_ar_augmentations_evicted.json.
             augmentationsEvicted.emit(
                 on: emitter,
-                payload: SchemaTypes.BarcodeArAugmentationsEvicted(
-                    barcodeId: barcodeId,
-                    viewId: viewCreationParams.viewId
-                ).toDictionary()
+                payload: [
+                    "barcodeId": barcodeId,
+                    "viewId": viewCreationParams.viewId,
+                ]
             )
         }
         let barcodeArListener = FrameworksBarcodeArListener(

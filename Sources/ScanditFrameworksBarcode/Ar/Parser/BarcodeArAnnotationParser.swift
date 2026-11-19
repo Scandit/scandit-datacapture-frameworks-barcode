@@ -21,14 +21,6 @@ public enum FrameworksBarcodeArAnnotationEvents: String, CaseIterable {
     case didTapInfoAnnotationRightIcon = "BarcodeArInfoAnnotationListener.didTapInfoAnnotationRightIcon"
 }
 
-private enum AnnotationTypeName {
-    static let info = "barcodeArInfoAnnotation"
-    static let popover = "barcodeArPopoverAnnotation"
-    static let statusIcon = "barcodeArStatusIconAnnotation"
-    static let responsive = "barcodeArResponsiveAnnotation"
-    static let custom = "barcodeArCustomAnnotation"
-}
-
 public class BarcodeArAnnotationParser {
     private let viewId: Int
     private let emitter: Emitter
@@ -42,9 +34,6 @@ public class BarcodeArAnnotationParser {
     // refreshed in place across updates rather than recreated, so a listener registered on a
     // still-live child annotation keeps working.
     private var responsiveInfoAnnotationDelegates: [String: FrameworksInfoAnnotationDelegate] = [:]
-    // Popover children of a responsive annotation: same per-slot scheme as the info delegates. The
-    // native popover delegate is weak, so the parser must keep these alive.
-    private var responsivePopoverAnnotationDelegates: [String: FrameworksPopoverAnnotationDelegate] = [:]
     private var popoverAnnotationDelegate: FrameworksPopoverAnnotationDelegate?
     private var cache: BarcodeArAugmentationsCache?
 
@@ -74,15 +63,15 @@ public class BarcodeArAnnotationParser {
         }
 
         switch type {
-        case AnnotationTypeName.info:
+        case "barcodeArInfoAnnotation":
             return getInfoAnnotation(barcode: barcode, json: json)
-        case AnnotationTypeName.popover:
+        case "barcodeArPopoverAnnotation":
             return getPopoverAnnotation(barcode: barcode, json: json)
-        case AnnotationTypeName.statusIcon:
+        case "barcodeArStatusIconAnnotation":
             return getStatusIconAnnotation(barcode: barcode, json: json)
-        case AnnotationTypeName.responsive:
+        case "barcodeArResponsiveAnnotation":
             return getResponsiveAnnotation(barcode: barcode, json: json)
-        case AnnotationTypeName.custom:
+        case "barcodeArCustomAnnotation":
             return BarcodeArCustomAnnotation(barcode: barcode, emitter: emitter, json: json, viewId: viewId)
         default:
             Log.error("Not supported annotation type.", error: NSError(domain: "Type \(type)", code: -1))
@@ -114,22 +103,7 @@ public class BarcodeArAnnotationParser {
         }
     }
 
-    func updateBarcodeArPopoverButton(
-        _ cached: BarcodeArAnnotation,
-        json: JSONValue,
-        responsiveAnnotationThreshold: Double? = nil
-    ) {
-        let target: Any?
-        if let responsive = cached as? BarcodeArResponsiveAnnotation, let threshold = responsiveAnnotationThreshold {
-            target = responsive.annotationsByThreshold[CGFloat(threshold)] ?? nil
-        } else {
-            target = cached
-        }
-        guard let annotation = target as? BarcodeArPopoverAnnotation else {
-            Log.error("No popover annotation found to update the popover button.")
-            return
-        }
-
+    func updateBarcodeArPopoverButton(_ annotation: BarcodeArPopoverAnnotation, json: JSONValue) {
         guard let index = json.optionalInt(forKey: "index") else {
             Log.error("Invalid index received when trying to update the updateBarcodeArPopoverButton.")
             return
@@ -212,113 +186,6 @@ private extension BarcodeArAnnotationParser {
         return delegate
     }
 
-    private func responsivePopoverDelegate(
-        slotKey: String,
-        threshold: Double,
-        responsiveAnnotationType: ResponsiveAnnotationType?
-    ) -> FrameworksPopoverAnnotationDelegate {
-        let delegate =
-            responsivePopoverAnnotationDelegates[slotKey]
-            ?? FrameworksPopoverAnnotationDelegate(emitter: emitter, viewId: viewId)
-        delegate.responsiveAnnotationType = responsiveAnnotationType
-        delegate.responsiveAnnotationThreshold = threshold
-        responsivePopoverAnnotationDelegates[slotKey] = delegate
-        return delegate
-    }
-
-    private func getResponsiveChild(
-        barcode: Barcode,
-        slotKey: String,
-        threshold: Double,
-        minThreshold: CGFloat?,
-        json: JSONValue
-    ) -> (any UIView & BarcodeArAnnotation)? {
-        let type = responsiveAnnotationType(for: CGFloat(threshold), minThreshold: minThreshold)
-        switch json.optionalString(forKey: "type") ?? AnnotationTypeName.info {
-        case AnnotationTypeName.info:
-            let child = BarcodeArInfoAnnotation(barcode: barcode)
-            let delegate = responsiveDelegate(slotKey: slotKey, threshold: threshold, responsiveAnnotationType: type)
-            updateInfoAnnotation(child, json, barcode.uniqueId, delegate)
-            return child
-        case AnnotationTypeName.popover:
-            let delegate = responsivePopoverDelegate(
-                slotKey: slotKey,
-                threshold: threshold,
-                responsiveAnnotationType: type
-            )
-            return getPopoverAnnotation(barcode: barcode, json: json, responsiveDelegate: delegate)
-        case AnnotationTypeName.statusIcon:
-            return getStatusIconAnnotation(barcode: barcode, json: json)
-        case AnnotationTypeName.custom:
-            return BarcodeArCustomAnnotation(
-                barcode: barcode,
-                emitter: emitter,
-                json: json,
-                viewId: viewId,
-                responsiveAnnotationThreshold: threshold
-            )
-        case AnnotationTypeName.responsive:
-            Log.error("Nested responsive annotations are not supported.", error: NSError(domain: slotKey, code: -1))
-            return nil
-        default:
-            Log.error(
-                "Not supported annotation type inside a responsive annotation.",
-                error: NSError(domain: slotKey, code: -1)
-            )
-            return nil
-        }
-    }
-
-    private func updateResponsiveChild(
-        _ child: Any?,
-        slotKey: String,
-        threshold: CGFloat,
-        minThreshold: CGFloat?,
-        json: JSONValue,
-        barcodeId: String
-    ) {
-        func typeMatches(_ expectedType: String) -> Bool {
-            let jsonType = json.optionalString(forKey: "type") ?? expectedType
-            guard jsonType == expectedType else {
-                Log.error(
-                    "Cannot change the type of a responsive slot; rebuild the annotation instead.",
-                    error: NSError(domain: "\(expectedType) to \(jsonType)", code: -1)
-                )
-                return false
-            }
-            return true
-        }
-        let type = responsiveAnnotationType(for: threshold, minThreshold: minThreshold)
-        switch child {
-        case let info as BarcodeArInfoAnnotation:
-            guard typeMatches(AnnotationTypeName.info) else { return }
-            let delegate = responsiveDelegate(
-                slotKey: slotKey,
-                threshold: Double(threshold),
-                responsiveAnnotationType: type
-            )
-            updateInfoAnnotation(info, json, barcodeId, delegate)
-        case let popover as BarcodeArPopoverAnnotation:
-            guard typeMatches(AnnotationTypeName.popover) else { return }
-            let delegate = responsivePopoverDelegate(
-                slotKey: slotKey,
-                threshold: Double(threshold),
-                responsiveAnnotationType: type
-            )
-            updatePopoverAnnotation(popover, json, popover.barcode, delegate)
-        case let status as BarcodeArStatusIconAnnotation:
-            guard typeMatches(AnnotationTypeName.statusIcon) else { return }
-            updateStatusIconAnnotation(status, json.getObjectAsString(forKey: "icon"), json)
-        case let custom as BarcodeArCustomAnnotation:
-            guard typeMatches(AnnotationTypeName.custom) else { return }
-            var trigger = custom.annotationTrigger
-            SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
-            custom.annotationTrigger = trigger
-        default:
-            break
-        }
-    }
-
     private func updateInfoAnnotation(
         _ annotation: BarcodeArInfoAnnotation,
         _ json: JSONValue,
@@ -372,10 +239,6 @@ private extension BarcodeArAnnotationParser {
         annotation.annotationTrigger = trigger
     }
 
-    private func infoAnnotation(_ annotation: Any?) -> BarcodeArInfoAnnotation? {
-        annotation as? BarcodeArInfoAnnotation
-    }
-
     private func updateResponsiveAnnotation(annotation: BarcodeArResponsiveAnnotation, json: JSONValue) {
         if json.containsKey("annotationsByThreshold") {
             let thresholdsJson = json.object(forKey: "annotationsByThreshold")
@@ -421,20 +284,28 @@ private extension BarcodeArAnnotationParser {
                     continue
                 }
 
-                updateResponsiveChild(
-                    existingByThreshold[resolvedThreshold] ?? nil,
+                guard let childAnnotation = existingByThreshold[resolvedThreshold] ?? nil else { continue }
+
+                let delegate = responsiveDelegate(
                     slotKey: incoming.key,
-                    threshold: incoming.threshold,
-                    minThreshold: minThreshold,
-                    json: thresholdsJson.object(forKey: incoming.key),
-                    barcodeId: annotation.barcode.uniqueId
+                    threshold: Double(incoming.threshold),
+                    responsiveAnnotationType: responsiveAnnotationType(
+                        for: incoming.threshold,
+                        minThreshold: minThreshold
+                    )
+                )
+                updateInfoAnnotation(
+                    childAnnotation,
+                    thresholdsJson.object(forKey: incoming.key),
+                    annotation.barcode.uniqueId,
+                    delegate
                 )
             }
         } else {
             // Legacy fallback, behaviour identical to before the annotationsByThreshold JSON key existed.
             let sortedByThreshold = annotation.annotationsByThreshold.sorted { $0.key < $1.key }
-            let farAway = infoAnnotation(sortedByThreshold.first?.value ?? nil)
-            let closeUp = infoAnnotation(sortedByThreshold.last?.value ?? nil)
+            let farAway = sortedByThreshold.first?.value ?? nil
+            let closeUp = sortedByThreshold.last?.value ?? nil
 
             if let closeUp = closeUp {
                 let closeUpJson = json.object(forKey: "closeUpAnnotation")
@@ -459,7 +330,6 @@ private extension BarcodeArAnnotationParser {
 
         var trigger = BarcodeArAnnotationTrigger.highlightTap
         SDCBarcodeArAnnotationTriggerFromJSONString(json.string(forKey: "annotationTrigger"), &trigger)
-        annotation.annotationTrigger = trigger
     }
 
     private func parseInfoAnnotationHeader(_ json: JSONValue) -> BarcodeArInfoAnnotationHeader {
@@ -548,11 +418,7 @@ private extension BarcodeArAnnotationParser {
 
 private extension BarcodeArAnnotationParser {
 
-    private func getPopoverAnnotation(
-        barcode: Barcode,
-        json: JSONValue,
-        responsiveDelegate: FrameworksPopoverAnnotationDelegate? = nil
-    ) -> BarcodeArPopoverAnnotation? {
+    private func getPopoverAnnotation(barcode: Barcode, json: JSONValue) -> BarcodeArPopoverAnnotation? {
         do {
             let annotationButtons = json.array(forKey: "buttons")
 
@@ -573,7 +439,7 @@ private extension BarcodeArAnnotationParser {
             }
 
             let annotation = BarcodeArPopoverAnnotation(barcode: barcode, buttons: buttons)
-            updatePopoverAnnotation(annotation, json, barcode, responsiveDelegate)
+            updatePopoverAnnotation(annotation, json, barcode)
 
             return annotation
         } catch {
@@ -585,8 +451,7 @@ private extension BarcodeArAnnotationParser {
     private func updatePopoverAnnotation(
         _ annotation: BarcodeArPopoverAnnotation,
         _ json: JSONValue,
-        _ barcode: Barcode,
-        _ responsiveDelegate: FrameworksPopoverAnnotationDelegate? = nil
+        _ barcode: Barcode
     ) {
         if let anchorJson = json.optionalString(forKey: "anchor") {
             switch anchorJson {
@@ -598,8 +463,9 @@ private extension BarcodeArAnnotationParser {
         }
         annotation.isEntirePopoverTappable = json.bool(forKey: "isEntirePopoverTappable", default: false)
         if json.bool(forKey: "hasListener", default: false) {
-            // Always reassign: a remapped responsive slot carries a different delegate.
-            annotation.delegate = responsiveDelegate ?? self.popoverAnnotationDelegate
+            if annotation.delegate == nil {
+                annotation.delegate = self.popoverAnnotationDelegate
+            }
         } else {
             annotation.delegate = nil
         }
@@ -641,7 +507,7 @@ private extension BarcodeArAnnotationParser {
             let numericKeys = keys.compactMap { Double($0).map { CGFloat($0) } }
             let minThreshold = numericKeys.min()
 
-            var annotationsByThreshold: [CGFloat: (any UIView & BarcodeArAnnotation)?] = [:]
+            var annotationsByThreshold: [CGFloat: BarcodeArInfoAnnotation?] = [:]
             for key in keys {
                 guard let parsedKey = Double(key) else {
                     Log.error("Invalid annotationsByThreshold key received.", error: NSError(domain: key, code: -1))
@@ -649,14 +515,17 @@ private extension BarcodeArAnnotationParser {
                 }
                 let threshold = CGFloat(parsedKey)
                 if thresholdsJson.containsObject(withKey: key) {
-                    // An unbuildable child keeps its key as a nil slot, so later updates still
-                    // match the existing keys instead of falling into the legacy remap.
-                    let childAnnotation = getResponsiveChild(
-                        barcode: barcode,
+                    let childAnnotation = BarcodeArInfoAnnotation(barcode: barcode)
+                    let delegate = responsiveDelegate(
                         slotKey: key,
                         threshold: parsedKey,
-                        minThreshold: minThreshold,
-                        json: thresholdsJson.object(forKey: key)
+                        responsiveAnnotationType: responsiveAnnotationType(for: threshold, minThreshold: minThreshold)
+                    )
+                    updateInfoAnnotation(
+                        childAnnotation,
+                        thresholdsJson.object(forKey: key),
+                        barcode.uniqueId,
+                        delegate
                     )
                     annotationsByThreshold.updateValue(childAnnotation, forKey: threshold)
                 } else {

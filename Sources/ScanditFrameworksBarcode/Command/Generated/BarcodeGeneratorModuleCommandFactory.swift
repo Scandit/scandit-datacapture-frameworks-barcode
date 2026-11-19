@@ -23,7 +23,6 @@ public class BarcodeGeneratorModuleCommandFactory {
         module: BarcodeGeneratorModule,
         _ method: FrameworksMethodCall
     ) -> BarcodeGeneratorModuleCommand? {
-        _ = LogMetadata.registered
         switch method.method {
         case "createBarcodeGenerator":
             return CreateBarcodeGeneratorCommand(module: module, method)

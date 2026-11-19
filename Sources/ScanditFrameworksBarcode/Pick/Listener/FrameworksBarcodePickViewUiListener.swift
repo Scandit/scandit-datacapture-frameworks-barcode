@@ -29,8 +29,7 @@ open class FrameworksBarcodePickViewUiListener: NSObject, BarcodePickViewUIDeleg
         else { return }
         emitter.emit(
             name: BarcodePickViewUiListenerEvents.didTapFinishButton.rawValue,
-            payload: SchemaTypes.BarcodePickViewUiListenerDidTapFinishButton(viewId: self.viewId)
-                .toDictionary().mapValues { $0 as Any? }
+            payload: ["viewId": self.viewId]
         )
     }
 }

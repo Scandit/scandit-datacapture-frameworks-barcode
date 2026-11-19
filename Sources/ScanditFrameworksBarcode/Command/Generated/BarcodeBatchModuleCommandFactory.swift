@@ -21,7 +21,6 @@ public class BarcodeBatchModuleCommandFactory {
     /// - Returns: The corresponding command, or nil if method is not recognized
     public static func create(module: BarcodeBatchModule, _ method: FrameworksMethodCall) -> BarcodeBatchModuleCommand?
     {
-        _ = LogMetadata.registered
         switch method.method {
         case "resetBarcodeBatchSession":
             return ResetBarcodeBatchSessionCommand(module: module)

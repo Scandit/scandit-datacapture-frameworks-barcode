@@ -42,15 +42,31 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
         name: FrameworksBarcodeArAnnotationEvents.didTapInfoAnnotationHeader.rawValue
     )
 
+    private func generatePayload(barcodeId: String, mergeWith: [String: Any]? = nil) -> [String: Any] {
+        var payload: [String: Any] = [
+            "barcodeId": barcodeId,
+            "viewId": self.viewId,
+        ]
+
+        if let responsiveAnnotationType = responsiveAnnotationType {
+            payload["responsiveAnnotationType"] = responsiveAnnotationType.rawValue
+        }
+
+        if let responsiveAnnotationThreshold = responsiveAnnotationThreshold {
+            payload["responsiveAnnotationThreshold"] = responsiveAnnotationThreshold
+        }
+
+        if let mw = mergeWith {
+            payload = payload.merging(mw) { (_, new) in new }
+        }
+
+        return payload
+    }
+
     func barcodeArInfoAnnotationDidTapHeader(_ annotation: BarcodeArInfoAnnotation) {
         didTapInfoAnnotationHeader.emit(
             on: self.emitter,
-            payload: SchemaTypes.BarcodeArInfoAnnotationListenerDidTapInfoAnnotationHeader(
-                barcodeId: annotation.barcode.uniqueId,
-                viewId: self.viewId,
-                responsiveAnnotationType: responsiveAnnotationType?.rawValue,
-                responsiveAnnotationThreshold: responsiveAnnotationThreshold
-            ).toDictionary()
+            payload: generatePayload(barcodeId: annotation.barcode.uniqueId)
         )
     }
 
@@ -61,12 +77,7 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
     func barcodeArInfoAnnotationDidTapFooter(_ annotation: BarcodeArInfoAnnotation) {
         didTapInfoAnnotationFooter.emit(
             on: self.emitter,
-            payload: SchemaTypes.BarcodeArInfoAnnotationListenerDidTapInfoAnnotationFooter(
-                barcodeId: annotation.barcode.uniqueId,
-                viewId: self.viewId,
-                responsiveAnnotationType: responsiveAnnotationType?.rawValue,
-                responsiveAnnotationThreshold: responsiveAnnotationThreshold
-            ).toDictionary()
+            payload: generatePayload(barcodeId: annotation.barcode.uniqueId)
         )
     }
 
@@ -81,13 +92,10 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
     ) {
         didTapInfoAnnotationLeftIcon.emit(
             on: self.emitter,
-            payload: SchemaTypes.BarcodeArInfoAnnotationListenerDidTapInfoAnnotationLeftIcon(
+            payload: generatePayload(
                 barcodeId: annotation.barcode.uniqueId,
-                componentIndex: componentIndex,
-                viewId: self.viewId,
-                responsiveAnnotationType: responsiveAnnotationType?.rawValue,
-                responsiveAnnotationThreshold: responsiveAnnotationThreshold
-            ).toDictionary()
+                mergeWith: ["componentIndex": componentIndex]
+            )
         )
     }
 
@@ -102,13 +110,10 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
     ) {
         didTapInfoAnnotationRightIcon.emit(
             on: self.emitter,
-            payload: SchemaTypes.BarcodeArInfoAnnotationListenerDidTapInfoAnnotationRightIcon(
+            payload: generatePayload(
                 barcodeId: annotation.barcode.uniqueId,
-                componentIndex: componentIndex,
-                viewId: self.viewId,
-                responsiveAnnotationType: responsiveAnnotationType?.rawValue,
-                responsiveAnnotationThreshold: responsiveAnnotationThreshold
-            ).toDictionary()
+                mergeWith: ["componentIndex": componentIndex]
+            )
         )
     }
 
@@ -119,12 +124,7 @@ class FrameworksInfoAnnotationDelegate: NSObject, BarcodeArInfoAnnotationDelegat
     func barcodeArInfoAnnotationDidTap(_ annotation: BarcodeArInfoAnnotation) {
         didTapInfoAnnotation.emit(
             on: self.emitter,
-            payload: SchemaTypes.BarcodeArInfoAnnotationListenerDidTapInfoAnnotation(
-                barcodeId: annotation.barcode.uniqueId,
-                viewId: self.viewId,
-                responsiveAnnotationType: responsiveAnnotationType?.rawValue,
-                responsiveAnnotationThreshold: responsiveAnnotationThreshold
-            ).toDictionary()
+            payload: generatePayload(barcodeId: annotation.barcode.uniqueId)
         )
     }
 }

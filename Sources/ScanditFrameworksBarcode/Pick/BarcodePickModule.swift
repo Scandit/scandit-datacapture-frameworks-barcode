@@ -14,10 +14,6 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
 
     private let viewCache = FrameworksViewsCache<FrameworksBarcodePickView>()
 
-    // Registration calls that raced view creation (addViewToContainer hasn't added the
-    // view to viewCache yet); replayed once the view is added (SDC-32821).
-    let viewCreationActionQueue = ViewCreationActionQueue()
-
     public init(emitter: Emitter) {
         self.emitter = emitter
     }
@@ -37,7 +33,10 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
 
     private func cleanup() {
         viewCache.disposeAll()
-        viewCreationActionQueue.clearAll()
+    }
+
+    public func getDefaults() -> [String: Any?] {
+        BarcodePickDefaults.shared.toEncodable()
     }
 
     public func addViewToContainer(container: UIView, jsonString: String, result: FrameworksResult) {
@@ -81,13 +80,6 @@ open class BarcodePickModule: NSObject, FrameworkModule, DeserializationLifeCycl
                 )
 
                 viewCache.addView(view: frameworksView)
-                // Replay any registration calls parked while this viewId didn't have a
-                // view yet (SDC-32821). Must run after addView above, or a replayed
-                // action's own cache lookup would miss and re-park it forever.
-                let parkedActions = self.viewCreationActionQueue.drain(viewId: viewCreationParams.viewId)
-                for action in parkedActions {
-                    action()
-                }
 
                 result.success(result: nil)
             } catch let error {
@@ -140,7 +132,6 @@ public extension BarcodePickModule {
     }
 
     func removeView(viewId: Int, result: FrameworksResult) {
-        viewCreationActionQueue.clear(viewId: viewId)
         viewCache.remove(viewId: viewId)?.dispose()
         if let previousView = viewCache.getTopMost() {
             previousView.show()
@@ -183,9 +174,6 @@ public extension BarcodePickModule {
 
     func addPickActionListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodePickActionListener()
-            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -204,9 +192,6 @@ public extension BarcodePickModule {
 
     func addBarcodePickScanningListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodePickScanningListener()
-            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -225,9 +210,6 @@ public extension BarcodePickModule {
 
     func addPickViewListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodePickViewListener()
-            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -246,9 +228,6 @@ public extension BarcodePickModule {
 
     func registerBarcodePickViewUiListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodePickViewUiListener()
-            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -267,9 +246,6 @@ public extension BarcodePickModule {
 
     func addBarcodePickListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodePickListener()
-            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -296,7 +272,6 @@ public extension BarcodePickModule {
     }
 
     func pickViewRelease(viewId: Int, result: FrameworksResult) {
-        viewCreationActionQueue.clear(viewId: viewId)
         viewCache.remove(viewId: viewId)?.dispose()
 
         let previousView = viewCache.getTopMost()

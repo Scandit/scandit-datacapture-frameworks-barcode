@@ -32,11 +32,11 @@ open class FrameworksBarcodeArViewUiListener: NSObject, BarcodeArViewUIDelegate 
     ) {
         didTapHighlightForBarcode.emit(
             on: emitter,
-            payload: SchemaTypes.BarcodeArViewUiListenerDidTapHighlightForBarcode(
-                barcode: barcode.jsonString,
-                barcodeId: barcode.uniqueId,
-                viewId: self.viewId
-            ).toDictionary()
+            payload: [
+                "barcode": barcode.jsonString,
+                "barcodeId": barcode.uniqueId,
+                "viewId": self.viewId,
+            ]
         )
     }
 }

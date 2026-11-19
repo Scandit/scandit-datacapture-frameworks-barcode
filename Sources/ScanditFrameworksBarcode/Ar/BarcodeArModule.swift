@@ -52,6 +52,10 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
         viewCache.disposeAll()
     }
 
+    override public func getDefaults() -> [String: Any?] {
+        BarcodeArDefaults.shared.toEncodable()
+    }
+
     // Exposes the cached view to the RN host container so it can re-assert
     // `start()` when the view re-enters a window (SDC-32484).
     public func getView(viewId: Int) -> FrameworksBarcodeArView? {
@@ -60,13 +64,6 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
 
     public func registerBarcodeArFilter(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            // Registration can race view creation (a listener added before the
-            // widget mounts). Park the listener attachment and replay it once
-            // addViewFromJson creates this viewId — same parking as
-            // registerBarcodeArListener (SDC-32821).
-            addPostSpecificViewCreationAction(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodeArFilter()
-            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -94,13 +91,6 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
 
     public func registerBarcodeArViewUiListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            // Registration can race view creation (a listener added before the
-            // widget mounts). Park the listener attachment and replay it once
-            // addViewFromJson creates this viewId — same parking as
-            // registerBarcodeArListener (SDC-32821).
-            addPostSpecificViewCreationAction(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodeArViewUiListener()
-            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -129,13 +119,6 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
 
     public func registerBarcodeArHighlightProvider(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            // Registration can race view creation (a listener added before the
-            // widget mounts). Park the listener attachment and replay it once
-            // addViewFromJson creates this viewId — same parking as
-            // registerBarcodeArListener (SDC-32821).
-            addPostSpecificViewCreationAction(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodeArHighlightProvider()
-            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -163,13 +146,6 @@ open class BarcodeArModule: BaseFrameworkModule, DeserializationLifeCycleObserve
 
     public func registerBarcodeArAnnotationProvider(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
-            // Registration can race view creation (a listener added before the
-            // widget mounts). Park the listener attachment and replay it once
-            // addViewFromJson creates this viewId — same parking as
-            // registerBarcodeArListener (SDC-32821).
-            addPostSpecificViewCreationAction(viewId: viewId) { [weak self] in
-                self?.viewCache.getView(viewId: viewId)?.addBarcodeArAnnotationProvider()
-            }
             result.successAndKeepCallback(result: nil)
             return
         }

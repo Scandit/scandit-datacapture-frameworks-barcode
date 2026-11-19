@@ -40,12 +40,7 @@ open class FrameworksBarcodeFindTransformer: NSObject, BarcodeFindTransformer {
             return data
         }
 
-        let payload = SchemaTypes.BarcodeFindTransformerTransformBarcodeData(
-            data: data,
-            viewId: self.viewId,
-            event: FrameworksBarcodeFindEvent.transformBarcodeData.rawValue
-        ).toDictionary()
-        return onTransformBarcodeData.emit(on: emitter, payload: payload) ?? nil
+        return onTransformBarcodeData.emit(on: emitter, payload: ["data": data, "viewId": self.viewId]) ?? nil
     }
 
     public func submitResult(result: String?) {

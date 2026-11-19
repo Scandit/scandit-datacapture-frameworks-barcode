@@ -10,8 +10,6 @@ import ScanditFrameworksCore
 
 open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMode> {
 
-    private static let areListenerGroup = "adaptiveRecognitionService"
-
     private enum FunctionNames {
         static let finishDidScan = "finishDidScan"
         static let finishDidUpdateSession = "finishDidUpdateSession"
@@ -41,44 +39,16 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
 
     // MARK: - FrameworkModule API
 
-    private lazy var listenerAttachments: [ListenerAttachment] = [
-        ModuleListenerAttachment.forMode(
-            [
-                "BarcodeCaptureListener.didUpdateSession",
-                "BarcodeCaptureListener.didScan",
-            ],
-            attach: { [weak self] in
-                self?.registerBarcodeCaptureListenerForEvents(modeId: $0, result: NoopFrameworksResult())
-            },
-            detach: { [weak self] in
-                self?.unregisterBarcodeCaptureListenerForEvents(modeId: $0, result: NoopFrameworksResult())
-            }
-        ),
-        ModuleListenerAttachment.forMode(
-            Set(FrameworksBarcodeCaptureAdaptiveRecognitionEvent.allCases.map { $0.rawValue }),
-            attach: { [weak self] in
-                self?.registerBarcodeCaptureAdaptiveRecognitionServiceListener(
-                    modeId: $0,
-                    result: NoopFrameworksResult()
-                )
-            },
-            detach: { [weak self] in
-                self?.unregisterBarcodeCaptureAdaptiveRecognitionServiceListener(
-                    modeId: $0,
-                    result: NoopFrameworksResult()
-                )
-            }
-        ),
-    ]
-
     public override func didStart() {
-        listenerAttachments.forEach { ListenerRegistry.shared.register(attachment: $0) }
         DeserializationLifeCycleDispatcher.shared.attach(observer: self)
     }
 
     public override func didStop() {
-        listenerAttachments.forEach { ListenerRegistry.shared.unregister(attachment: $0) }
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
+    }
+
+    open override func getDefaults() -> [String: Any?] {
+        BarcodeCaptureDefaults.shared.toEncodable()
     }
 
     // MARK: - Module API exposed to the platform native modules
@@ -94,44 +64,12 @@ open class BarcodeCaptureModule: BasicFrameworkModule<FrameworksBarcodeCaptureMo
             return
         }
         mode.addListener()
-        rememberListenerRegistration(modeId: modeId) { [weak self] in
-            self?.registerBarcodeCaptureListenerForEvents(modeId: modeId, result: NoopFrameworksResult())
-        }
         result.successAndKeepCallback(result: nil)
     }
 
     public func unregisterBarcodeCaptureListenerForEvents(modeId: Int, result: FrameworksResult) {
-        forgetListenerRegistration(modeId: modeId)
         if let mode = getModeFromCache(modeId) {
             mode.removeListener()
-        }
-        result.success()
-    }
-
-    public func registerBarcodeCaptureAdaptiveRecognitionServiceListener(modeId: Int, result: FrameworksResult) {
-        guard let mode = getModeFromCache(modeId) else {
-            addPostModeCreationAction(
-                modeId,
-                action: {
-                    self.registerBarcodeCaptureAdaptiveRecognitionServiceListener(modeId: modeId, result: result)
-                }
-            )
-            return
-        }
-        mode.addAdaptiveRecognitionServiceListener()
-        rememberListenerRegistration(modeId: modeId, group: BarcodeCaptureModule.areListenerGroup) { [weak self] in
-            self?.registerBarcodeCaptureAdaptiveRecognitionServiceListener(
-                modeId: modeId,
-                result: NoopFrameworksResult()
-            )
-        }
-        result.successAndKeepCallback(result: nil)
-    }
-
-    public func unregisterBarcodeCaptureAdaptiveRecognitionServiceListener(modeId: Int, result: FrameworksResult) {
-        forgetListenerRegistration(modeId: modeId, group: BarcodeCaptureModule.areListenerGroup)
-        if let mode = getModeFromCache(modeId) {
-            mode.removeAdaptiveRecognitionServiceListener()
         }
         result.success()
     }
@@ -277,10 +215,6 @@ extension BarcodeCaptureModule: DeserializationLifeCycleObserver {
 
             addModeToCache(modeId: creationParams.modeId, mode: captureMode)
             for action in getPostModeCreationActions(creationParams.modeId) {
-                action()
-            }
-            let parentId = captureMode.parentId ?? -1
-            for action in getPostModeCreationActionsByParent(parentId) {
                 action()
             }
         } catch {

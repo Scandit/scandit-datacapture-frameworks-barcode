@@ -109,105 +109,13 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
         }
     }
 
-    // Builds the generated per-event payload for the 13 events shaped `{trackedBarcode, viewId}`
-    // (brush x4, icon x4, didTap x5). `didCompleteCaptureList`/`didTapCluster` carry a different
-    // shape and are built inline at their own call sites below.
-    private func trackedBarcodePayload(
-        for event: BarcodeCountViewListenerEvent,
-        trackedBarcode: TrackedBarcode
-    ) -> [String: Any] {
-        let jsonString = trackedBarcode.jsonString
-        switch event {
-        case .brushForRecognizedBarcode:
-            return SchemaTypes.BarcodeCountViewListenerBrushForRecognizedBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .brushForRecognizedBarcodeNotInList:
-            return SchemaTypes.BarcodeCountViewListenerBrushForRecognizedBarcodeNotInList(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .brushForAcceptedBarcode:
-            return SchemaTypes.BarcodeCountViewListenerBrushForAcceptedBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .brushForRejectedBarcode:
-            return SchemaTypes.BarcodeCountViewListenerBrushForRejectedBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .iconForRecognizedBarcode:
-            return SchemaTypes.BarcodeCountViewListenerIconForRecognizedBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .iconForRecognizedBarcodeNotInList:
-            return SchemaTypes.BarcodeCountViewListenerIconForRecognizedBarcodeNotInList(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .iconForAcceptedBarcode:
-            return SchemaTypes.BarcodeCountViewListenerIconForAcceptedBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .iconForRejectedBarcode:
-            return SchemaTypes.BarcodeCountViewListenerIconForRejectedBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .didTapRecognizedBarcode:
-            return SchemaTypes.BarcodeCountViewListenerDidTapRecognizedBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .didTapFilteredBarcode:
-            return SchemaTypes.BarcodeCountViewListenerDidTapFilteredBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .didTapRecognizedBarcodeNotInList:
-            return SchemaTypes.BarcodeCountViewListenerDidTapRecognizedBarcodeNotInList(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .didTapAcceptedBarcode:
-            return SchemaTypes.BarcodeCountViewListenerDidTapAcceptedBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .didTapRejectedBarcode:
-            return SchemaTypes.BarcodeCountViewListenerDidTapRejectedBarcode(
-                trackedBarcode: jsonString,
-                viewId: viewId,
-                event: nil
-            ).toDictionary()
-        case .didCompleteCaptureList, .didTapCluster:
-            preconditionFailure("\(event) does not carry a trackedBarcode payload")
-        }
-    }
-
     private func brush(for trackedBarcode: TrackedBarcode, event: BarcodeCountViewListenerEvent) -> Brush? {
         if !emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
             return nil
         }
         eventDescriptor(for: event).emit(
             on: emitter,
-            payload: trackedBarcodePayload(for: event, trackedBarcode: trackedBarcode)
+            payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId]
         )
         let key = trackedBarcode.identifier.key(for: event)
         brushRequests[key] = trackedBarcode
@@ -223,31 +131,27 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
         event: BarcodeCountViewListenerEvent,
         defaultIcon: BarcodeCountIcon
     ) -> BarcodeCountIcon? {
-        // nil (no default flash) only when a registered app callback will reply via setIcon(_:for:).
-        // Stored before the emit for fast replies; re-checked after it for a listener removed meanwhile.
-        let registered = emitter.hasRegisteredViewListenersForEvent(viewId, for: event.rawValue)
-        if registered || emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
-            let key = trackedBarcode.identifier.key(for: event)
-            iconRequests[key] = trackedBarcode
+        if emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
             eventDescriptor(for: event).emit(
                 on: emitter,
-                payload: trackedBarcodePayload(for: event, trackedBarcode: trackedBarcode)
+                payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId]
             )
-            if registered,
-                !emitter.hasRegisteredViewListenersForEvent(viewId, for: event.rawValue),
-                iconRequests.removeValue(forKey: key) != nil
-            {
-                return defaultIcon
-            }
+            let key = trackedBarcode.identifier.key(for: event)
+            iconRequests[key] = trackedBarcode
         }
-        return registered ? nil : defaultIcon
+
+        // Never return nil here. The SDK treats a set view delegate as authoritative and does not
+        // fall back to its own defaults, so nil means "draw no highlight at all" instead of "use
+        // the default icon". Returning the default keeps the overlay visible; a later
+        // finishIconFor* reply from the app still replaces it via setIcon(_:for:).
+        return defaultIcon
     }
 
     private func emit(event: BarcodeCountViewListenerEvent, for trackedBarcode: TrackedBarcode) {
         if emitter.hasViewSpecificListenersForEvent(viewId, for: event) {
             eventDescriptor(for: event).emit(
                 on: emitter,
-                payload: trackedBarcodePayload(for: event, trackedBarcode: trackedBarcode)
+                payload: ["trackedBarcode": trackedBarcode.jsonString, "viewId": self.viewId]
             )
         }
     }
@@ -262,12 +166,6 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
             brushRequests.removeValue(forKey: key)
         }
         return trackedBarcode
-    }
-
-    func takePendingIconRequests(for event: BarcodeCountViewListenerEvent) -> [TrackedBarcode] {
-        let prefix = "\(event.rawValue)-"
-        let keys = iconRequests.keys.filter { $0.hasPrefix(prefix) }
-        return keys.compactMap { iconRequests.removeValue(forKey: $0) }
     }
 
     func getTrackedBarcodeForIcon(
@@ -391,27 +289,18 @@ open class FrameworksBarcodeCountViewListener: NSObject, BarcodeCountViewDelegat
 
     public func barcodeCountView(_ view: BarcodeCountView, didTap cluster: Cluster) {
         if emitter.hasViewSpecificListenersForEvent(viewId, for: .didTapCluster) {
-            let payload = SchemaTypes.BarcodeCountViewListenerDidTapCluster(
-                barcodes: cluster.barcodes.map { $0.jsonString },
-                viewId: viewId,
-                event: nil
-            )
             eventDescriptor(for: .didTapCluster).emit(
                 on: emitter,
-                payload: payload.toDictionary()
+                payload: ["barcodes": cluster.barcodes.map { $0.jsonString }, "viewId": self.viewId]
             )
         }
     }
 
     public func didCompleteCaptureList(for view: BarcodeCountView) {
         if emitter.hasViewSpecificListenersForEvent(viewId, for: .didCompleteCaptureList) {
-            let payload = SchemaTypes.BarcodeCountViewListenerDidCompleteCaptureList(
-                viewId: viewId,
-                event: nil
-            )
             eventDescriptor(for: .didCompleteCaptureList).emit(
                 on: emitter,
-                payload: payload.toDictionary()
+                payload: ["viewId": self.viewId]
             )
         }
     }
