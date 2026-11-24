@@ -10,10 +10,8 @@ import XCTest
 
 @testable import ScanditFrameworksBarcode
 
-/// Regression coverage for SDC-33376: `icon(for:event:defaultIcon:)` must always return the
-/// caller-supplied default icon, whether or not a subscriber is listening for the corresponding
-/// event. Returning nil is what caused the highlight to disappear entirely, because the SDK
-/// treats a set view delegate as authoritative and never falls back to its own defaults.
+/// Coverage for `icon(for:event:defaultIcon:)`: it returns the default icon unless the registry
+/// holds the view's icon event; the app's reply then supplies the icon.
 ///
 /// A real `BarcodeCountView` cannot be constructed in a unit test (it needs a licensed
 /// `DataCaptureContext`), and no other test in this target attempts it, so this drives the
@@ -29,7 +27,7 @@ final class FrameworksBarcodeCountViewListenerTests: XCTestCase {
 
     // MARK: - iconForRecognizedBarcode
 
-    func testIconForRecognizedBarcode_withSubscriber_emitsAndReturnsDefault() {
+    func testIconForRecognizedBarcode_platformSubscriberOnly_emitsAndReturnsDefault() {
         assertIcon(
             event: .iconForRecognizedBarcode,
             defaultIcon: BarcodeCountView.defaultRecognizedIcon,
@@ -47,7 +45,7 @@ final class FrameworksBarcodeCountViewListenerTests: XCTestCase {
 
     // MARK: - iconForRecognizedBarcodeNotInList
 
-    func testIconForRecognizedBarcodeNotInList_withSubscriber_emitsAndReturnsDefault() {
+    func testIconForRecognizedBarcodeNotInList_platformSubscriberOnly_emitsAndReturnsDefault() {
         assertIcon(
             event: .iconForRecognizedBarcodeNotInList,
             defaultIcon: BarcodeCountView.defaultNotInListIcon,
@@ -65,7 +63,7 @@ final class FrameworksBarcodeCountViewListenerTests: XCTestCase {
 
     // MARK: - iconForAcceptedBarcode
 
-    func testIconForAcceptedBarcode_withSubscriber_emitsAndReturnsDefault() {
+    func testIconForAcceptedBarcode_platformSubscriberOnly_emitsAndReturnsDefault() {
         assertIcon(
             event: .iconForAcceptedBarcode,
             defaultIcon: BarcodeCountView.defaultAcceptedIcon,
@@ -83,7 +81,7 @@ final class FrameworksBarcodeCountViewListenerTests: XCTestCase {
 
     // MARK: - iconForRejectedBarcode
 
-    func testIconForRejectedBarcode_withSubscriber_emitsAndReturnsDefault() {
+    func testIconForRejectedBarcode_platformSubscriberOnly_emitsAndReturnsDefault() {
         assertIcon(
             event: .iconForRejectedBarcode,
             defaultIcon: BarcodeCountView.defaultRejectedIcon,
@@ -99,7 +97,234 @@ final class FrameworksBarcodeCountViewListenerTests: XCTestCase {
         )
     }
 
+    // MARK: - Registered app callback returns nil
+
+    func testIconForRecognizedBarcode_registered_emitsAndReturnsNil() {
+        assertRegisteredIconIsNil(.iconForRecognizedBarcode, BarcodeCountView.defaultRecognizedIcon)
+    }
+
+    func testIconForRecognizedBarcodeNotInList_registered_emitsAndReturnsNil() {
+        assertRegisteredIconIsNil(.iconForRecognizedBarcodeNotInList, BarcodeCountView.defaultNotInListIcon)
+    }
+
+    func testIconForAcceptedBarcode_registered_emitsAndReturnsNil() {
+        assertRegisteredIconIsNil(.iconForAcceptedBarcode, BarcodeCountView.defaultAcceptedIcon)
+    }
+
+    func testIconForRejectedBarcode_registered_emitsAndReturnsNil() {
+        assertRegisteredIconIsNil(.iconForRejectedBarcode, BarcodeCountView.defaultRejectedIcon)
+    }
+
+    func testIconForRecognizedBarcode_registeredForOtherView_returnsDefault() {
+        let event = BarcodeCountViewListenerEvent.iconForRecognizedBarcode
+        ListenerRegistry.shared.addListener(eventName: event.rawValue, target: .view(viewId + 1))
+        let sut = FrameworksBarcodeCountViewListener(
+            emitter: RegistryEmitter(platformEmitter: RecordingEmitter(hasListener: true), registry: .shared),
+            viewId: viewId
+        )
+
+        let icon = sut.icon(for: trackedBarcode, event: event, defaultIcon: BarcodeCountView.defaultRecognizedIcon)
+
+        XCTAssertTrue(icon === BarcodeCountView.defaultRecognizedIcon)
+    }
+
+    func testTakePendingIconRequests_drainsOnlyTheGivenEvent() {
+        ListenerRegistry.shared.addListener(
+            eventName: BarcodeCountViewListenerEvent.iconForAcceptedBarcode.rawValue,
+            target: .view(viewId)
+        )
+        ListenerRegistry.shared.addListener(
+            eventName: BarcodeCountViewListenerEvent.iconForRejectedBarcode.rawValue,
+            target: .view(viewId)
+        )
+        let sut = FrameworksBarcodeCountViewListener(
+            emitter: RegistryEmitter(platformEmitter: RecordingEmitter(hasListener: true), registry: .shared),
+            viewId: viewId
+        )
+        _ = sut.icon(
+            for: trackedBarcode,
+            event: .iconForAcceptedBarcode,
+            defaultIcon: BarcodeCountView.defaultAcceptedIcon
+        )
+        _ = sut.icon(
+            for: trackedBarcode,
+            event: .iconForRejectedBarcode,
+            defaultIcon: BarcodeCountView.defaultRejectedIcon
+        )
+
+        XCTAssertEqual(sut.takePendingIconRequests(for: .iconForAcceptedBarcode).count, 1)
+        XCTAssertTrue(sut.takePendingIconRequests(for: .iconForAcceptedBarcode).isEmpty)
+        XCTAssertNotNil(sut.getTrackedBarcodeForIcon(with: trackedBarcode.identifier, for: .iconForRejectedBarcode))
+    }
+
+    func testIcon_replyDuringEmit_findsItsRequest() {
+        let platform = RecordingEmitter(hasListener: true)
+        let sut = FrameworksBarcodeCountViewListener(emitter: platform, viewId: viewId)
+        var replyFound: TrackedBarcode?
+        platform.onEmit = { [trackedBarcode] in
+            replyFound = sut.getTrackedBarcodeForIcon(with: trackedBarcode.identifier, for: .iconForRecognizedBarcode)
+        }
+
+        _ = sut.icon(
+            for: trackedBarcode,
+            event: .iconForRecognizedBarcode,
+            defaultIcon: BarcodeCountView.defaultRecognizedIcon
+        )
+
+        XCTAssertTrue(replyFound === trackedBarcode)
+    }
+
+    func testIcon_listenerRemovedDuringEmit_returnsDefaultAndKeepsNoRequest() {
+        let eventName = BarcodeCountViewListenerEvent.iconForRecognizedBarcode.rawValue
+        ListenerRegistry.shared.addListener(eventName: eventName, target: .view(viewId))
+        let platform = RecordingEmitter(hasListener: true)
+        platform.onEmit = { [viewId] in
+            ListenerRegistry.shared.removeListener(eventName: eventName, target: .view(viewId))
+        }
+        let sut = FrameworksBarcodeCountViewListener(
+            emitter: RegistryEmitter(platformEmitter: platform, registry: .shared),
+            viewId: viewId
+        )
+
+        let icon = sut.icon(
+            for: trackedBarcode,
+            event: .iconForRecognizedBarcode,
+            defaultIcon: BarcodeCountView.defaultRecognizedIcon
+        )
+
+        XCTAssertTrue(icon === BarcodeCountView.defaultRecognizedIcon)
+        XCTAssertTrue(sut.takePendingIconRequests(for: .iconForRecognizedBarcode).isEmpty)
+    }
+
+    // MARK: - Brushes
+
+    private let brushEvents: [BarcodeCountViewListenerEvent] = [
+        .brushForRecognizedBarcode, .brushForRecognizedBarcodeNotInList,
+        .brushForAcceptedBarcode, .brushForRejectedBarcode,
+    ]
+
+    private let viewBrush = Brush(fill: .red, stroke: .blue, strokeWidth: 7)
+
+    func testBrush_registered_returnsTransparentPlaceholderAndKeepsRequest() {
+        for event in brushEvents {
+            ListenerRegistry.shared.addListener(eventName: event.rawValue, target: .view(viewId))
+            let platform = RecordingEmitter(hasListener: true)
+            let sut = FrameworksBarcodeCountViewListener(
+                emitter: RegistryEmitter(platformEmitter: platform, registry: .shared),
+                viewId: viewId
+            )
+
+            let brush = sut.brush(for: trackedBarcode, event: event, viewBrush: viewBrush)
+
+            XCTAssertNotNil(brush, "\(event)")
+            XCTAssertFalse(brush === viewBrush, "\(event)")
+            XCTAssertEqual(brush?.strokeWidth, 0, "\(event)")
+            XCTAssertEqual(platform.emittedEventNames, [event.rawValue])
+            XCTAssertEqual(sut.takePendingBrushRequests(for: event).count, 1, "\(event)")
+        }
+    }
+
+    func testBrush_registeredRepeatedRequest_replacesPending() {
+        let event = BarcodeCountViewListenerEvent.brushForRecognizedBarcode
+        ListenerRegistry.shared.addListener(eventName: event.rawValue, target: .view(viewId))
+        let sut = FrameworksBarcodeCountViewListener(
+            emitter: RegistryEmitter(platformEmitter: RecordingEmitter(hasListener: true), registry: .shared),
+            viewId: viewId
+        )
+
+        _ = sut.brush(for: trackedBarcode, event: event, viewBrush: viewBrush)
+        _ = sut.brush(for: trackedBarcode, event: event, viewBrush: viewBrush)
+
+        XCTAssertEqual(sut.takePendingBrushRequests(for: event).count, 1)
+    }
+
+    func testTakePendingBrushRequests_drainsOnlyItsEvent() {
+        let recognized = BarcodeCountViewListenerEvent.brushForRecognizedBarcode
+        let notInList = BarcodeCountViewListenerEvent.brushForRecognizedBarcodeNotInList
+        ListenerRegistry.shared.addListener(eventName: recognized.rawValue, target: .view(viewId))
+        ListenerRegistry.shared.addListener(eventName: notInList.rawValue, target: .view(viewId))
+        let sut = FrameworksBarcodeCountViewListener(
+            emitter: RegistryEmitter(platformEmitter: RecordingEmitter(hasListener: true), registry: .shared),
+            viewId: viewId
+        )
+        _ = sut.brush(for: trackedBarcode, event: recognized, viewBrush: viewBrush)
+        _ = sut.brush(for: trackedBarcode, event: notInList, viewBrush: viewBrush)
+
+        XCTAssertEqual(sut.takePendingBrushRequests(for: recognized).count, 1)
+        XCTAssertTrue(sut.takePendingBrushRequests(for: recognized).isEmpty)
+        XCTAssertEqual(sut.takePendingBrushRequests(for: notInList).count, 1)
+    }
+
+    func testBrush_platformSubscriberOnly_emitsAndReturnsViewBrush() {
+        for event in brushEvents {
+            let platform = RecordingEmitter(hasListener: true)
+            let sut = FrameworksBarcodeCountViewListener(emitter: platform, viewId: viewId)
+
+            let brush = sut.brush(for: trackedBarcode, event: event, viewBrush: viewBrush)
+
+            XCTAssertTrue(brush === viewBrush, "\(event)")
+            XCTAssertEqual(platform.emittedEventNames, [event.rawValue])
+        }
+    }
+
+    func testBrush_withoutSubscriber_returnsViewBrushIncludingNilWithoutEmitting() {
+        for event in brushEvents {
+            let platform = RecordingEmitter(hasListener: false)
+            let sut = FrameworksBarcodeCountViewListener(emitter: platform, viewId: viewId)
+
+            XCTAssertTrue(sut.brush(for: trackedBarcode, event: event, viewBrush: viewBrush) === viewBrush)
+            XCTAssertNil(sut.brush(for: trackedBarcode, event: event, viewBrush: nil), "\(event)")
+            XCTAssertEqual(platform.emittedEventNames, [])
+        }
+    }
+
+    func testBrush_listenerRemovedDuringEmit_returnsViewBrushAndKeepsNoRequest() {
+        for event in brushEvents {
+            ListenerRegistry.shared.addListener(eventName: event.rawValue, target: .view(viewId))
+            let platform = RecordingEmitter(hasListener: true)
+            platform.onEmit = { [viewId] in
+                ListenerRegistry.shared.removeListener(eventName: event.rawValue, target: .view(viewId))
+            }
+            let sut = FrameworksBarcodeCountViewListener(
+                emitter: RegistryEmitter(platformEmitter: platform, registry: .shared),
+                viewId: viewId
+            )
+
+            let brush = sut.brush(for: trackedBarcode, event: event, viewBrush: viewBrush)
+
+            XCTAssertTrue(brush === viewBrush, "\(event)")
+            XCTAssertTrue(sut.takePendingBrushRequests(for: event).isEmpty, "\(event)")
+        }
+    }
+
     // MARK: - Helpers
+
+    override func setUp() {
+        super.setUp()
+        ListenerRegistry.shared.reset()
+    }
+
+    override func tearDown() {
+        ListenerRegistry.shared.reset()
+        super.tearDown()
+    }
+
+    private func assertRegisteredIconIsNil(
+        _ event: BarcodeCountViewListenerEvent,
+        _ defaultIcon: BarcodeCountIcon
+    ) {
+        ListenerRegistry.shared.addListener(eventName: event.rawValue, target: .view(viewId))
+        let platform = RecordingEmitter(hasListener: true)
+        let sut = FrameworksBarcodeCountViewListener(
+            emitter: RegistryEmitter(platformEmitter: platform, registry: .shared),
+            viewId: viewId
+        )
+
+        let icon = sut.icon(for: trackedBarcode, event: event, defaultIcon: defaultIcon)
+
+        XCTAssertNil(icon)
+        XCTAssertEqual(platform.emittedEventNames, [event.rawValue])
+    }
 
     private func assertIcon(
         event: BarcodeCountViewListenerEvent,
@@ -111,7 +336,7 @@ final class FrameworksBarcodeCountViewListenerTests: XCTestCase {
 
         let icon = sut.icon(for: trackedBarcode, event: event, defaultIcon: defaultIcon)
 
-        XCTAssertNotNil(icon, "icon(for:event:defaultIcon:) must never return nil (SDC-33376)")
+        XCTAssertNotNil(icon, "default icon when no registry listener exists")
         XCTAssertTrue(icon === defaultIcon)
         XCTAssertEqual(
             emitter.emittedEventNames,
@@ -123,6 +348,7 @@ final class FrameworksBarcodeCountViewListenerTests: XCTestCase {
 private class RecordingEmitter: Emitter {
     private let hasListener: Bool
     private(set) var emittedEventNames: [String] = []
+    var onEmit: (() -> Void)?
 
     init(hasListener: Bool) {
         self.hasListener = hasListener
@@ -130,6 +356,7 @@ private class RecordingEmitter: Emitter {
 
     func emit(name: String, payload: [String: Any?]) {
         emittedEventNames.append(name)
+        onEmit?()
     }
 
     func hasListener(for event: String) -> Bool { hasListener }

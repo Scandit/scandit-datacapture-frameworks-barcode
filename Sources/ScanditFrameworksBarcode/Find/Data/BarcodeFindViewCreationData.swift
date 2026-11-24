@@ -106,7 +106,8 @@ struct BarcodeFindViewCreationData {
     }
 
     static func fromViewJsonOnly(viewJson: String) -> BarcodeFindViewCreationData {
-        let json = JSONValue(string: viewJson)
+        let envelope = JSONValue(string: viewJson)
+        let json = envelope.containsKey(viewKey) ? envelope.object(forKey: viewKey) : envelope
 
         var itemsToFind: BarcodeFindItemsData? = nil
         if json.containsKey(itemsToFindKey) {
@@ -115,7 +116,7 @@ struct BarcodeFindViewCreationData {
 
         return BarcodeFindViewCreationData(
             modeJson: "{}",
-            viewJson: viewJson,
+            viewJson: json.jsonString(),
             itemsToFind: itemsToFind,
             startSearching: json.bool(forKey: startSearchingKey, default: false),
             hasBarcodeTransformer: false,

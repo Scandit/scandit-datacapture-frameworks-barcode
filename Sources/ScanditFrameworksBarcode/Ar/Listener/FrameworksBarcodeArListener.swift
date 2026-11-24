@@ -53,11 +53,11 @@ open class FrameworksBarcodeArListener: NSObject, BarcodeArListener {
 
         sessionUpdatedEvent.emit(
             on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "frameId": frameId,
-                "viewId": self.viewId,
-            ]
+            payload: SchemaTypes.BarcodeArListenerDidUpdateSession(
+                session: session.jsonString,
+                frameId: frameId,
+                viewId: self.viewId
+            ).toDictionary().mapValues { $0 as Any? }
         )
 
         LastFrameData.shared.removeFromCache(frameId: frameId)

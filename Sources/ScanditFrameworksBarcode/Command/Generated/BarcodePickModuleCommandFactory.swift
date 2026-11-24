@@ -20,6 +20,7 @@ public class BarcodePickModuleCommandFactory {
     /// - Parameter method: The method call containing method name and arguments
     /// - Returns: The corresponding command, or nil if method is not recognized
     public static func create(module: BarcodePickModule, _ method: FrameworksMethodCall) -> BarcodePickModuleCommand? {
+        _ = LogMetadata.registered
         switch method.method {
         case "pickViewStart":
             return PickViewStartCommand(module: module, method)

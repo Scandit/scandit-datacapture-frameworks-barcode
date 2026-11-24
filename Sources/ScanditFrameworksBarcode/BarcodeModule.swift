@@ -19,17 +19,24 @@ open class BarcodeModule: NSObject, FrameworkModule {
 
     public func didStop() {}
 
-    public func getDefaults() -> [String: Any?] {
+    /// Only the defaults that cannot be resolved statically by a framework plugin: the
+    /// engine-owned symbology/composite-type descriptions and per-symbology settings, every mode's
+    /// recommended camera settings, and the view blocks that carry localized texts, asset handles
+    /// or device-probed hardware-trigger flags.
+    ///
+    /// Values come from the same per-mode producers, just narrowed.
+    public func getDynamicDefaults() -> [String: Any?] {
         [
+            // Every key of the Barcode block is engine-owned, so it is kept whole.
             "Barcode": BarcodeDefaults.shared.toEncodable(),
-            "BarcodeCapture": resolveModuleDefaults(String(describing: BarcodeCaptureModule.self)),
-            "BarcodeBatch": resolveModuleDefaults(String(describing: BarcodeBatchModule.self)),
-            "BarcodeSelection": resolveModuleDefaults(String(describing: BarcodeSelectionModule.self)),
-            "BarcodeCount": resolveModuleDefaults(String(describing: BarcodeCountModule.self)),
-            "BarcodeFind": resolveModuleDefaults(String(describing: BarcodeFindModule.self)),
-            "BarcodePick": resolveModuleDefaults(String(describing: BarcodePickModule.self)),
-            "SparkScan": resolveModuleDefaults(String(describing: SparkScanModule.self)),
-            "BarcodeAr": resolveModuleDefaults(String(describing: BarcodeArModule.self)),
+            "BarcodeCapture": BarcodeCaptureDefaults.shared.toDynamicEncodable(),
+            "BarcodeBatch": BarcodeBatchDefaults.shared.toDynamicEncodable(),
+            "BarcodeSelection": BarcodeSelectionDefaults.shared.toDynamicEncodable(),
+            "BarcodeCount": BarcodeCountDefaults.shared.toDynamicEncodable(),
+            "BarcodeFind": BarcodeFindDefaults.shared.toDynamicEncodable(),
+            "BarcodePick": BarcodePickDefaults.shared.toDynamicEncodable(),
+            "SparkScan": SparkScanDefaults.shared.toDynamicEncodable(),
+            "BarcodeAr": BarcodeArDefaults.shared.toDynamicEncodable(),
         ]
     }
 
@@ -58,12 +65,5 @@ open class BarcodeModule: NSObject, FrameworkModule {
         let barcode = Barcode(barcodeInfo: info)
 
         result.success(result: barcode.jsonString)
-    }
-
-    private func resolveModuleDefaults(_ moduleName: String) -> [String: Any?] {
-        guard let module = DefaultServiceLocator.shared.resolve(clazzName: moduleName) else {
-            return [:]
-        }
-        return module.getDefaults()
     }
 }

@@ -7,33 +7,25 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-struct BarcodeCaptureDefaults: DefaultsEncodable {
+struct BarcodeCaptureDefaults {
     private let recommendedCameraSettings: CameraSettingsDefaults
-    private let barcodeCaptureSettingsDefaults: BarcodeCaptureSettingsDefaults
-    private let barcodeCaptureOverlayDefaults: BarcodeCaptureOverlayDefaults
 
     static let shared: BarcodeCaptureDefaults = {
-        let cameraSettingsDefaults = CameraSettingsDefaults(cameraSettings: BarcodeCapture.recommendedCameraSettings)
-        let barcodeCaptureSettingsDefaults = BarcodeCaptureSettingsDefaults(
-            barcodeCaptureSettings: BarcodeCaptureSettings()
-        )
-
-        let settings = BarcodeCaptureSettings()
-        let mode = BarcodeCapture(context: nil, settings: settings)
-        let overlay = BarcodeCaptureOverlay(barcodeCapture: mode)
-        let barcodeCaptureOverlayDefaults = BarcodeCaptureOverlayDefaults()
-        return BarcodeCaptureDefaults(
-            recommendedCameraSettings: cameraSettingsDefaults,
-            barcodeCaptureSettingsDefaults: barcodeCaptureSettingsDefaults,
-            barcodeCaptureOverlayDefaults: barcodeCaptureOverlayDefaults
+        BarcodeCaptureDefaults(
+            recommendedCameraSettings: CameraSettingsDefaults(
+                cameraSettings: BarcodeCapture.recommendedCameraSettings
+            )
         )
     }()
 
-    func toEncodable() -> [String: Any?] {
-        [
-            "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
-            "BarcodeCaptureSettings": barcodeCaptureSettingsDefaults.toEncodable(),
-            "BarcodeCaptureOverlay": barcodeCaptureOverlayDefaults.toEncodable(),
-        ]
+    enum Keys {
+        static let recommendedCameraSettings = "RecommendedCameraSettings"
+    }
+
+    /// The residual defaults that a framework plugin cannot resolve statically: the
+    /// device-probed recommended camera settings. Every other BarcodeCapture default ships as
+    /// a generated static file.
+    func toDynamicEncodable() -> [String: Any?] {
+        [Keys.recommendedCameraSettings: recommendedCameraSettings.toEncodable()]
     }
 }

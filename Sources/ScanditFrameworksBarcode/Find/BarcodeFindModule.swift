@@ -18,6 +18,10 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
     private let viewCache = FrameworksViewsCache<FrameworksBarcodeFindView>()
 
+    // Registration calls that raced view creation (addViewToContainer hasn't added the
+    // view to viewCache yet); replayed once the view is added (SDC-32821).
+    let viewCreationActionQueue = ViewCreationActionQueue()
+
     private var barcodeFindFeedback: BarcodeFindFeedback?
 
     public func didStart() {
@@ -26,11 +30,8 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
     public func didStop() {
         viewCache.disposeAll()
+        viewCreationActionQueue.clearAll()
         DeserializationLifeCycleDispatcher.shared.detach(observer: self)
-    }
-
-    public func getDefaults() -> [String: Any?] {
-        BarcodeFindDefaults.shared.toEncodable()
     }
 
     public func addViewToContainer(container: UIView, jsonString: String, result: FrameworksResult) {
@@ -65,6 +66,13 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
                         viewCreationParams: viewCreationParams
                     )
                     viewCache.addView(view: view)
+                    // Replay any registration calls parked while this viewId didn't have
+                    // a view yet (SDC-32821). Must run after addView above, or a replayed
+                    // action's own cache lookup would miss and re-park it forever.
+                    let parkedActions = self.viewCreationActionQueue.drain(viewId: viewCreationParams.viewId)
+                    for action in parkedActions {
+                        action()
+                    }
                     result.success()
                 } catch {
                     result.reject(error: error)
@@ -93,6 +101,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
     }
 
     public func onViewRemovedFromSuperview(viewId: Int) {
+        viewCreationActionQueue.clear(viewId: viewId)
         if let viewInstance = viewCache.remove(viewId: viewId) {
             viewInstance.dispose()
         }
@@ -103,6 +112,7 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
     }
 
     public func removeBarcodeFindView(_ viewId: Int, result: FrameworksResult) {
+        viewCreationActionQueue.clear(viewId: viewId)
         viewCache.remove(viewId: viewId)?.dispose()
 
         if let previousView = viewCache.getTopMost() {
@@ -123,6 +133,9 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
     public func registerBarcodeFindListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addBarcodeFindListener()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -141,6 +154,9 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 
     public func registerBarcodeFindViewListener(viewId: Int, result: FrameworksResult) {
         guard let viewInstance = viewCache.getView(viewId: viewId) else {
+            viewCreationActionQueue.enqueue(viewId: viewId) { [weak self] in
+                self?.viewCache.getView(viewId: viewId)?.addBarcodeFindViewListener()
+            }
             result.successAndKeepCallback(result: nil)
             return
         }
@@ -319,5 +335,6 @@ open class BarcodeFindModule: NSObject, FrameworkModule {
 extension BarcodeFindModule: DeserializationLifeCycleObserver {
     public func didDisposeDataCaptureContext() {
         viewCache.disposeAll()
+        viewCreationActionQueue.clearAll()
     }
 }

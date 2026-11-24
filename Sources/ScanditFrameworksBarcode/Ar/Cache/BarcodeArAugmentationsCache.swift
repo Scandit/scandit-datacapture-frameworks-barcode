@@ -23,23 +23,46 @@ public class BarcodeArAugmentationsCache {
     // The native SDK has implemented a mechanism where the items are not immediately removed from the cache but
     // only marked for deletion and deleted after a delay. We need to have the same mechanism in the frameworks to
     // avoid not finding annotations or highlights in our cache.
-    private var markedForDeletion = ConcurrentDictionary<BarcodeId, Timer>()
+    private var markedForDeletion = ConcurrentDictionary<BarcodeId, ScheduledDeletion>()
 
     // Notified once a barcode's augmentations are really gone, so the script-layer caches can
     // drop the same key without re-implementing the delay-and-cancel policy above.
     private let onEvicted: (BarcodeId) -> Void
+    private let scheduler: BarcodeArDeletionScheduler
 
-    init(onEvicted: @escaping (BarcodeId) -> Void = { _ in }) {
+    init(
+        scheduler: BarcodeArDeletionScheduler = MainRunLoopDeletionScheduler(),
+        onEvicted: @escaping (BarcodeId) -> Void = { _ in }
+    ) {
+        self.scheduler = scheduler
         self.onEvicted = onEvicted
     }
 
     func updateFromSession(_ session: BarcodeArSession) {
-        for trackedBarcode in session.addedTrackedBarcodes {
-            cancelDeletion(for: trackedBarcode.barcode.uniqueId)
-            trackedBarcodeCache.setValue(trackedBarcode.barcode.uniqueId, for: trackedBarcode.identifier)
+        update(
+            addedTrackedBarcodes: session.addedTrackedBarcodes,
+            removedIdentifiers: session.removedTrackedBarcodes
+        )
+    }
+
+    // Split out of `updateFromSession` so the tracked-barcode mapping is reachable: a
+    // `TrackedBarcode` can be built in a test, a `BarcodeArSession` cannot.
+    func update(addedTrackedBarcodes: [TrackedBarcode], removedIdentifiers: [Int]) {
+        update(
+            added: addedTrackedBarcodes.map { (identifier: $0.identifier, barcodeId: $0.barcode.uniqueId) },
+            removedIdentifiers: removedIdentifiers
+        )
+    }
+
+    // Session-free twin of `updateFromSession`: `BarcodeArSession` cannot be built in a test,
+    // so the eviction policy is driven through here instead.
+    func update(added: [(identifier: Int, barcodeId: BarcodeId)], removedIdentifiers: [Int]) {
+        for entry in added {
+            cancelDeletion(for: entry.barcodeId)
+            trackedBarcodeCache.setValue(entry.barcodeId, for: entry.identifier)
         }
 
-        for trackedBarcodeId in session.removedTrackedBarcodes {
+        for trackedBarcodeId in removedIdentifiers {
             // A barcode re-identified under a new identifier (as start() does) is still in view.
             if let barcodeId = trackedBarcodeCache.removeValue(for: trackedBarcodeId),
                 !trackedBarcodeCache.getAllValues().values.contains(barcodeId)
@@ -49,18 +72,18 @@ public class BarcodeArAugmentationsCache {
         }
     }
 
-    // Timers are installed on and invalidated from the main run loop: the session callback
+    // Deletions are installed on and cancelled from the main run loop: the session callback
     // feeding this cache has no run loop of its own, and Timer is only valid on its installer.
     private func scheduleDeletion(for barcodeId: BarcodeId) {
-        dispatchMain {
-            if let existingTimer = self.markedForDeletion.removeValue(for: barcodeId) {
-                existingTimer.invalidate()
+        scheduler.onMain {
+            if let existing = self.markedForDeletion.removeValue(for: barcodeId) {
+                existing.cancel()
             }
 
-            let timer = Timer.scheduledTimer(withTimeInterval: Self.deletionDelay, repeats: false) { [weak self] _ in
+            let handle = self.scheduler.schedule(after: Self.deletionDelay) { [weak self] in
                 self?.performDeletion(for: barcodeId)
             }
-            self.markedForDeletion.setValue(timer, for: barcodeId)
+            self.markedForDeletion.setValue(handle, for: barcodeId)
         }
     }
 
@@ -75,9 +98,9 @@ public class BarcodeArAugmentationsCache {
     }
 
     func cancelDeletion(for barcodeId: BarcodeId) {
-        dispatchMain {
-            if let timer = self.markedForDeletion.removeValue(for: barcodeId) {
-                timer.invalidate()
+        scheduler.onMain {
+            if let handle = self.markedForDeletion.removeValue(for: barcodeId) {
+                handle.cancel()
             }
         }
     }
@@ -115,9 +138,9 @@ public class BarcodeArAugmentationsCache {
     }
 
     func clear() {
-        dispatchMain {
-            self.markedForDeletion.getAllValues().forEach { timer in
-                timer.value.invalidate()
+        scheduler.onMain {
+            self.markedForDeletion.getAllValues().forEach { handle in
+                handle.value.cancel()
             }
             self.markedForDeletion.removeAllValues()
         }

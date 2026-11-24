@@ -72,47 +72,36 @@ public class BarcodeArHighlightParser {
     }
 
     private func updateCircleHighlight(_ highlight: BarcodeArCircleHighlight, json: JSONValue) {
-        do {
-            let sizeValue = json.cgFloat(forKey: "size")
-
-            if json.containsKey("icon") {
-                let iconJson = json.getObjectAsString(forKey: "icon")
-                highlight.icon = try ScanditIcon(fromJSONString: iconJson)
-            }
-            highlight.size = sizeValue
-            if json.containsKey("brush") {
-                let brushString = json.getObjectAsString(forKey: "brush")
-                if let brush = Brush(jsonString: brushString) {
-                    highlight.brush = brush
-                }
-            }
-            highlight.isPulsing = json.bool(forKey: "isPulsing", default: highlight.isPulsing)
-        } catch {
-            Log.error("Unable to parse the BarcodeArCircleHighlight from the provided json.", error: error)
-        }
+        applyIcon(from: json) { highlight.icon = $0 }
+        highlight.size = json.cgFloat(forKey: "size", default: highlight.size)
+        applyBrush(from: json) { highlight.brush = $0 }
+        highlight.isPulsing = json.bool(forKey: "isPulsing", default: highlight.isPulsing)
     }
 
     private func updateRectangleHighlight(_ highlight: BarcodeArRectangleHighlight, json: JSONValue) {
+        applyIcon(from: json) { highlight.icon = $0 }
+        applyBrush(from: json) { highlight.brush = $0 }
+    }
 
-        do {
-            if json.containsKey("icon") {
-                let iconJson = json.getObjectAsString(forKey: "icon")
-                highlight.icon = try ScanditIcon(fromJSONString: iconJson)
-            } else {
-                highlight.icon = nil
-            }
-
-            if json.containsKey("brush") {
-                let brushString = json.getObjectAsString(forKey: "brush")
-                if let brush = Brush(jsonString: brushString) {
-                    highlight.brush = brush
-                }
-            } else {
-                highlight.icon = nil
-            }
-        } catch {
-            Log.error("Unable to parse the BarcodeArRectangleHighlight from the provided json.", error: error)
+    private func applyIcon(from json: JSONValue, to assign: (ScanditIcon?) -> Void) {
+        guard json.containsKey("icon"), !json.containsArray(withKey: "icon") else {
+            assign(nil)
+            return
         }
 
+        do {
+            assign(try ScanditIcon(fromJSONString: json.getObjectAsString(forKey: "icon")))
+        } catch {
+            assign(nil)
+            Log.error("Unable to parse the highlight icon from the provided json.", error: error)
+        }
+    }
+
+    private func applyBrush(from json: JSONValue, to assign: (Brush) -> Void) {
+        guard json.containsKey("brush") else { return }
+
+        if let brush = Brush(jsonString: json.getObjectAsString(forKey: "brush")) {
+            assign(brush)
+        }
     }
 }

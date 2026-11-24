@@ -50,28 +50,43 @@ open class FrameworksSparkScanViewUIListener: NSObject, SparkScanViewUIDelegate 
     public func sparkScanView(_ view: SparkScanView, didChange viewState: SparkScanViewState) {
         guard isEnabled.value, emitter.hasViewSpecificListenersForEvent(viewId: viewId, for: didChangeViewStateEvent)
         else { return }
-        didChangeViewStateEvent.emit(on: emitter, payload: ["state": viewState.jsonString, "viewId": viewId])
+        didChangeViewStateEvent.emit(
+            on: emitter,
+            payload: SchemaTypes.SparkScanViewUiListenerDidChangeViewState(
+                state: viewState.jsonString,
+                viewId: viewId
+            ).toDictionary()
+        )
     }
 
     public func barcodeCountButtonTapped(in view: SparkScanView) {
         guard isEnabled.value,
             emitter.hasViewSpecificListenersForEvent(viewId: viewId, for: barcodeCountButtonTappedEvent)
         else { return }
-        barcodeCountButtonTappedEvent.emit(on: emitter, payload: ["viewId": viewId])
+        barcodeCountButtonTappedEvent.emit(
+            on: emitter,
+            payload: SchemaTypes.SparkScanViewUiListenerBarcodeCountButtonTapped(viewId: viewId).toDictionary()
+        )
     }
 
     public func barcodeFindButtonTapped(in view: SparkScanView) {
         guard isEnabled.value,
             emitter.hasViewSpecificListenersForEvent(viewId: viewId, for: barcodeFindButtonTappedEvent)
         else { return }
-        barcodeFindButtonTappedEvent.emit(on: emitter, payload: ["viewId": viewId])
+        barcodeFindButtonTappedEvent.emit(
+            on: emitter,
+            payload: SchemaTypes.SparkScanViewUiListenerBarcodeFindButtonTapped(viewId: viewId).toDictionary()
+        )
     }
 
     public func labelCaptureButtonTapped(in view: SparkScanView) {
         guard isEnabled.value,
             emitter.hasViewSpecificListenersForEvent(viewId: viewId, for: labelCaptureButtonTappedEvent)
         else { return }
-        labelCaptureButtonTappedEvent.emit(on: emitter, payload: ["viewId": viewId])
+        labelCaptureButtonTappedEvent.emit(
+            on: emitter,
+            payload: SchemaTypes.SparkScanViewUiListenerLabelCaptureButtonTapped(viewId: viewId).toDictionary()
+        )
     }
 
     public func sparkScanView(_ view: SparkScanView, didChange scanningMode: SparkScanScanningMode) {
@@ -80,7 +95,10 @@ open class FrameworksSparkScanViewUIListener: NSObject, SparkScanViewUIDelegate 
         else { return }
         didChangeScanningModeEvent.emit(
             on: emitter,
-            payload: ["scanningMode": scanningMode.jsonString, "viewId": viewId]
+            payload: SchemaTypes.SparkScanViewUiListenerDidChangeScanningMode(
+                scanningMode: scanningMode.jsonString,
+                viewId: viewId
+            ).toDictionary()
         )
     }
 }

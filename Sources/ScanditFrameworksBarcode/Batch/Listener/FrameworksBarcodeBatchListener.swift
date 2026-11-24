@@ -57,12 +57,12 @@ open class FrameworksBarcodeBatchListener: NSObject, BarcodeBatchListener {
 
         let frameId = LastFrameData.shared.addToCache(frameData: frameData)
 
-        let payload =
-            [
-                "session": session.jsonString,
-                "frameId": frameId,
-                "modeId": modeId,
-            ] as [String: Any?]
+        let payload = SchemaTypes.BarcodeBatchListenerDidUpdateSession(
+            session: session.jsonString,
+            frameId: frameId,
+            modeId: modeId,
+            event: FrameworksBarcodeBatchEvent.sessionUpdated.rawValue
+        ).toDictionary().mapValues { $0 as Any? }
 
         sessionUpdatedEvent.emit(
             on: emitter,

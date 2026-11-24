@@ -19,6 +19,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     private let viewListener: FrameworksBarcodeCountViewListener
     private let viewUiListener: FrameworksBarcodeCountViewUIListener
     private let statusProvider: FrameworksBarcodeCountStatusProvider
+    private let areListener: FrameworksBarcodeCountAdaptiveRecognitionServiceListener
     private let modeDeserializer: BarcodeCountDeserializer
     private let viewDeserializer: BarcodeCountViewDeserializer
     private let barcodeDataTransformer: FrameworksBarcodeDataTransformer
@@ -37,6 +38,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         viewListener: FrameworksBarcodeCountViewListener,
         viewUiListener: FrameworksBarcodeCountViewUIListener,
         statusProvider: FrameworksBarcodeCountStatusProvider,
+        areListener: FrameworksBarcodeCountAdaptiveRecognitionServiceListener,
         barcodeDataTransformer: FrameworksBarcodeDataTransformer,
         modeDeserializer: BarcodeCountDeserializer = BarcodeCountDeserializer(),
         viewDeserializer: BarcodeCountViewDeserializer = BarcodeCountViewDeserializer()
@@ -47,6 +49,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         self.viewListener = viewListener
         self.viewUiListener = viewUiListener
         self.statusProvider = statusProvider
+        self.areListener = areListener
         self.modeDeserializer = modeDeserializer
         self.viewDeserializer = viewDeserializer
         self.barcodeDataTransformer = barcodeDataTransformer
@@ -159,7 +162,12 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
     }
 
     public func addBarcodeCountStatusProvider() {
+        statusProvider.attach()
         view.setStatusProvider(statusProvider)
+    }
+
+    public func removeBarcodeCountStatusProvider() {
+        statusProvider.detach()
     }
 
     public func addBarcodeCountViewListener() {
@@ -186,7 +194,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(
             with: trackedBarcodeId,
             for: .brushForRecognizedBarcode
-        ), let brush = brush {
+        ) {
             view.setBrush(brush, forRecognizedBarcode: trackedBarcode)
         }
     }
@@ -195,7 +203,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(
             with: trackedBarcodeId,
             for: .brushForRecognizedBarcodeNotInList
-        ), let brush = brush {
+        ) {
             view.setBrush(brush, forRecognizedBarcodeNotInList: trackedBarcode)
         }
     }
@@ -204,7 +212,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(
             with: trackedBarcodeId,
             for: .brushForAcceptedBarcode
-        ), let brush = brush {
+        ) {
             view.setBrush(brush, forAcceptedBarcode: trackedBarcode)
         }
     }
@@ -213,16 +221,22 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         if let trackedBarcode = viewListener.getTrackedBarcodeForBrush(
             with: trackedBarcodeId,
             for: .brushForRejectedBarcode
-        ), let brush = brush {
+        ) {
             view.setBrush(brush, forRejectedBarcode: trackedBarcode)
         }
     }
 
+    // SDC-33589: like finishBrushFor*Event above, these forward a nil reply as is.
+    // setIcon(_:for:) is declared nullable and treats nil as removal, so forwarding the nil is
+    // what lets a listener clear an icon. The frameworks listener answers with the platform
+    // default when the app never implemented iconFor*, so a nil here really did come from the
+    // app. Do not "restore" the guard: a nil brush likewise hides the barcode, as documented,
+    // and still replaces the placeholder.
     public func finishIconForRecognizedBarcodeEvent(icon: BarcodeCountIcon?, trackedBarcodeId: Int) {
         if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
             with: trackedBarcodeId,
             for: .iconForRecognizedBarcode
-        ), let icon = icon {
+        ) {
             view.setIcon(icon, forRecognizedBarcode: trackedBarcode)
         }
     }
@@ -231,7 +245,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
             with: trackedBarcodeId,
             for: .iconForRecognizedBarcodeNotInList
-        ), let icon = icon {
+        ) {
             view.setIcon(icon, forRecognizedBarcodeNotInList: trackedBarcode)
         }
     }
@@ -240,7 +254,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
             with: trackedBarcodeId,
             for: .iconForAcceptedBarcode
-        ), let icon = icon {
+        ) {
             view.setIcon(icon, forAcceptedBarcode: trackedBarcode)
         }
     }
@@ -249,8 +263,44 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         if let trackedBarcode = viewListener.getTrackedBarcodeForIcon(
             with: trackedBarcodeId,
             for: .iconForRejectedBarcode
-        ), let icon = icon {
+        ) {
             view.setIcon(icon, forRejectedBarcode: trackedBarcode)
+        }
+    }
+
+    // The app's listener for event is gone, so no reply will come: draw the default instead.
+    public func setDefaultIconsForPendingRequests(event: BarcodeCountViewListenerEvent) {
+        for trackedBarcode in viewListener.takePendingIconRequests(for: event) {
+            switch event {
+            case .iconForRecognizedBarcode:
+                view.setIcon(BarcodeCountView.defaultRecognizedIcon, forRecognizedBarcode: trackedBarcode)
+            case .iconForRecognizedBarcodeNotInList:
+                view.setIcon(BarcodeCountView.defaultNotInListIcon, forRecognizedBarcodeNotInList: trackedBarcode)
+            case .iconForAcceptedBarcode:
+                view.setIcon(BarcodeCountView.defaultAcceptedIcon, forAcceptedBarcode: trackedBarcode)
+            case .iconForRejectedBarcode:
+                view.setIcon(BarcodeCountView.defaultRejectedIcon, forRejectedBarcode: trackedBarcode)
+            default:
+                break
+            }
+        }
+    }
+
+    // The app's listener for event is gone, so no reply will come: draw the view's brush.
+    public func setViewBrushesForPendingRequests(event: BarcodeCountViewListenerEvent) {
+        for trackedBarcode in viewListener.takePendingBrushRequests(for: event) {
+            switch event {
+            case .brushForRecognizedBarcode:
+                view.setBrush(view.recognizedBrush, forRecognizedBarcode: trackedBarcode)
+            case .brushForRecognizedBarcodeNotInList:
+                view.setBrush(view.notInListBrush, forRecognizedBarcodeNotInList: trackedBarcode)
+            case .brushForAcceptedBarcode:
+                view.setBrush(view.acceptedBrush, forAcceptedBarcode: trackedBarcode)
+            case .brushForRejectedBarcode:
+                view.setBrush(view.rejectedBrush, forRejectedBarcode: trackedBarcode)
+            default:
+                break
+            }
         }
     }
 
@@ -286,6 +336,14 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         barcodeCountListener.disable()
         barcodeCountListener.disableAsync()
         mode.removeListener(barcodeCountListener)
+    }
+
+    public func addAdaptiveRecognitionServiceListener() {
+        mode.addAdaptiveRecognitionServiceListener(areListener)
+    }
+
+    public func removeAdaptiveRecognitionServiceListener() {
+        mode.removeAdaptiveRecognitionServiceListener(areListener)
     }
 
     public func resetBarcodeCount() {
@@ -380,6 +438,10 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         let viewListener = FrameworksBarcodeCountViewListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let viewUiListener = FrameworksBarcodeCountViewUIListener(emitter: emitter, viewId: viewCreationParams.viewId)
         let statusProvider = FrameworksBarcodeCountStatusProvider(emitter: emitter, viewId: viewCreationParams.viewId)
+        let areListener = FrameworksBarcodeCountAdaptiveRecognitionServiceListener(
+            emitter: emitter,
+            viewId: viewCreationParams.viewId
+        )
         let instance = FrameworksBarcodeCountView(
             context: context,
             barcodeCountListener: barcodeCountListener,
@@ -387,6 +449,7 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
             viewListener: viewListener,
             viewUiListener: viewUiListener,
             statusProvider: statusProvider,
+            areListener: areListener,
             barcodeDataTransformer: FrameworksBarcodeDataTransformer(
                 emitter: emitter,
                 viewId: viewCreationParams.viewId
@@ -402,7 +465,9 @@ public class FrameworksBarcodeCountView: FrameworksBaseView {
         view.delegate = nil
         view.uiDelegate = nil
         mode.removeListener(barcodeCountListener)
+        mode.removeAdaptiveRecognitionServiceListener(areListener)
         mode.reset()
+        statusProvider.detach()
         // Strong capture: dispose cleanup must not race wrapper dealloc.
         let view: BarcodeCountView = self.view
         DispatchQueue.main.async {

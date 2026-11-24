@@ -36,10 +36,10 @@ open class FrameworksBarcodePickAsyncMapperProductProviderCallback: NSObject,
         else { return }
         let result = identifiersForItemsEvent.emit(
             on: emitter,
-            payload: [
-                "itemsData": items,
-                "viewId": self.viewId,
-            ]
+            payload: SchemaTypes.BarcodePickAsyncMapperProductProviderCallbackOnProductIdentifierForItems(
+                itemsData: items,
+                viewId: self.viewId
+            ).toDictionary().mapValues { $0 as Any? }
         )
         if let result = result {
             completionHandler(result)

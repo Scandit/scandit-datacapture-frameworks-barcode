@@ -7,22 +7,29 @@
 import ScanditBarcodeCapture
 import ScanditFrameworksCore
 
-struct BarcodePickDefaults: DefaultsEncodable {
+struct BarcodePickDefaults {
     private let recommendedCameraSettings: CameraSettingsDefaults
-    private let settingsDefaults: FrameworksBarcodePickSettingsDefaults
     private let viewSettingsDefaults: FrameworksBarcodePickViewDefaults
     private let barcodePickViewHighlightStyleDefaults: BarcodePickViewHighlightStyleDefaults
     private let barcodePickSymbologySettingsDefaults: BarcodePickSymbologySettingsDefaults
-    private let barcodePickStatusIconSettingsDefaults: BarcodePickStatusIconSettingsDefaults
 
-    func toEncodable() -> [String: Any?] {
+    enum Keys {
+        static let recommendedCameraSettings = "RecommendedCameraSettings"
+        static let viewSettings = "ViewSettings"
+        static let barcodePickViewHighlightStyle = "BarcodePickViewHighlightStyle"
+        static let symbologySettings = "SymbologySettings"
+    }
+
+    /// The residual defaults that a framework plugin cannot resolve statically: the
+    /// device-probed recommended camera settings, the engine-owned symbology settings, and the
+    /// view blocks (highlight style, localized texts, asset handles). Every other BarcodePick
+    /// default ships as a generated static file.
+    func toDynamicEncodable() -> [String: Any?] {
         [
-            "RecommendedCameraSettings": recommendedCameraSettings.toEncodable(),
-            "BarcodePickSettings": settingsDefaults.toEncodable(),
-            "ViewSettings": viewSettingsDefaults.toEncodable(),
-            "BarcodePickViewHighlightStyle": barcodePickViewHighlightStyleDefaults.toEncodable(),
-            "SymbologySettings": barcodePickSymbologySettingsDefaults.toEncodable(),
-            "BarcodePickStatusIconSettings": barcodePickStatusIconSettingsDefaults.toEncodable(),
+            Keys.recommendedCameraSettings: recommendedCameraSettings.toEncodable(),
+            Keys.symbologySettings: barcodePickSymbologySettingsDefaults.toEncodable(),
+            Keys.barcodePickViewHighlightStyle: barcodePickViewHighlightStyleDefaults.toEncodable(),
+            Keys.viewSettings: viewSettingsDefaults.toEncodable(),
         ]
     }
 
@@ -31,11 +38,9 @@ struct BarcodePickDefaults: DefaultsEncodable {
             recommendedCameraSettings: CameraSettingsDefaults(
                 cameraSettings: BarcodePick.recommendedCameraSettings
             ),
-            settingsDefaults: FrameworksBarcodePickSettingsDefaults(barcodePickSettings: BarcodePickSettings()),
             viewSettingsDefaults: FrameworksBarcodePickViewDefaults(),
             barcodePickViewHighlightStyleDefaults: .shared,
-            barcodePickSymbologySettingsDefaults: .shared,
-            barcodePickStatusIconSettingsDefaults: .shared
+            barcodePickSymbologySettingsDefaults: .shared
         )
     }()
 }

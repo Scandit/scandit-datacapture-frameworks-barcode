@@ -225,6 +225,10 @@ public class FrameworksSparkScanView: FrameworksBaseView {
         mode.sparkScanLicenseInfo?.jsonString
     }
 
+    public var scanningModeJsonString: String {
+        view.scanningMode.jsonString
+    }
+
     public func bringViewToTop() {
         if !shouldShowOnTopAlways {
             return

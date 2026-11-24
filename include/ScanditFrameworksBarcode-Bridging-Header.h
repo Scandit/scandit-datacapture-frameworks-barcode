@@ -4,8 +4,6 @@
  * Copyright (C) 2023- Scandit AG. All rights reserved.
  */
 
-#import "SDCBarcodeCountDeserializerDelegate.h"
-#import "SDCBarcodeCountDeserializer+Private.h"
 #import "SDCBarcodeArViewDefaults.h"
 #import "SDCBarcodeCountViewDefaults.h"
 #import "SDCBarcodePickSettingsDefaults.h"

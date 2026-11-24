@@ -20,6 +20,7 @@ public class BarcodeArModuleCommandFactory {
     /// - Parameter method: The method call containing method name and arguments
     /// - Returns: The corresponding command, or nil if method is not recognized
     public static func create(module: BarcodeArModule, _ method: FrameworksMethodCall) -> BarcodeArModuleCommand? {
+        _ = LogMetadata.registered
         switch method.method {
         case "registerBarcodeArViewUiListener":
             return RegisterBarcodeArViewUiListenerCommand(module: module, method)

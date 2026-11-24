@@ -92,13 +92,16 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
             frameId = LastFrameData.shared.addToCache(frameData: data)
         }
 
+        let payload = SchemaTypes.BarcodeSelectionListenerDidUpdateSelection(
+            session: session.jsonString,
+            frameId: frameId,
+            modeId: modeId,
+            event: FrameworksBarcodeSelectionEvent.didUpdateSelection.rawValue
+        ).toDictionary().mapValues { $0 as Any? }
+
         didUpdateSelectionEvent.emit(
             on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "frameId": frameId,
-                "modeId": modeId,
-            ]
+            payload: payload
         )
 
         if let id = frameId {
@@ -118,13 +121,16 @@ open class FrameworksBarcodeSelectionListener: NSObject, BarcodeSelectionListene
             frameId = LastFrameData.shared.addToCache(frameData: data)
         }
 
+        let payload = SchemaTypes.BarcodeSelectionListenerDidUpdateSession(
+            session: session.jsonString,
+            frameId: frameId,
+            modeId: modeId,
+            event: FrameworksBarcodeSelectionEvent.didUpdateSession.rawValue
+        ).toDictionary().mapValues { $0 as Any? }
+
         didUpdateSessionEvent.emit(
             on: emitter,
-            payload: [
-                "session": session.jsonString,
-                "frameId": frameId,
-                "modeId": modeId,
-            ]
+            payload: payload
         )
 
         if let id = frameId {
